@@ -1,57 +1,15 @@
 import Link from "next/link";
 import FadeIn from "@/components/FadeIn";
+import HeroVideo from "@/components/HeroVideo";
 
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative bg-darkred text-cream overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(201,168,76,0.15) 35px, rgba(201,168,76,0.15) 70px)`,
-          }} />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
-          <div className="max-w-3xl">
-            <FadeIn>
-              <p className="text-gold font-medium tracking-wide uppercase text-xs sm:text-sm mb-3 sm:mb-4">
-                «Кең Жылыой» мәдениет үйі
-              </p>
-            </FadeIn>
-            <FadeIn delay={100}>
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
-                <span className="text-gold">Жылыой сазы</span>
-                <br />
-                фольклорлық ансамблі
-              </h1>
-            </FadeIn>
-            <FadeIn delay={200}>
-              <p className="text-base sm:text-xl text-cream/80 mb-6 sm:mb-8 max-w-2xl leading-relaxed">
-                Қазақ халқының бай музыкалық мұрасын сақтау, дамыту және келер ұрпаққа жеткізу — біздің басты мақсатымыз. Ансамбль 18 талантты орындаушыдан тұрады.
-              </p>
-            </FadeIn>
-            <FadeIn delay={300}>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <Link
-                  href="/about"
-                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gold text-darkred font-semibold rounded-lg hover:bg-gold-light active:scale-95 transition-all text-base sm:text-lg"
-                >
-                  Толығырақ
-                </Link>
-                <Link
-                  href="/video"
-                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-gold text-gold font-semibold rounded-lg hover:bg-gold hover:text-darkred active:scale-95 transition-all text-base sm:text-lg"
-                >
-                  Бейнелер
-                </Link>
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </section>
+      {/* Hero video */}
+      <HeroVideo />
 
       {/* About cards */}
-      <section className="py-12 sm:py-16 lg:py-20">
+      <section id="about-section" className="py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="text-center mb-10 sm:mb-12">
