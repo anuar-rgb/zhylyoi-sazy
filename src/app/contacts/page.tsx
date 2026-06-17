@@ -47,8 +47,7 @@ export default function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-darkred mb-1">Телефон</h3>
-                  <p className="text-darkred/70">+7 (712) 37-XX-XX</p>
-                  <p className="text-darkred/50 text-sm mt-1">Дүйсенбі – Жұма, 09:00 – 18:00</p>
+                  <a href="tel:+77789276387" className="text-darkred/70 hover:text-gold transition-colors">+7 778 927 63 87</a>
                 </div>
               </div>
             </div>
@@ -62,7 +61,7 @@ export default function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-darkred mb-1">Email</h3>
-                  <p className="text-darkred/70">zhylyoi.sazy@example.com</p>
+                  <a href="mailto:dk.kenzhylyoi@gmail.com" className="text-darkred/70 hover:text-gold transition-colors">dk.kenzhylyoi@gmail.com</a>
                 </div>
               </div>
             </div>
@@ -76,9 +75,8 @@ export default function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-darkred mb-1">Жұмыс уақыты</h3>
-                  <p className="text-darkred/70">Дүйсенбі – Жұма: 09:00 – 18:00</p>
-                  <p className="text-darkred/70">Сенбі: 10:00 – 15:00</p>
-                  <p className="text-darkred/50 text-sm mt-1">Жексенбі — демалыс</p>
+                  <p className="text-darkred/70">Дүйсенбі – Жұма: 18:00 – 22:00</p>
+                  <p className="text-darkred/50 text-sm mt-1">Сенбі, Жексенбі — демалыс</p>
                 </div>
               </div>
             </div>

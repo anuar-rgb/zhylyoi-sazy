@@ -37,7 +37,8 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>Атырау облысы, Жылыой ауданы</li>
               <li>«Кең Жылыой» мәдениет үйі</li>
-              <li>Тел: +7 (712) 37-XX-XX</li>
+              <li>Тел: +7 778 927 63 87</li>
+              <li>dk.kenzhylyoi@gmail.com</li>
             </ul>
           </div>
         </div>
