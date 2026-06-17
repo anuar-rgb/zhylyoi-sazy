@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <circle cx="32" cy="32" r="30" fill="#8B1A1A"/>
+  <circle cx="32" cy="32" r="27" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+  <!-- Dombra body -->
+  <ellipse cx="32" cy="42" rx="10" ry="12" fill="#C9A84C"/>
+  <ellipse cx="32" cy="42" rx="7" ry="9" fill="#8B1A1A"/>
+  <ellipse cx="32" cy="42" rx="3" ry="3.5" fill="#C9A84C" opacity="0.6"/>
+  <!-- Neck -->
+  <rect x="30.5" y="12" width="3" height="24" rx="1.5" fill="#C9A84C"/>
+  <!-- Tuning pegs -->
+  <rect x="27" y="11" width="3" height="1.5" rx="0.75" fill="#C9A84C"/>
+  <rect x="34" y="11" width="3" height="1.5" rx="0.75" fill="#C9A84C"/>
+  <!-- Head -->
+  <rect x="29" y="8" width="6" height="5" rx="2" fill="#C9A84C"/>
+  <!-- Strings -->
+  <line x1="31" y1="14" x2="31" y2="50" stroke="#FAF3E0" stroke-width="0.5" opacity="0.7"/>
+  <line x1="33" y1="14" x2="33" y2="50" stroke="#FAF3E0" stroke-width="0.5" opacity="0.7"/>
+</svg>
