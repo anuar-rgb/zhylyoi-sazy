@@ -13,8 +13,8 @@ const videos = [
     date: "2026",
   },
   {
-    src: "/videos/concert-2026.mov",
-    type: "video/quicktime",
+    src: "/videos/concert-2026.mp4",
+    type: "video/mp4",
     title: "Концерттік бейнежазба",
     description: "Ансамбльдің сахнадағы өнер көрсетуі",
     date: "2026",
