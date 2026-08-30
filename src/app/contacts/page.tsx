@@ -5,7 +5,7 @@ import FadeIn from "@/components/FadeIn";
 export const metadata: Metadata = {
   title: "Байланыс",
   description:
-    "«Жылыой сазы» ансамблімен байланысу — мекенжай, телефон, жұмыс уақыты, репетициялар кестесі. Атырау облысы, Жылыой ауданы, «Кең Жылыой» мәдениет үйі.",
+    "«Кең Жылыой» Жылыой аудандық мәдениет үйімен байланысу — мекенжай, телефон, жұмыс уақыты. Атырау облысы, Жылыой ауданы, Құлсары қаласы, Махамбет даңғылы, 37.",
 };
 
 export default function ContactsPage() {
@@ -32,8 +32,8 @@ export default function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-darkred mb-1">Мекенжай</h3>
-                  <p className="text-darkred/70">Атырау облысы, Жылыой ауданы</p>
-                  <p className="text-darkred/70">«Кең Жылыой» мәдениет үйі</p>
+                  <p className="text-darkred/70">Атырау облысы, Жылыой ауданы, Құлсары қаласы</p>
+                  <p className="text-darkred/70">Махамбет даңғылы, 37</p>
                 </div>
               </div>
             </div>
@@ -75,7 +75,8 @@ export default function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-darkred mb-1">Жұмыс уақыты</h3>
-                  <p className="text-darkred/70">Дүйсенбі – Жұма: 18:00 – 22:00</p>
+                  <p className="text-darkred/70">Дүйсенбі – Жұма: 09:00 – 18:30</p>
+                  <p className="text-darkred/70">Түскі үзіліс: 13:00 – 14:30</p>
                   <p className="text-darkred/50 text-sm mt-1">Сенбі, Жексенбі — демалыс</p>
                 </div>
               </div>
@@ -157,6 +158,34 @@ export default function ContactsPage() {
           </div>
           </FadeIn>
         </div>
+
+        <FadeIn delay={250}>
+          <div className="mt-6 sm:mt-8 bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
+            <h3 className="font-bold text-darkred text-lg mb-4">Мекеменің ресми деректері</h3>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+              <div>
+                <dt className="text-darkred/50">Толық атауы</dt>
+                <dd className="text-darkred/80 mt-0.5">
+                  «Кең Жылыой» Жылыой аудандық мәдениет үйі» коммуналдық мемлекеттік қазыналық кәсіпорыны
+                </dd>
+              </div>
+              <div>
+                <dt className="text-darkred/50">БСН</dt>
+                <dd className="text-darkred/80 mt-0.5">010240004070</dd>
+              </div>
+              <div>
+                <dt className="text-darkred/50">Басшысы</dt>
+                <dd className="text-darkred/80 mt-0.5">Темирханов Алибек Жумаханович</dd>
+              </div>
+              <div>
+                <dt className="text-darkred/50">Құрылтайшы</dt>
+                <dd className="text-darkred/80 mt-0.5">
+                  Жылыой ауданы мәдениет, тілдерді дамыту, дене шынықтыру және спорт бөлімі
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </FadeIn>
       </div>
     </section>
   );

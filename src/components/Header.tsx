@@ -37,11 +37,11 @@ export default function Header() {
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-gold flex items-center justify-center text-darkred font-bold text-base sm:text-lg lg:text-xl">
-              ЖС
+              КЖ
             </div>
             <div className="hidden sm:block">
-              <div className="text-gold font-bold text-base lg:text-lg leading-tight">Жылыой сазы</div>
-              <div className="text-cream/70 text-[11px] lg:text-xs">фольклорлық ансамбль</div>
+              <div className="text-gold font-bold text-base lg:text-lg leading-tight">Кең Жылыой</div>
+              <div className="text-cream/70 text-[11px] lg:text-xs">Жылыой аудандық мәдениет үйі</div>
             </div>
           </Link>
 

@@ -8,15 +8,15 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-darkred font-bold">
-                ЖС
+                КЖ
               </div>
               <div>
-                <div className="text-gold font-bold text-lg">Жылыой сазы</div>
-                <div className="text-cream/50 text-xs">фольклорлық ансамбль</div>
+                <div className="text-gold font-bold text-lg">Кең Жылыой</div>
+                <div className="text-cream/50 text-xs">Жылыой аудандық мәдениет үйі</div>
               </div>
             </div>
             <p className="text-sm leading-relaxed">
-              «Кең Жылыой» мәдениет үйі жанындағы фольклорлық ансамбль. Қазақ халқының музыкалық мұрасын сақтау мен насихаттау.
+              Жылыой ауданының мәдениет үйі. «Жылыой сазы» фольклорлық ансамблі. Қазақ халқының музыкалық мұрасын сақтау мен насихаттау.
             </p>
           </div>
 
@@ -36,7 +36,7 @@ export default function Footer() {
             <h3 className="text-gold font-semibold mb-4">Байланыс</h3>
             <ul className="space-y-2 text-sm">
               <li>Атырау облысы, Жылыой ауданы</li>
-              <li>«Кең Жылыой» мәдениет үйі</li>
+              <li>Құлсары қ., Махамбет даңғылы, 37</li>
               <li>Тел: +7 778 927 63 87</li>
               <li>dk.kenzhylyoi@gmail.com</li>
             </ul>
@@ -44,7 +44,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-cream/10 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-cream/40">
-          <span>&copy; {new Date().getFullYear()} «Жылыой сазы» фольклорлық ансамблі</span>
+          <span>&copy; {new Date().getFullYear()} «Кең Жылыой» Жылыой аудандық мәдениет үйі</span>
           <span>Жылыой ауданы, Атырау облысы</span>
         </div>
       </div>
