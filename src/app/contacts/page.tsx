@@ -87,13 +87,20 @@ export default function ContactsPage() {
           <div className="space-y-4 sm:space-y-6">
             <div className="bg-white rounded-xl p-5 sm:p-6 shadow-sm border border-cream-dark">
               <h3 className="font-bold text-darkred text-lg mb-4">Хабарлама жіберу</h3>
-              <form className="space-y-4">
+              <form
+                className="space-y-4"
+                action="mailto:dk.kenzhylyoi@gmail.com"
+                method="post"
+                encType="text/plain"
+              >
                 <div>
                   <label className="block text-sm font-medium text-darkred/70 mb-1">
                     Аты-жөніңіз
                   </label>
                   <input
                     type="text"
+                    name="Аты-жөні"
+                    required
                     className="w-full px-4 py-2.5 border border-cream-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30"
                     placeholder="Есіміңізді жазыңыз"
                   />
@@ -104,6 +111,8 @@ export default function ContactsPage() {
                   </label>
                   <input
                     type="text"
+                    name="Байланыс"
+                    required
                     className="w-full px-4 py-2.5 border border-cream-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30"
                     placeholder="+7 (___) ___-__-__"
                   />
@@ -114,12 +123,14 @@ export default function ContactsPage() {
                   </label>
                   <textarea
                     rows={4}
+                    name="Хабарлама"
+                    required
                     className="w-full px-4 py-2.5 border border-cream-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30 resize-none"
                     placeholder="Хабарламаңызды жазыңыз..."
                   />
                 </div>
                 <button
-                  type="button"
+                  type="submit"
                   className="w-full bg-darkred text-cream py-3 rounded-lg font-semibold hover:bg-darkred-light transition-colors"
                 >
                   Жіберу
