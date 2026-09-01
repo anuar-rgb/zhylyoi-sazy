@@ -1,0 +1,144 @@
+"use client";
+
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "@/i18n/navigation";
+
+type Club = {
+  title: string;
+  description: string;
+  image: string;
+  imagePosition?: string;
+  href: string;
+  linkLabel: string;
+  real?: boolean;
+};
+
+export default function ClubsCarousel({
+  clubs,
+  activeLabel,
+  prevLabel,
+  nextLabel,
+}: {
+  clubs: Club[];
+  activeLabel: string;
+  prevLabel: string;
+  nextLabel: string;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateArrows = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 8);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 8);
+  }, []);
+
+  useEffect(() => {
+    updateArrows();
+    const el = trackRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateArrows, { passive: true });
+    window.addEventListener("resize", updateArrows);
+    return () => {
+      el.removeEventListener("scroll", updateArrows);
+      window.removeEventListener("resize", updateArrows);
+    };
+  }, [updateArrows]);
+
+  function scrollByCards(direction: 1 | -1) {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-card]");
+    const step = card ? card.offsetWidth + 24 : el.clientWidth * 0.8;
+    el.scrollBy({ left: step * direction, behavior: "smooth" });
+  }
+
+  function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
+    const el = trackRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  }
+
+  return (
+    <div className="relative">
+      {/* Nav arrows */}
+      <div className="hidden sm:flex items-center gap-2 absolute -top-16 right-0 z-10">
+        <button
+          type="button"
+          onClick={() => scrollByCards(-1)}
+          disabled={!canScrollLeft}
+          aria-label={prevLabel}
+          className="w-10 h-10 rounded-full border border-ocean/25 flex items-center justify-center text-ocean transition-colors hover:bg-ocean hover:text-white hover:border-ocean disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ocean disabled:cursor-not-allowed"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollByCards(1)}
+          disabled={!canScrollRight}
+          aria-label={nextLabel}
+          className="w-10 h-10 rounded-full border border-ocean/25 flex items-center justify-center text-ocean transition-colors hover:bg-ocean hover:text-white hover:border-ocean disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ocean disabled:cursor-not-allowed"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Track */}
+      <div
+        ref={trackRef}
+        onWheel={handleWheel}
+        className="hide-scrollbar flex gap-5 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth scroll-px-4 sm:scroll-px-0 -mx-4 px-4 sm:mx-0 sm:px-0 pb-3"
+      >
+        {clubs.map((club) => (
+          <Link
+            key={club.title}
+            href={club.href}
+            data-card
+            className="group relative shrink-0 w-[74vw] xs:w-[62vw] sm:w-[300px] lg:w-[320px] aspect-[3/4] rounded-3xl overflow-hidden snap-start shadow-md hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 ease-out"
+          >
+            <Image
+              src={club.image}
+              alt={club.title}
+              fill
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+              style={club.imagePosition ? { objectPosition: club.imagePosition } : undefined}
+              sizes="(max-width: 640px) 74vw, 320px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-ocean-dark via-ocean-dark/45 to-black/10 opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
+
+            {club.real && (
+              <span className="absolute top-4 left-4 bg-gold text-ocean-dark text-[11px] font-semibold px-2.5 py-1 rounded-full shadow">
+                {activeLabel}
+              </span>
+            )}
+
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+              <h3 className="text-white font-bold text-xl sm:text-2xl leading-tight mb-2 text-balance">
+                {club.title}
+              </h3>
+              <p className="text-white/75 text-sm leading-relaxed line-clamp-2 mb-3">
+                {club.description}
+              </p>
+              <span className="inline-flex items-center gap-1.5 text-gold text-sm font-semibold opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                {club.linkLabel}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}

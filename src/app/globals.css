@@ -29,6 +29,15 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Carousel: hide scrollbar but keep native scroll/swipe behavior */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Hero text animations */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
