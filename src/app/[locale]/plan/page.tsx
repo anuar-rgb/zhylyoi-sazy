@@ -107,15 +107,15 @@ export default async function PlanPage() {
         {/* Timeline */}
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-6 sm:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-darkred via-gold to-darkred/30" />
+          <div className="absolute left-6 sm:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-forest via-gold to-forest/30" />
 
           <div className="space-y-0">
             {t.timeline.map((item, index) => (
               <FadeIn key={item.title} delay={index * 100}>
               <div className="relative pl-16 sm:pl-20 pb-10 last:pb-0 group">
                 {/* Circle on line */}
-                <div className="absolute left-0 sm:left-2 w-12 h-12 sm:w-12 sm:h-12 rounded-full bg-white border-4 border-darkred flex items-center justify-center z-10 group-hover:border-gold group-hover:scale-110 transition-all">
-                  <span className="font-bold text-darkred text-lg group-hover:text-gold transition-colors">
+                <div className="absolute left-0 sm:left-2 w-12 h-12 sm:w-12 sm:h-12 rounded-full bg-white border-4 border-forest flex items-center justify-center z-10 group-hover:border-gold group-hover:scale-110 transition-all">
+                  <span className="font-bold text-forest text-lg group-hover:text-gold transition-colors">
                     {index + 1}
                   </span>
                 </div>
@@ -124,13 +124,13 @@ export default async function PlanPage() {
                 <div className="bg-white rounded-xl shadow-sm border border-cream-dark p-6 hover:shadow-md hover:border-gold/40 transition-all">
                   {/* Year badge */}
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xs font-medium text-cream bg-darkred px-3 py-1 rounded-full">
+                    <span className="text-xs font-medium text-cream bg-forest px-3 py-1 rounded-full">
                       {years[index]}
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-darkred mb-2">{item.title}</h3>
-                  <p className="text-darkred/60 leading-relaxed">{item.description}</p>
+                  <h3 className="text-xl font-bold text-forest mb-2">{item.title}</h3>
+                  <p className="text-forest/60 leading-relaxed">{item.description}</p>
                 </div>
               </div>
               </FadeIn>
@@ -140,7 +140,7 @@ export default async function PlanPage() {
 
         {/* Conclusion */}
         <FadeIn>
-        <div className="mt-10 sm:mt-14 bg-gradient-to-br from-darkred to-darkred-dark rounded-2xl p-6 sm:p-8 lg:p-10 text-center">
+        <div className="mt-10 sm:mt-14 bg-gradient-to-br from-forest to-forest-dark rounded-2xl p-6 sm:p-8 lg:p-10 text-center">
           <h3 className="text-xl sm:text-2xl font-bold text-gold mb-4">{t.strategicTitle}</h3>
           <p className="text-cream/80 text-lg leading-relaxed max-w-2xl mx-auto">
             {t.strategicText}

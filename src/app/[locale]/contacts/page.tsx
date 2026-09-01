@@ -108,16 +108,16 @@ export default async function ContactsPage() {
           <div className="space-y-4 sm:space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-darkred/10 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-darkred" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-forest/10 rounded-full flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-forest" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-bold text-darkred mb-1">{t.addressTitle}</h3>
+                  <h3 className="font-bold text-forest mb-1">{t.addressTitle}</h3>
                   {t.address.map((line) => (
-                    <p key={line} className="text-darkred/70">{line}</p>
+                    <p key={line} className="text-forest/70">{line}</p>
                   ))}
                 </div>
               </div>
@@ -125,44 +125,44 @@ export default async function ContactsPage() {
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-darkred/10 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-darkred" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-forest/10 rounded-full flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-forest" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-bold text-darkred mb-1">{t.phoneTitle}</h3>
-                  <a href="tel:+77789276387" className="text-darkred/70 hover:text-gold transition-colors">+7 778 927 63 87</a>
+                  <h3 className="font-bold text-forest mb-1">{t.phoneTitle}</h3>
+                  <a href="tel:+77789276387" className="text-forest/70 hover:text-gold transition-colors">+7 778 927 63 87</a>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-darkred/10 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-darkred" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-forest/10 rounded-full flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-forest" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-bold text-darkred mb-1">{t.emailTitle}</h3>
-                  <a href="mailto:dk.kenzhylyoi@gmail.com" className="text-darkred/70 hover:text-gold transition-colors">dk.kenzhylyoi@gmail.com</a>
+                  <h3 className="font-bold text-forest mb-1">{t.emailTitle}</h3>
+                  <a href="mailto:dk.kenzhylyoi@gmail.com" className="text-forest/70 hover:text-gold transition-colors">dk.kenzhylyoi@gmail.com</a>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-darkred/10 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-darkred" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-forest/10 rounded-full flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-forest" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-bold text-darkred mb-1">{t.hoursTitle}</h3>
-                  <p className="text-darkred/70">{t.hours}</p>
-                  <p className="text-darkred/70">{t.lunch}</p>
-                  <p className="text-darkred/50 text-sm mt-1">{t.weekend}</p>
+                  <h3 className="font-bold text-forest mb-1">{t.hoursTitle}</h3>
+                  <p className="text-forest/70">{t.hours}</p>
+                  <p className="text-forest/70">{t.lunch}</p>
+                  <p className="text-forest/50 text-sm mt-1">{t.weekend}</p>
                 </div>
               </div>
             </div>
@@ -172,7 +172,7 @@ export default async function ContactsPage() {
           <FadeIn delay={150}>
           <div className="space-y-4 sm:space-y-6">
             <div className="bg-white rounded-xl p-5 sm:p-6 shadow-sm border border-cream-dark">
-              <h3 className="font-bold text-darkred text-lg mb-4">{t.formTitle}</h3>
+              <h3 className="font-bold text-forest text-lg mb-4">{t.formTitle}</h3>
               <form
                 className="space-y-4"
                 action="mailto:dk.kenzhylyoi@gmail.com"
@@ -180,7 +180,7 @@ export default async function ContactsPage() {
                 encType="text/plain"
               >
                 <div>
-                  <label className="block text-sm font-medium text-darkred/70 mb-1">
+                  <label className="block text-sm font-medium text-forest/70 mb-1">
                     {t.nameLabel}
                   </label>
                   <input
@@ -192,7 +192,7 @@ export default async function ContactsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-darkred/70 mb-1">
+                  <label className="block text-sm font-medium text-forest/70 mb-1">
                     {t.contactLabel}
                   </label>
                   <input
@@ -204,7 +204,7 @@ export default async function ContactsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-darkred/70 mb-1">
+                  <label className="block text-sm font-medium text-forest/70 mb-1">
                     {t.messageLabel}
                   </label>
                   <textarea
@@ -217,7 +217,7 @@ export default async function ContactsPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-darkred text-cream py-3 rounded-lg font-semibold hover:bg-darkred-light transition-colors"
+                  className="w-full bg-forest text-cream py-3 rounded-lg font-semibold hover:bg-forest-light transition-colors"
                 >
                   {t.submit}
                 </button>
@@ -225,8 +225,8 @@ export default async function ContactsPage() {
             </div>
 
             <div className="bg-gold/10 rounded-xl p-6 border border-gold/20">
-              <h3 className="font-bold text-darkred mb-2">{t.rehearsalTitle}</h3>
-              <ul className="space-y-2 text-darkred/70 text-sm">
+              <h3 className="font-bold text-forest mb-2">{t.rehearsalTitle}</h3>
+              <ul className="space-y-2 text-forest/70 text-sm">
                 {t.rehearsal.map((r) => (
                   <li key={r.day} className="flex justify-between">
                     <span>{r.day}</span>
@@ -234,7 +234,7 @@ export default async function ContactsPage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-darkred/50 text-xs mt-3">
+              <p className="text-forest/50 text-xs mt-3">
                 {t.rehearsalNote}
               </p>
             </div>
@@ -244,23 +244,23 @@ export default async function ContactsPage() {
 
         <FadeIn delay={250}>
           <div className="mt-6 sm:mt-8 bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
-            <h3 className="font-bold text-darkred text-lg mb-4">{t.legalTitle}</h3>
+            <h3 className="font-bold text-forest text-lg mb-4">{t.legalTitle}</h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
               <div>
-                <dt className="text-darkred/50">{t.legalFullNameLabel}</dt>
-                <dd className="text-darkred/80 mt-0.5">{t.legalFullName}</dd>
+                <dt className="text-forest/50">{t.legalFullNameLabel}</dt>
+                <dd className="text-forest/80 mt-0.5">{t.legalFullName}</dd>
               </div>
               <div>
-                <dt className="text-darkred/50">{t.bsnLabel}</dt>
-                <dd className="text-darkred/80 mt-0.5">010240004070</dd>
+                <dt className="text-forest/50">{t.bsnLabel}</dt>
+                <dd className="text-forest/80 mt-0.5">010240004070</dd>
               </div>
               <div>
-                <dt className="text-darkred/50">{t.directorLabel}</dt>
-                <dd className="text-darkred/80 mt-0.5">{t.director}</dd>
+                <dt className="text-forest/50">{t.directorLabel}</dt>
+                <dd className="text-forest/80 mt-0.5">{t.director}</dd>
               </div>
               <div>
-                <dt className="text-darkred/50">{t.founderLabel}</dt>
-                <dd className="text-darkred/80 mt-0.5">{t.founder}</dd>
+                <dt className="text-forest/50">{t.founderLabel}</dt>
+                <dd className="text-forest/80 mt-0.5">{t.founder}</dd>
               </div>
             </dl>
           </div>

@@ -101,7 +101,7 @@ function VideoCard({
             onClick={handlePlay}
           >
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gold/90 hover:bg-gold flex items-center justify-center transition-all hover:scale-110 shadow-2xl">
-              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-darkred ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-forest ml-1" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
@@ -123,8 +123,8 @@ function VideoCard({
       </div>
 
       <div className="mt-3 sm:mt-4 bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-cream-dark">
-        <h3 className="font-bold text-darkred text-base sm:text-lg mb-1">{video.title}</h3>
-        <p className="text-darkred/60 text-sm">{video.description}</p>
+        <h3 className="font-bold text-forest text-base sm:text-lg mb-1">{video.title}</h3>
+        <p className="text-forest/60 text-sm">{video.description}</p>
       </div>
     </div>
   );
@@ -150,8 +150,8 @@ export default function VideoPage() {
         </div>
 
         <FadeIn>
-          <div className="mt-8 sm:mt-12 bg-darkred/5 rounded-xl p-6 sm:p-8 text-center">
-            <p className="text-darkred/70 text-base sm:text-lg">
+          <div className="mt-8 sm:mt-12 bg-forest/5 rounded-xl p-6 sm:p-8 text-center">
+            <p className="text-forest/70 text-base sm:text-lg">
               {t.footer}
             </p>
           </div>

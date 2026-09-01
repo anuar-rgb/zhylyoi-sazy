@@ -118,7 +118,7 @@ export default async function ClubsSection() {
           {t.clubs.map((club, index) => (
             <FadeIn key={club.title} delay={index * 120}>
               <div className="group bg-white rounded-xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                <div className="relative aspect-square overflow-hidden bg-darkred/5">
+                <div className="relative aspect-square overflow-hidden bg-forest/5">
                   <Image
                     src={club.image}
                     alt={club.title}
@@ -128,17 +128,17 @@ export default async function ClubsSection() {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                   {club.real && (
-                    <div className="absolute bottom-3 left-3 bg-gold text-darkred text-[11px] font-semibold px-2.5 py-1 rounded-full shadow">
+                    <div className="absolute bottom-3 left-3 bg-gold text-forest text-[11px] font-semibold px-2.5 py-1 rounded-full shadow">
                       {t.active}
                     </div>
                   )}
                 </div>
                 <div className="p-4 sm:p-5 flex flex-col flex-1">
-                  <h3 className="font-bold text-darkred text-base mb-2 leading-tight">{club.title}</h3>
-                  <p className="text-darkred/70 text-sm mb-4 flex-1">{club.description}</p>
+                  <h3 className="font-bold text-forest text-base mb-2 leading-tight">{club.title}</h3>
+                  <p className="text-forest/70 text-sm mb-4 flex-1">{club.description}</p>
                   <Link
                     href={club.href}
-                    className="text-sm font-semibold text-darkred hover:text-gold-dark transition-colors inline-flex items-center gap-1"
+                    className="text-sm font-semibold text-forest hover:text-gold-dark transition-colors inline-flex items-center gap-1"
                   >
                     {club.linkLabel}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

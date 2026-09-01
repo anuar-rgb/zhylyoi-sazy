@@ -68,10 +68,10 @@ const content = {
 const tagColors: Record<string, string> = {
   "Күй": "bg-gold/15 text-gold-dark border-gold/30",
   "Кюй": "bg-gold/15 text-gold-dark border-gold/30",
-  "Халық әні": "bg-darkred/10 text-darkred border-darkred/20",
-  "Народная песня": "bg-darkred/10 text-darkred border-darkred/20",
-  "Ән": "bg-darkred/10 text-darkred border-darkred/20",
-  "Песня": "bg-darkred/10 text-darkred border-darkred/20",
+  "Халық әні": "bg-forest/10 text-forest border-forest/20",
+  "Народная песня": "bg-forest/10 text-forest border-forest/20",
+  "Ән": "bg-forest/10 text-forest border-forest/20",
+  "Песня": "bg-forest/10 text-forest border-forest/20",
   "Классика": "bg-blue-50 text-blue-700 border-blue-200",
   "Терме": "bg-amber-50 text-amber-700 border-amber-200",
   "Авторлық": "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -98,7 +98,7 @@ export default async function RepertoirePage() {
               <div className="p-6">
                 {/* Number + tag */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="w-9 h-9 bg-darkred rounded-full flex items-center justify-center text-cream font-bold text-sm">
+                  <span className="w-9 h-9 bg-forest rounded-full flex items-center justify-center text-cream font-bold text-sm">
                     {item.num}
                   </span>
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${tagColors[item.tag]}`}>
@@ -114,12 +114,12 @@ export default async function RepertoirePage() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold text-darkred mb-1 leading-tight">
+                <h3 className="text-xl font-bold text-forest mb-1 leading-tight">
                   «{item.title}»
                 </h3>
 
                 {/* Author */}
-                <p className="text-darkred/60 text-sm">{item.author}</p>
+                <p className="text-forest/60 text-sm">{item.author}</p>
 
                 {/* Note */}
                 {item.note && (
@@ -130,7 +130,7 @@ export default async function RepertoirePage() {
               </div>
 
               {/* Bottom accent */}
-              <div className="h-1 bg-gradient-to-r from-darkred via-gold to-darkred opacity-20 group-hover:opacity-60 transition-opacity" />
+              <div className="h-1 bg-gradient-to-r from-forest via-gold to-forest opacity-20 group-hover:opacity-60 transition-opacity" />
             </div>
             </FadeIn>
           ))}
@@ -147,19 +147,19 @@ export default async function RepertoirePage() {
               }, {})
             ).map(([tag, count]) => (
               <div key={tag} className="px-4">
-                <div className="text-2xl font-bold text-darkred">{count}</div>
-                <div className="text-sm text-darkred/50">{tag}</div>
+                <div className="text-2xl font-bold text-forest">{count}</div>
+                <div className="text-sm text-forest/50">{tag}</div>
               </div>
             ))}
             <div className="px-4 border-l-2 border-gold/30">
               <div className="text-2xl font-bold text-gold-dark">{t.items.length}</div>
-              <div className="text-sm text-darkred/50">{t.total}</div>
+              <div className="text-sm text-forest/50">{t.total}</div>
             </div>
           </div>
         </div>
 
         </FadeIn>
-        <div className="mt-4 sm:mt-6 text-center text-darkred/50 text-sm">
+        <div className="mt-4 sm:mt-6 text-center text-forest/50 text-sm">
           {t.footer}
         </div>
       </div>
