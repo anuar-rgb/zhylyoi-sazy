@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -36,8 +37,14 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-gold flex items-center justify-center text-darkred font-bold text-base sm:text-lg lg:text-xl">
-              КЖ
+            <div className="relative w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
+              <Image
+                src="/images/gallery/logo.jpeg"
+                alt="«Кең Жылыой» мәдениет үйінің логотипі"
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
             </div>
             <div className="hidden sm:block">
               <div className="text-gold font-bold text-base lg:text-lg leading-tight">Кең Жылыой</div>

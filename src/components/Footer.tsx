@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -7,8 +8,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-darkred font-bold">
-                КЖ
+              <div className="relative w-10 h-10 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
+                <Image
+                  src="/images/gallery/logo.jpeg"
+                  alt="«Кең Жылыой» мәдениет үйінің логотипі"
+                  fill
+                  className="object-cover"
+                  sizes="40px"
+                />
               </div>
               <div>
                 <div className="text-gold font-bold text-lg">Кең Жылыой</div>

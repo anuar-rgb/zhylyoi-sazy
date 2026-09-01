@@ -29,7 +29,7 @@ export default function HeroVideo() {
   }
 
   function handleScroll() {
-    const el = document.getElementById("about-section");
+    const el = document.getElementById("afisha");
     if (el) el.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -68,17 +68,17 @@ export default function HeroVideo() {
                 Қазақ халқының бай музыкалық мұрасын сақтау, дамыту және келер ұрпаққа жеткізу
               </p>
               <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-delay-3">
-                <Link
-                  href="/about"
+                <a
+                  href="#afisha"
                   className="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gold text-darkred font-semibold rounded-lg hover:bg-gold-light active:scale-95 transition-all text-base sm:text-lg"
                 >
-                  Толығырақ
-                </Link>
+                  Афиша
+                </a>
                 <Link
-                  href="/video"
+                  href="/about"
                   className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-white/40 text-white font-semibold rounded-lg hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
                 >
-                  Бейнелер
+                  Ансамбль туралы
                 </Link>
               </div>
             </div>
