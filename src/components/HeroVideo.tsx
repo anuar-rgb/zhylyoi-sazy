@@ -1,9 +1,41 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Link from "next/link";
+import { useLocale } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import type { Locale } from "@/i18n/routing";
+
+const content: Record<
+  Locale,
+  { eyebrow: string; titleGold: string; titleCream: string; subtitle: string; afisha: string; about: string; mute: string; unmute: string; scroll: string }
+> = {
+  kk: {
+    eyebrow: "«Кең Жылыой» мәдениет үйі",
+    titleGold: "Жылыой сазы",
+    titleCream: "фольклорлық ансамблі",
+    subtitle: "Қазақ халқының бай музыкалық мұрасын сақтау, дамыту және келер ұрпаққа жеткізу",
+    afisha: "Афиша",
+    about: "Ансамбль туралы",
+    mute: "Дыбысты өшіру",
+    unmute: "Дыбысты қосу",
+    scroll: "Төмен айналдыру",
+  },
+  ru: {
+    eyebrow: "Дом культуры «Кен Жылыой»",
+    titleGold: "Жылыой сазы",
+    titleCream: "фольклорный ансамбль",
+    subtitle: "Сохранение, развитие и передача будущим поколениям богатого музыкального наследия казахского народа",
+    afisha: "Афиша",
+    about: "Об ансамбле",
+    mute: "Выключить звук",
+    unmute: "Включить звук",
+    scroll: "Прокрутить вниз",
+  },
+};
 
 export default function HeroVideo() {
+  const locale = useLocale() as Locale;
+  const t = content[locale];
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [showOverlay, setShowOverlay] = useState(true);
@@ -57,28 +89,29 @@ export default function HeroVideo() {
           <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-8 lg:p-12 pb-20 sm:pb-16 lg:pb-20">
             <div className="max-w-3xl">
               <p className="text-gold font-medium tracking-wide uppercase text-xs sm:text-sm mb-2 sm:mb-3 animate-fade-in">
-                «Кең Жылыой» мәдениет үйі
+                {t.eyebrow}
               </p>
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-3 sm:mb-5 leading-tight text-white animate-fade-in-delay-1">
-                <span className="text-gold">Жылыой сазы</span>
+                <span className="text-gold">{t.titleGold}</span>
                 <br />
-                <span className="text-cream">фольклорлық ансамблі</span>
+                <span className="text-cream">{t.titleCream}</span>
               </h1>
               <p className="text-sm sm:text-lg lg:text-xl text-white/70 mb-5 sm:mb-7 max-w-xl leading-relaxed animate-fade-in-delay-2">
-                Қазақ халқының бай музыкалық мұрасын сақтау, дамыту және келер ұрпаққа жеткізу
+                {t.subtitle}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-delay-3">
                 <a
                   href="#afisha"
+                  onClick={(e) => { e.preventDefault(); handleScroll(); }}
                   className="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gold text-darkred font-semibold rounded-lg hover:bg-gold-light active:scale-95 transition-all text-base sm:text-lg"
                 >
-                  Афиша
+                  {t.afisha}
                 </a>
                 <Link
                   href="/about"
                   className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-white/40 text-white font-semibold rounded-lg hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
                 >
-                  Ансамбль туралы
+                  {t.about}
                 </Link>
               </div>
             </div>
@@ -89,7 +122,7 @@ export default function HeroVideo() {
         <button
           onClick={isMuted ? handleUnmute : handleMute}
           className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all"
-          aria-label={isMuted ? "Дыбысты қосу" : "Дыбысты өшіру"}
+          aria-label={isMuted ? t.unmute : t.mute}
         >
           {isMuted ? (
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +140,7 @@ export default function HeroVideo() {
         <button
           onClick={handleScroll}
           className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/60 hover:text-white animate-bounce transition-colors"
-          aria-label="Төмен айналдыру"
+          aria-label={t.scroll}
         >
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />

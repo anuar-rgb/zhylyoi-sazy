@@ -1,30 +1,73 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useLocale } from "next-intl";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import type { Locale } from "@/i18n/routing";
 
-const videos = [
+const content: Record<
+  Locale,
   {
-    src: "/videos/ensemble-2026.mp4",
-    type: "video/mp4",
-    title: "«Жылыой сазы» фольклорлық ансамблі",
-    description: "Ансамбльдің «Кең Жылыой» мәдениет үйіндегі концерттік бейнежазбасы",
-    date: "2026",
+    title: string;
+    subtitle: string;
+    badge: string;
+    footer: string;
+    videos: { src: string; title: string; description: string; date: string; venueLine: string }[];
+  }
+> = {
+  kk: {
+    title: "Бейне",
+    subtitle: "Ансамбль концерттері мен іс-шаралардан бейнежазбалар",
+    badge: "Бейне",
+    footer: "Жаңа бейнежазбалар қосылып отырады",
+    videos: [
+      {
+        src: "/videos/ensemble-2026.mp4",
+        title: "«Жылыой сазы» фольклорлық ансамблі",
+        description: "Ансамбльдің «Кең Жылыой» мәдениет үйіндегі концерттік бейнежазбасы",
+        date: "2026",
+        venueLine: "«Кең Жылыой» мәдениет үйі, 2026 жыл",
+      },
+      {
+        src: "/videos/concert-2026.mp4",
+        title: "Концерттік бейнежазба",
+        description: "Ансамбльдің сахнадағы өнер көрсетуі",
+        date: "2026",
+        venueLine: "«Кең Жылыой» мәдениет үйі, 2026 жыл",
+      },
+    ],
   },
-  {
-    src: "/videos/concert-2026.mp4",
-    type: "video/mp4",
-    title: "Концерттік бейнежазба",
-    description: "Ансамбльдің сахнадағы өнер көрсетуі",
-    date: "2026",
+  ru: {
+    title: "Видео",
+    subtitle: "Видеозаписи концертов и мероприятий ансамбля",
+    badge: "Видео",
+    footer: "Видеотека регулярно пополняется новыми записями",
+    videos: [
+      {
+        src: "/videos/ensemble-2026.mp4",
+        title: "Фольклорный ансамбль «Жылыой сазы»",
+        description: "Концертная видеозапись ансамбля в доме культуры «Кен Жылыой»",
+        date: "2026",
+        venueLine: "Дом культуры «Кен Жылыой», 2026 год",
+      },
+      {
+        src: "/videos/concert-2026.mp4",
+        title: "Концертная видеозапись",
+        description: "Выступление ансамбля на сцене",
+        date: "2026",
+        venueLine: "Дом культуры «Кен Жылыой», 2026 год",
+      },
+    ],
   },
-];
+};
 
 function VideoCard({
   video,
+  badge,
 }: {
-  video: (typeof videos)[number];
+  video: (typeof content)["kk"]["videos"][number];
+  badge: string;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -49,7 +92,7 @@ function VideoCard({
           preload="metadata"
           playsInline
         >
-          <source src={video.src} type={video.type} />
+          <source src={video.src} type="video/mp4" />
         </video>
 
         {!isPlaying && (
@@ -68,12 +111,12 @@ function VideoCard({
                 {video.title}
               </h3>
               <p className="text-white/70 text-xs sm:text-sm">
-                «Кең Жылыой» мәдениет үйі, {video.date} жыл
+                {video.venueLine}
               </p>
             </div>
 
             <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-lg backdrop-blur-sm">
-              Бейне
+              {badge}
             </div>
           </div>
         )}
@@ -88,20 +131,20 @@ function VideoCard({
 }
 
 export default function VideoPage() {
+  const locale = useLocale() as Locale;
+  const t = content[locale];
+
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <SectionTitle
-            title="Бейне"
-            subtitle="Ансамбль концерттері мен іс-шаралардан бейнежазбалар"
-          />
+          <SectionTitle title={t.title} subtitle={t.subtitle} />
         </FadeIn>
 
         <div className="space-y-8 sm:space-y-10">
-          {videos.map((video, index) => (
+          {t.videos.map((video, index) => (
             <FadeIn key={index} delay={index * 150}>
-              <VideoCard video={video} />
+              <VideoCard video={video} badge={t.badge} />
             </FadeIn>
           ))}
         </div>
@@ -109,7 +152,7 @@ export default function VideoPage() {
         <FadeIn>
           <div className="mt-8 sm:mt-12 bg-darkred/5 rounded-xl p-6 sm:p-8 text-center">
             <p className="text-darkred/70 text-base sm:text-lg">
-              Жаңа бейнежазбалар қосылып отырады
+              {t.footer}
             </p>
           </div>
         </FadeIn>
