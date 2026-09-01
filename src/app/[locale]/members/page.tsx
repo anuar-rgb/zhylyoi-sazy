@@ -97,7 +97,7 @@ export default async function MembersPage() {
           {t.members.map((member, index) => (
             <FadeIn key={index} delay={(index % 3) * 100}>
               <div className="bg-white rounded-xl shadow-sm border border-cream-dark hover:shadow-md transition-shadow overflow-hidden h-full">
-                <div className="aspect-[3/4] relative bg-forest/5">
+                <div className="aspect-[3/4] relative bg-ocean/5">
                   {member.photo ? (
                     <Image
                       src={member.photo}
@@ -107,22 +107,22 @@ export default async function MembersPage() {
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-forest/10">
-                      <span className="text-5xl font-bold text-forest/30">
+                    <div className="w-full h-full flex items-center justify-center bg-ocean/10">
+                      <span className="text-5xl font-bold text-ocean/30">
                         {member.name.charAt(0)}
                       </span>
                     </div>
                   )}
-                  <div className="absolute top-3 left-3 bg-forest/80 text-cream text-xs px-2.5 py-1 rounded-full font-medium">
+                  <div className="absolute top-3 left-3 bg-ocean/80 text-cream text-xs px-2.5 py-1 rounded-full font-medium">
                     #{index + 1}
                   </div>
                 </div>
                 <div className="p-4 sm:p-5">
-                  <h3 className="font-bold text-forest text-base sm:text-lg leading-tight mb-1">
+                  <h3 className="font-bold text-ocean text-base sm:text-lg leading-tight mb-1">
                     {member.name}
                   </h3>
                   <p className="text-gold-dark font-semibold text-xs sm:text-sm mb-2 sm:mb-3">{member.role}</p>
-                  <div className="space-y-1.5 text-xs sm:text-sm text-forest/60">
+                  <div className="space-y-1.5 text-xs sm:text-sm text-ocean/60">
                     <p className="flex items-start gap-2">
                       <svg className="w-4 h-4 text-gold shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
@@ -139,7 +139,7 @@ export default async function MembersPage() {
                       <span className={`inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-medium ${
                         member.level === t.highLevel
                           ? "bg-gold/20 text-gold-dark"
-                          : "bg-forest/10 text-forest/70"
+                          : "bg-ocean/10 text-ocean/70"
                       }`}>
                         {t.educationLabel}: {member.level}
                       </span>

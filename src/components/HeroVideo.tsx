@@ -103,7 +103,7 @@ export default function HeroVideo() {
                 <a
                   href="#afisha"
                   onClick={(e) => { e.preventDefault(); handleScroll(); }}
-                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gold text-forest font-semibold rounded-lg hover:bg-gold-light active:scale-95 transition-all text-base sm:text-lg"
+                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gold text-ocean font-semibold rounded-lg hover:bg-gold-light active:scale-95 transition-all text-base sm:text-lg"
                 >
                   {t.afisha}
                 </a>

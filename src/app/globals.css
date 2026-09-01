@@ -6,9 +6,9 @@
   --color-gold: #C9A84C;
   --color-gold-light: #D4B85E;
   --color-gold-dark: #A88A3A;
-  --color-forest: #2F4F3E;
-  --color-forest-light: #3F6650;
-  --color-forest-dark: #203A2C;
+  --color-ocean: #1E4A6E;
+  --color-ocean-light: #2E6390;
+  --color-ocean-dark: #123249;
   --font-sans: var(--font-geist-sans);
 }
 
@@ -18,7 +18,7 @@ html {
 
 body {
   background: var(--color-cream);
-  color: #1C2A22;
+  color: #16232E;
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

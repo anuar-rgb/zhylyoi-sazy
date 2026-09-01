@@ -95,19 +95,19 @@ export default async function EventsSection() {
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
-                  <div className="absolute top-3 left-3 bg-forest text-cream text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg shadow">
+                  <div className="absolute top-3 left-3 bg-ocean text-cream text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg shadow">
                     {event.date}
                   </div>
-                  <div className="absolute top-3 right-3 bg-gold text-forest text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg shadow">
+                  <div className="absolute top-3 right-3 bg-gold text-ocean text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg shadow">
                     {event.time}
                   </div>
                 </div>
                 <div className="p-5 sm:p-6 flex flex-col flex-1">
-                  <h3 className="font-bold text-forest text-lg mb-2">{event.title}</h3>
-                  <p className="text-forest/70 text-sm mb-4 flex-1">{event.description}</p>
+                  <h3 className="font-bold text-ocean text-lg mb-2">{event.title}</h3>
+                  <p className="text-ocean/70 text-sm mb-4 flex-1">{event.description}</p>
                   <Link
                     href="/contacts"
-                    className="inline-flex items-center justify-center px-4 py-2.5 bg-forest text-cream text-sm font-semibold rounded-lg hover:bg-forest-light active:scale-95 transition-all"
+                    className="inline-flex items-center justify-center px-4 py-2.5 bg-ocean text-cream text-sm font-semibold rounded-lg hover:bg-ocean-light active:scale-95 transition-all"
                   >
                     {t.more}
                   </Link>
