@@ -1,9 +1,26 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
+import FadeIn from "@/components/FadeIn";
 import type { Locale } from "@/i18n/routing";
+
+const meta: Record<Locale, Metadata> = {
+  kk: {
+    title: "Афиша",
+    description: "«Кең Жылыой» мәдениет үйінің жақын арадағы концерттері, спектакльдері мен көрмелері.",
+  },
+  ru: {
+    title: "Афиша",
+    description: "Ближайшие концерты, спектакли и выставки Дома культуры «Кен Жылыой».",
+  },
+};
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = (await getLocale()) as Locale;
+  return meta[locale];
+}
 
 const content: Record<
   Locale,
@@ -11,15 +28,13 @@ const content: Record<
     title: string;
     subtitle: string;
     more: string;
-    seeAll: string;
     events: { date: string; time: string; title: string; description: string; image: string }[];
   }
 > = {
   kk: {
     title: "Афиша",
-    subtitle: "Жақын арадағы іс-шаралар",
+    subtitle: "Мәдениет үйінің жақын арадағы іс-шаралары",
     more: "Толығырақ",
-    seeAll: "Барлық іс-шаралар",
     events: [
       {
         date: "20 қыркүйек",
@@ -42,13 +57,26 @@ const content: Record<
         description: "Өңір шеберлері мен балалар шығармашылық үйірмелерінің жұмыстары",
         image: "https://images.pexels.com/photos/2559741/pexels-photo-2559741.jpeg",
       },
+      {
+        date: "1 қараша",
+        time: "17:00",
+        title: "«Жылыой сазы» есеп концерті",
+        description: "Ансамбльдің жарты жылдық шығармашылық есебі, жаңа репертуар үлгілерімен",
+        image: "/images/gallery/ensemble-photo.jpeg",
+      },
+      {
+        date: "20 қараша",
+        time: "18:30",
+        title: "Би және вокал үйірмелерінің отчеттік кеші",
+        description: "Жас өнерпаздардың жылдық жұмысының қорытынды көрсетілімі",
+        image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
+      },
     ],
   },
   ru: {
     title: "Афиша",
-    subtitle: "Ближайшие мероприятия",
+    subtitle: "Ближайшие мероприятия Дома культуры",
     more: "Подробнее",
-    seeAll: "Все мероприятия",
     events: [
       {
         date: "20 сентября",
@@ -71,16 +99,30 @@ const content: Record<
         description: "Работы мастеров региона и детских творческих кружков",
         image: "https://images.pexels.com/photos/2559741/pexels-photo-2559741.jpeg",
       },
+      {
+        date: "1 ноября",
+        time: "17:00",
+        title: "Отчётный концерт «Жылыой сазы»",
+        description: "Творческий отчёт ансамбля за полугодие с новыми произведениями репертуара",
+        image: "/images/gallery/ensemble-photo.jpeg",
+      },
+      {
+        date: "20 ноября",
+        time: "18:30",
+        title: "Отчётный вечер танцевального и вокального кружков",
+        description: "Итоговый показ годовой работы юных артистов",
+        image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
+      },
     ],
   },
 };
 
-export default async function EventsSection() {
+export default async function AfishaPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
 
   return (
-    <section id="afisha" className="py-12 sm:py-16 lg:py-20 bg-white">
+    <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={t.title} subtitle={t.subtitle} />
@@ -88,7 +130,7 @@ export default async function EventsSection() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {t.events.map((event, index) => (
-            <FadeIn key={event.title} delay={index * 120}>
+            <FadeIn key={event.title} delay={index * 100}>
               <div className="group bg-cream/40 rounded-xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <Image
@@ -119,20 +161,6 @@ export default async function EventsSection() {
             </FadeIn>
           ))}
         </div>
-
-        <FadeIn delay={t.events.length * 120}>
-          <div className="mt-8 sm:mt-10 text-center">
-            <Link
-              href="/afisha"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-ocean hover:text-gold-dark transition-colors"
-            >
-              {t.seeAll}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-          </div>
-        </FadeIn>
       </div>
     </section>
   );
