@@ -39,24 +39,17 @@ const content: Record<Locale, { brand: string; tagline: string; nav: { href: str
 
 function LanguageSwitcher({ pathname, className = "" }: { pathname: string; className?: string }) {
   const locale = useLocale();
+  const otherLocale = locale === "kk" ? "ru" : "kk";
+  const otherLabel = locale === "kk" ? "РУС" : "ҚАЗ";
+
   return (
-    <div className={`flex items-center gap-1 text-xs font-semibold ${className}`}>
-      <Link
-        href={pathname}
-        locale="kk"
-        className={`px-2 py-1 rounded transition-colors ${locale === "kk" ? "bg-gold text-ocean" : "text-cream/70 hover:text-gold"}`}
-      >
-        ҚАЗ
-      </Link>
-      <span className="text-cream/30">/</span>
-      <Link
-        href={pathname}
-        locale="ru"
-        className={`px-2 py-1 rounded transition-colors ${locale === "ru" ? "bg-gold text-ocean" : "text-cream/70 hover:text-gold"}`}
-      >
-        РУС
-      </Link>
-    </div>
+    <Link
+      href={pathname}
+      locale={otherLocale}
+      className={`px-3 py-1.5 rounded text-xs font-semibold bg-gold text-ocean hover:bg-gold-light transition-colors ${className}`}
+    >
+      {otherLabel}
+    </Link>
   );
 }
 
@@ -116,7 +109,7 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <LanguageSwitcher pathname={pathname} className="hidden lg:flex" />
+            <LanguageSwitcher pathname={pathname} className="hidden lg:inline-block" />
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
