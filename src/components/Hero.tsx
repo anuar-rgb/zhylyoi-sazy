@@ -1,6 +1,5 @@
 import { getImageProps } from "next/image";
 import { getLocale } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -8,21 +7,21 @@ const content: Record<
   { eyebrow: string; titleGold: string; titleCream: string; subtitle: string; afisha: string; about: string; scroll: string }
 > = {
   kk: {
-    eyebrow: "«Кең Жылыой» мәдениет үйі",
-    titleGold: "Жылыой сазы",
-    titleCream: "фольклорлық ансамблі",
-    subtitle: "Қазақ халқының бай музыкалық мұрасын сақтау, дамыту және келер ұрпаққа жеткізу",
+    eyebrow: "Атырау облысы, Жылыой ауданы",
+    titleGold: "«Кең Жылыой»",
+    titleCream: "мәдениет үйі",
+    subtitle: "Жылыой ауданының мәдени өмірінің ордасы — концерттер, шығармашылық үйірмелер мен ансамбльдер, ұлттық өнерді сақтау және дамыту",
     afisha: "Афиша",
-    about: "Ансамбль туралы",
+    about: "Біз туралы",
     scroll: "Төмен айналдыру",
   },
   ru: {
-    eyebrow: "Дом культуры «Кен Жылыой»",
-    titleGold: "Жылыой сазы",
-    titleCream: "фольклорный ансамбль",
-    subtitle: "Сохранение, развитие и передача будущим поколениям богатого музыкального наследия казахского народа",
+    eyebrow: "Атырауская область, Жылыойский район",
+    titleGold: "«Кен Жылыой»",
+    titleCream: "дом культуры",
+    subtitle: "Центр культурной жизни Жылыойского района — концерты, творческие коллективы и ансамбли, сохранение и развитие национального искусства",
     afisha: "Афиша",
-    about: "Об ансамбле",
+    about: "О нас",
     scroll: "Прокрутить вниз",
   },
 };
@@ -87,12 +86,12 @@ export default async function Hero() {
               >
                 {t.afisha}
               </a>
-              <Link
-                href="/about"
+              <a
+                href="#about-us"
                 className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-white/40 text-white font-semibold rounded-lg hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
               >
                 {t.about}
-              </Link>
+              </a>
             </div>
           </div>
         </div>
