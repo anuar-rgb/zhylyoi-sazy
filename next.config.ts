@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
         hostname: "images.pexels.com",
       },
     ],
+    qualities: [75, 90, 100],
   },
 };
 

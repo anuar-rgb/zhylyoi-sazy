@@ -77,13 +77,14 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="relative w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
               <Image
                 src="/images/gallery/logo.jpeg"
                 alt={t.brand}
                 fill
+                quality={95}
                 className="object-cover"
-                sizes="48px"
+                sizes="56px"
               />
             </div>
             <div className="hidden sm:block">

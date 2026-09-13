@@ -69,8 +69,8 @@ export default async function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="relative w-10 h-10 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
-                <Image src="/images/gallery/logo.jpeg" alt={t.brand} fill className="object-cover" sizes="40px" />
+              <div className="relative w-12 h-12 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
+                <Image src="/images/gallery/logo.jpeg" alt={t.brand} fill quality={95} className="object-cover" sizes="48px" />
               </div>
               <div>
                 <div className="text-gold font-bold text-lg">{t.brand}</div>
