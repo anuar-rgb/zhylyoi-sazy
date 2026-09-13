@@ -38,6 +38,14 @@ body {
   display: none;
 }
 
+/* Respect users who've asked for less transparency */
+@media (prefers-reduced-transparency: reduce) {
+  header {
+    background-color: var(--color-ocean) !important;
+    backdrop-filter: none !important;
+  }
+}
+
 /* Hero text animations */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }

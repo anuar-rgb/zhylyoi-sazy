@@ -73,7 +73,7 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
-    <header className="bg-ocean text-cream shadow-lg sticky top-0 z-50">
+    <header className="bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
@@ -131,7 +131,7 @@ export default function Header() {
 
       {/* Mobile menu overlay */}
       <div
-        className={`lg:hidden fixed inset-0 top-14 sm:top-16 bg-ocean z-40 transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed inset-0 top-14 sm:top-16 bg-ocean/90 backdrop-blur-xl z-40 transition-transform duration-300 ease-in-out ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
