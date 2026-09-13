@@ -1,4 +1,4 @@
-import HeroVideo from "@/components/HeroVideo";
+import Hero from "@/components/Hero";
 import EventsSection from "@/components/EventsSection";
 import ClubsSection from "@/components/ClubsSection";
 import NewsSection from "@/components/NewsSection";
@@ -10,8 +10,8 @@ import FoundersSection from "@/components/FoundersSection";
 export default function HomePage() {
   return (
     <>
-      {/* Hero video */}
-      <HeroVideo />
+      {/* Hero */}
+      <Hero />
 
       {/* Афиша */}
       <EventsSection />
