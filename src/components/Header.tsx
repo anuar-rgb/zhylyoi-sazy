@@ -73,7 +73,8 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
-    <header className="bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10">
+    <header className="bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream sticky top-0 z-50">
+      <div className="pointer-events-none absolute inset-x-0 top-full h-10 sm:h-14 bg-gradient-to-b from-ocean/35 to-transparent" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
