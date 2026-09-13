@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
@@ -31,16 +31,37 @@ export default async function Hero() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
 
+  const common = { alt: t.eyebrow, sizes: "100vw", quality: 80 };
+  const {
+    props: { srcSet: desktopSrcSet },
+  } = getImageProps({
+    ...common,
+    width: 2752,
+    height: 1536,
+    src: "/images/hero-building-illustration.jpg",
+  });
+  const {
+    props: { srcSet: mobileSrcSet, ...mobileImgProps },
+  } = getImageProps({
+    ...common,
+    width: 1536,
+    height: 2752,
+    src: "/images/hero-building-illustration-mobile.jpg",
+  });
+
   return (
     <section className="relative bg-black overflow-hidden">
       <div className="relative w-full h-[100svh] lg:h-[85vh]">
-        <Image
-          src="/images/hero-building-illustration.jpg"
-          alt={t.eyebrow}
-          fill
-          priority
-          className="object-cover"
-        />
+        <picture>
+          <source media="(min-width: 1024px)" srcSet={desktopSrcSet} />
+          <source media="(max-width: 1023px)" srcSet={mobileSrcSet} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            {...mobileImgProps}
+            fetchPriority="high"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </picture>
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
