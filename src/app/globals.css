@@ -9,7 +9,7 @@
   --color-ocean: #1D7AC0;
   --color-ocean-light: #3B98DA;
   --color-ocean-dark: #145888;
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-montserrat);
 }
 
 html {
@@ -19,7 +19,7 @@ html {
 body {
   background: var(--color-cream);
   color: #16232E;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
