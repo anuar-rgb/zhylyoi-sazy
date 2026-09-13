@@ -66,7 +66,7 @@ export default async function Hero() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
 
         {/* Content overlay */}
-        <div className="absolute inset-0 flex flex-col justify-start sm:justify-end pt-16 p-5 sm:p-8 lg:p-12 sm:pb-16 lg:pb-20">
+        <div className="absolute inset-0 flex flex-col justify-between sm:justify-end p-5 sm:p-8 lg:p-12 pt-16 sm:pt-8 lg:pt-12 pb-16 sm:pb-16 lg:pb-20">
           <div className="max-w-3xl">
             <p className="text-gold font-medium tracking-wide uppercase text-xs sm:text-sm mb-2 sm:mb-3 animate-fade-in">
               {t.eyebrow}
@@ -76,23 +76,24 @@ export default async function Hero() {
               <br />
               <span className="text-cream">{t.titleCream}</span>
             </h1>
-            <p className="text-sm sm:text-lg lg:text-xl text-white/70 mb-5 sm:mb-7 max-w-xl leading-relaxed animate-fade-in-delay-2">
+            <p className="text-sm sm:text-lg lg:text-xl text-white/70 sm:mb-7 max-w-xl leading-relaxed animate-fade-in-delay-2">
               {t.subtitle}
             </p>
-            <div className="flex flex-col items-start sm:flex-row gap-3 animate-fade-in-delay-3">
-              <a
-                href="#afisha"
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gold text-ocean font-semibold rounded-lg hover:bg-gold-light active:scale-95 transition-all text-base sm:text-lg"
-              >
-                {t.afisha}
-              </a>
-              <a
-                href="#about-us"
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-white/40 text-white font-semibold rounded-lg hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
-              >
-                {t.about}
-              </a>
-            </div>
+          </div>
+
+          <div className="flex flex-col items-start sm:flex-row gap-3 max-w-3xl animate-fade-in-delay-3">
+            <a
+              href="#afisha"
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gold text-ocean font-semibold rounded-lg hover:bg-gold-light active:scale-95 transition-all text-base sm:text-lg"
+            >
+              {t.afisha}
+            </a>
+            <a
+              href="#about-us"
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-white/40 text-white font-semibold rounded-lg hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
+            >
+              {t.about}
+            </a>
           </div>
         </div>
 
