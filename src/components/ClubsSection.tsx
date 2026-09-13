@@ -133,10 +133,11 @@ export default async function ClubsSection() {
         src="/images/clubs-section-background.jpg"
         alt=""
         fill
-        className="object-cover -z-10"
+        className="object-cover -z-20 scale-110 blur-md"
         sizes="100vw"
         quality={85}
       />
+      <div className="absolute inset-0 -z-10 bg-cream/50" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={t.title} subtitle={t.subtitle} />
