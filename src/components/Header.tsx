@@ -132,7 +132,7 @@ export default function Header() {
 
       {/* Mobile menu overlay */}
       <div
-        className={`lg:hidden fixed inset-0 top-14 sm:top-16 bg-ocean/90 backdrop-blur-xl z-40 transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed left-0 right-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto bg-ocean z-40 transition-transform duration-300 ease-in-out ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
