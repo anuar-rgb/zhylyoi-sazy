@@ -66,7 +66,7 @@ export default async function Hero() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
 
         {/* Content overlay */}
-        <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-8 lg:p-12 pb-20 sm:pb-16 lg:pb-20">
+        <div className="absolute inset-0 flex flex-col justify-start sm:justify-end pt-16 p-5 sm:p-8 lg:p-12 sm:pb-16 lg:pb-20">
           <div className="max-w-3xl">
             <p className="text-gold font-medium tracking-wide uppercase text-xs sm:text-sm mb-2 sm:mb-3 animate-fade-in">
               {t.eyebrow}

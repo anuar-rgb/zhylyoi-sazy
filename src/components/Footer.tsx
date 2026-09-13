@@ -70,7 +70,7 @@ export default async function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="relative w-12 h-12 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
-                <Image src="/images/gallery/logo.jpeg" alt={t.brand} fill quality={95} className="object-cover" sizes="48px" />
+                <Image src="/images/gallery/logo.png" alt={t.brand} fill quality={95} className="object-cover" sizes="48px" />
               </div>
               <div>
                 <div className="text-gold font-bold text-lg">{t.brand}</div>

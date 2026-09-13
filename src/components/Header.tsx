@@ -79,7 +79,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
               <Image
-                src="/images/gallery/logo.jpeg"
+                src="/images/gallery/logo.png"
                 alt={t.brand}
                 fill
                 quality={95}
