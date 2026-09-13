@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
@@ -127,7 +128,15 @@ export default async function ClubsSection() {
   const t = content[locale];
 
   return (
-    <section id="clubs" className="py-12 sm:py-16 lg:py-20 overflow-hidden">
+    <section id="clubs" className="relative py-12 sm:py-16 lg:py-20 overflow-hidden">
+      <Image
+        src="/images/clubs-section-background.jpg"
+        alt=""
+        fill
+        className="object-cover -z-10"
+        sizes="100vw"
+        quality={85}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={t.title} subtitle={t.subtitle} />
