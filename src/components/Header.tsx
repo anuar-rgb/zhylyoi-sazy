@@ -76,7 +76,7 @@ export default function Header() {
     <header className="bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
-          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
               <Image
                 src="/images/gallery/logo.png"
@@ -87,9 +87,9 @@ export default function Header() {
                 sizes="56px"
               />
             </div>
-            <div className="hidden sm:block">
-              <div className="text-gold font-bold text-base lg:text-lg leading-tight">{t.brand}</div>
-              <div className="text-cream/70 text-[11px] lg:text-xs">{t.tagline}</div>
+            <div className="min-w-0">
+              <div className="text-gold font-bold text-sm sm:text-base lg:text-lg leading-tight truncate">{t.brand}</div>
+              <div className="text-cream/70 text-[10px] sm:text-[11px] lg:text-xs leading-snug truncate">{t.tagline}</div>
             </div>
           </Link>
 
