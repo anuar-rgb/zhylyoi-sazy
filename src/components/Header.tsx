@@ -73,15 +73,8 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
-    <header className="text-cream sticky top-0 z-50">
-      <div
-        className="absolute inset-0 bg-ocean/65 backdrop-blur-lg backdrop-saturate-150"
-        style={{
-          maskImage: "linear-gradient(to bottom, black 0%, black 75%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 75%, transparent 100%)",
-        }}
-      />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <div className="relative w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
