@@ -230,22 +230,20 @@ export default function Header() {
             </Link>
           ))}
 
-          <div className="pt-4 mt-2 border-t border-cream/10">
-            {t.more.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
-                  pathname === link.href
-                    ? "bg-gold text-ocean"
-                    : "text-cream/90 active:bg-ocean-light"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+          {t.more.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
+                pathname === link.href
+                  ? "bg-gold text-ocean"
+                  : "text-cream/90 active:bg-ocean-light"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
 
           <div className="pt-4 mt-2 border-t border-cream/10">
             <LanguageSwitcher pathname={pathname} className="text-sm" />
