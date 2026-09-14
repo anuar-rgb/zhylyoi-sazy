@@ -88,13 +88,14 @@ export default function Header() {
   }, [pathname]);
 
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
+    const locked = menuOpen || moreOpen;
+    document.body.style.overflow = locked ? "hidden" : "";
+    document.documentElement.style.overflow = locked ? "hidden" : "";
+    return () => {
       document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [menuOpen]);
+      document.documentElement.style.overflow = "";
+    };
+  }, [menuOpen, moreOpen]);
 
   useEffect(() => {
     if (!moreOpen) return;
