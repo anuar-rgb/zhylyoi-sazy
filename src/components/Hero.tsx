@@ -90,7 +90,7 @@ export default async function Hero() {
             </a>
             <a
               href="#about-us"
-              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 rounded-full border-2 border-white/40 text-white font-semibold hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 rounded-[20px] border-2 border-white/40 text-white font-semibold hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
             >
               {t.about}
             </a>
