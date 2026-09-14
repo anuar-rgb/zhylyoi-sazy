@@ -115,7 +115,7 @@ function VideoCard({
               </p>
             </div>
 
-            <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-lg backdrop-blur-sm">
+            <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
               {badge}
             </div>
           </div>

@@ -187,7 +187,7 @@ export default async function ContactsPage() {
                     type="text"
                     name={t.nameLabel}
                     required
-                    className="w-full px-4 py-2.5 border border-cream-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30"
+                    className="w-full px-5 py-3 border border-cream-dark rounded-full focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30 shadow-sm"
                     placeholder={t.namePlaceholder}
                   />
                 </div>
@@ -199,7 +199,7 @@ export default async function ContactsPage() {
                     type="text"
                     name={t.contactLabel}
                     required
-                    className="w-full px-4 py-2.5 border border-cream-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30"
+                    className="w-full px-5 py-3 border border-cream-dark rounded-full focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30 shadow-sm"
                     placeholder="+7 (___) ___-__-__"
                   />
                 </div>
@@ -211,7 +211,7 @@ export default async function ContactsPage() {
                     rows={4}
                     name={t.messageLabel}
                     required
-                    className="w-full px-4 py-2.5 border border-cream-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30 resize-none"
+                    className="w-full px-5 py-3 border border-cream-dark rounded-3xl focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30 resize-none shadow-sm"
                     placeholder={t.messagePlaceholder}
                   />
                 </div>
