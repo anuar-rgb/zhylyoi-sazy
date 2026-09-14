@@ -138,7 +138,7 @@ export default async function CollectivesPage() {
 
         {/* Flagship: Zhylyoi sazy */}
         <FadeIn>
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-dark mb-10 sm:mb-14">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-cream-dark mb-10 sm:mb-14">
             <div className="grid grid-cols-1 lg:grid-cols-2">
               <div className="relative aspect-[4/3] lg:aspect-auto">
                 <Image
@@ -159,7 +159,7 @@ export default async function CollectivesPage() {
 
                 <div className="grid grid-cols-3 gap-3 mb-6">
                   {f.stats.map((s) => (
-                    <div key={s.label} className="text-center bg-cream/50 rounded-lg py-3 px-2">
+                    <div key={s.label} className="text-center bg-cream/50 rounded-3xl py-3 px-2">
                       <div className="text-xl sm:text-2xl font-bold text-ocean">{s.value}</div>
                       <div className="text-[11px] sm:text-xs text-ocean/50 mt-0.5 leading-snug">{s.label}</div>
                     </div>
@@ -232,7 +232,7 @@ export default async function CollectivesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
           {t.others.map((c, index) => (
             <FadeIn key={c.title} delay={index * 100}>
-              <div className="group bg-white rounded-xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+              <div className="group bg-white rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden bg-ocean/5">
                   <Image
                     src={c.image}

@@ -93,7 +93,7 @@ export default async function RepertoirePage() {
           {t.items.map((item) => (
             <FadeIn key={item.num} delay={((item.num - 1) % 3) * 100}>
             <div
-              className="bg-white rounded-xl shadow-sm border border-cream-dark hover:shadow-md transition-all hover:-translate-y-0.5 group"
+              className="bg-white rounded-3xl shadow-sm border border-cream-dark hover:shadow-md transition-all hover:-translate-y-0.5 group"
             >
               <div className="p-6">
                 {/* Number + tag */}
@@ -138,7 +138,7 @@ export default async function RepertoirePage() {
 
         {/* Summary */}
         <FadeIn>
-        <div className="mt-8 sm:mt-12 bg-white rounded-xl p-6 sm:p-8 shadow-sm border border-cream-dark">
+        <div className="mt-8 sm:mt-12 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
           <div className="flex flex-wrap justify-center gap-6 text-center">
             {Object.entries(
               t.items.reduce<Record<string, number>>((acc, item) => {

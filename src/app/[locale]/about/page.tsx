@@ -113,7 +113,7 @@ export default async function AboutPage() {
         <div className="space-y-5 sm:space-y-6 text-ocean/80">
           {t.sections.map((s) => (
             <FadeIn key={s.h}>
-              <div className="bg-white rounded-xl p-6 sm:p-8 shadow-sm border border-cream-dark">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
                 <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">{s.h}</h3>
                 <p className="leading-relaxed text-sm sm:text-base">{s.p}</p>
               </div>
@@ -121,7 +121,7 @@ export default async function AboutPage() {
           ))}
 
           <FadeIn>
-            <div className="bg-white rounded-xl p-6 sm:p-8 shadow-sm border border-cream-dark">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
               <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">{t.directionsTitle}</h3>
               <ul className="space-y-3 text-sm sm:text-base">
                 {t.directions.map((d) => (
@@ -137,7 +137,7 @@ export default async function AboutPage() {
           <FadeIn>
             <div className="grid grid-cols-3 gap-3 sm:gap-4">
               {t.stats.map((s) => (
-                <div key={s.label} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-cream-dark text-center">
+                <div key={s.label} className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-cream-dark text-center">
                   <div className="text-2xl sm:text-3xl font-bold text-ocean">{s.value}</div>
                   <div className="text-xs sm:text-sm text-ocean/60 mt-1">{s.label}</div>
                 </div>
@@ -146,7 +146,7 @@ export default async function AboutPage() {
           </FadeIn>
 
           <FadeIn>
-            <div className="bg-ocean/5 rounded-xl p-6 sm:p-8">
+            <div className="bg-ocean/5 rounded-3xl p-6 sm:p-8">
               <blockquote className="text-center italic text-ocean text-base sm:text-lg leading-relaxed">
                 {t.quote}
               </blockquote>

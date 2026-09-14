@@ -69,7 +69,7 @@ export default async function HonoredPage() {
         </FadeIn>
 
         <FadeIn>
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-dark">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-cream-dark">
             <div className="grid grid-cols-1 sm:grid-cols-2">
               <div className="relative aspect-[4/3] sm:aspect-auto">
                 <Image

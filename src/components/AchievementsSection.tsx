@@ -71,7 +71,7 @@ export default async function AchievementsSection() {
           </FadeIn>
 
           <FadeIn delay={150}>
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-gold/20">
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-gold/20">
               <Image
                 src="/images/gallery/ensemble-photo.jpeg"
                 alt={t.title}

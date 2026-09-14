@@ -121,7 +121,7 @@ export default async function PlanPage() {
                 </div>
 
                 {/* Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-cream-dark p-6 hover:shadow-md hover:border-gold/40 transition-all">
+                <div className="bg-white rounded-3xl shadow-sm border border-cream-dark p-6 hover:shadow-md hover:border-gold/40 transition-all">
                   {/* Year badge */}
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-xs font-medium text-cream bg-ocean px-3 py-1 rounded-full">
@@ -140,7 +140,7 @@ export default async function PlanPage() {
 
         {/* Conclusion */}
         <FadeIn>
-        <div className="mt-10 sm:mt-14 bg-gradient-to-br from-ocean to-ocean-dark rounded-2xl p-6 sm:p-8 lg:p-10 text-center">
+        <div className="mt-10 sm:mt-14 bg-gradient-to-br from-ocean to-ocean-dark rounded-3xl p-6 sm:p-8 lg:p-10 text-center">
           <h3 className="text-xl sm:text-2xl font-bold text-gold mb-4">{t.strategicTitle}</h3>
           <p className="text-cream/80 text-lg leading-relaxed max-w-2xl mx-auto">
             {t.strategicText}

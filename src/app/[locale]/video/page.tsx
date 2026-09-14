@@ -81,7 +81,7 @@ function VideoCard({
 
   return (
     <div>
-      <div className="relative rounded-2xl overflow-hidden shadow-lg border border-cream-dark bg-black group">
+      <div className="relative rounded-3xl overflow-hidden shadow-lg border border-cream-dark bg-black group">
         <video
           ref={videoRef}
           className="w-full aspect-video object-cover"
@@ -122,7 +122,7 @@ function VideoCard({
         )}
       </div>
 
-      <div className="mt-3 sm:mt-4 bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-cream-dark">
+      <div className="mt-3 sm:mt-4 bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-cream-dark">
         <h3 className="font-bold text-ocean text-base sm:text-lg mb-1">{video.title}</h3>
         <p className="text-ocean/60 text-sm">{video.description}</p>
       </div>
@@ -150,7 +150,7 @@ export default function VideoPage() {
         </div>
 
         <FadeIn>
-          <div className="mt-8 sm:mt-12 bg-ocean/5 rounded-xl p-6 sm:p-8 text-center">
+          <div className="mt-8 sm:mt-12 bg-ocean/5 rounded-3xl p-6 sm:p-8 text-center">
             <p className="text-ocean/70 text-base sm:text-lg">
               {t.footer}
             </p>

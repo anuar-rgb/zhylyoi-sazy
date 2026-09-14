@@ -96,7 +96,7 @@ export default async function MembersPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {t.members.map((member, index) => (
             <FadeIn key={index} delay={(index % 3) * 100}>
-              <div className="bg-white rounded-xl shadow-sm border border-cream-dark hover:shadow-md transition-shadow overflow-hidden h-full">
+              <div className="bg-white rounded-3xl shadow-sm border border-cream-dark hover:shadow-md transition-shadow overflow-hidden h-full">
                 <div className="aspect-[3/4] relative bg-ocean/5">
                   {member.photo ? (
                     <Image

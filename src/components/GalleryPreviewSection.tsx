@@ -61,7 +61,7 @@ export default async function GalleryPreviewSection() {
                   <Link
                     key={index}
                     href={video.href}
-                    className="group relative rounded-xl overflow-hidden shadow-sm border border-cream-dark bg-black aspect-[9/16] hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="group relative rounded-3xl overflow-hidden shadow-sm border border-cream-dark bg-black aspect-[9/16] hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     <Image
                       src={video.poster}
@@ -100,7 +100,7 @@ export default async function GalleryPreviewSection() {
                 {galleryPhotos.map((photo, index) => (
                   <div
                     key={photo}
-                    className="group relative rounded-xl overflow-hidden shadow-sm border border-cream-dark aspect-square hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="group relative rounded-3xl overflow-hidden shadow-sm border border-cream-dark aspect-square hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     <Image
                       src={photo}

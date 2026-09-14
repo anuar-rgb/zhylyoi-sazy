@@ -131,7 +131,7 @@ export default async function AfishaPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {t.events.map((event, index) => (
             <FadeIn key={event.title} delay={index * 100}>
-              <div className="group bg-cream/40 rounded-xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+              <div className="group bg-cream/40 rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <Image
                     src={event.image}

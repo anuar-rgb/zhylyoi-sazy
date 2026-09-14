@@ -96,7 +96,7 @@ export default async function NewsSection() {
             <FadeIn key={item.title} delay={index * 120}>
               <Link
                 href="/contacts"
-                className="group block bg-white rounded-xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
+                className="group block bg-white rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-ocean/5">
                   <Image
