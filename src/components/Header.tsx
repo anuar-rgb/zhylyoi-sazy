@@ -231,7 +231,6 @@ export default function Header() {
           ))}
 
           <div className="pt-4 mt-2 border-t border-cream/10">
-            <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wide text-cream/40">{t.moreLabel}</p>
             {t.more.map((link) => (
               <Link
                 key={link.href}
