@@ -217,7 +217,7 @@ export default async function ContactsPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-ocean text-cream py-3 rounded-lg font-semibold hover:bg-ocean-light transition-colors"
+                  className="btn-primary w-full py-3 font-semibold"
                 >
                   {t.submit}
                 </button>

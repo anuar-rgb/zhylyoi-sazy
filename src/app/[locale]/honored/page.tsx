@@ -89,7 +89,7 @@ export default async function HonoredPage() {
                 <p className="text-ocean/70 text-sm sm:text-base leading-relaxed mb-6 flex-1">{t.cardDescription}</p>
                 <Link
                   href="/collectives"
-                  className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-ocean text-cream text-sm font-semibold rounded-lg hover:bg-ocean-light active:scale-95 transition-all self-start"
+                  className="btn-primary inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-semibold self-start"
                 >
                   {t.more}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

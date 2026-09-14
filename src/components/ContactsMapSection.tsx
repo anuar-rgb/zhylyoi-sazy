@@ -90,7 +90,7 @@ export default async function ContactsMapSection() {
 
               <Link
                 href="/contacts"
-                className="mt-6 inline-flex items-center justify-center px-6 py-3 bg-ocean text-cream font-semibold rounded-lg hover:bg-ocean-light active:scale-95 transition-all"
+                className="btn-primary mt-6 inline-flex items-center justify-center px-6 py-3 font-semibold"
               >
                 {t.contactBtn}
               </Link>
@@ -109,7 +109,7 @@ export default async function ContactsMapSection() {
                 href={`https://www.google.com/maps/search/?api=1&query=${mapSearchQuery}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute bottom-3 right-3 bg-ocean text-cream text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow hover:bg-ocean-light transition-colors"
+                className="btn-primary absolute bottom-3 right-3 text-xs sm:text-sm font-semibold px-3 py-2"
               >
                 {t.openInGoogle}
               </a>
