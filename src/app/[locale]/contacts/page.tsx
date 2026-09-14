@@ -106,7 +106,7 @@ export default async function ContactsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           <FadeIn>
           <div className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-ocean/10 rounded-full flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-ocean" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ export default async function ContactsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-ocean/10 rounded-full flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-ocean" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@ export default async function ContactsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-ocean/10 rounded-full flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-ocean" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +151,7 @@ export default async function ContactsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-cream-dark">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-ocean/10 rounded-full flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-ocean" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@ export default async function ContactsPage() {
 
           <FadeIn delay={150}>
           <div className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-xl p-5 sm:p-6 shadow-sm border border-cream-dark">
+            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-cream-dark">
               <h3 className="font-bold text-ocean text-lg mb-4">{t.formTitle}</h3>
               <form
                 className="space-y-4"
@@ -224,7 +224,7 @@ export default async function ContactsPage() {
               </form>
             </div>
 
-            <div className="bg-gold/10 rounded-xl p-6 border border-gold/20">
+            <div className="bg-gold/10 rounded-3xl p-6 border border-gold/20">
               <h3 className="font-bold text-ocean mb-2">{t.rehearsalTitle}</h3>
               <ul className="space-y-2 text-ocean/70 text-sm">
                 {t.rehearsal.map((r) => (
@@ -243,7 +243,7 @@ export default async function ContactsPage() {
         </div>
 
         <FadeIn delay={250}>
-          <div className="mt-6 sm:mt-8 bg-white rounded-xl p-6 shadow-sm border border-cream-dark">
+          <div className="mt-6 sm:mt-8 bg-white rounded-3xl p-6 shadow-sm border border-cream-dark">
             <h3 className="font-bold text-ocean text-lg mb-4">{t.legalTitle}</h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
               <div>

@@ -59,7 +59,7 @@ export default async function ContactsMapSection() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8">
           <FadeIn className="lg:col-span-2">
-            <div className="bg-cream/40 rounded-xl p-6 sm:p-8 border border-cream-dark h-full flex flex-col">
+            <div className="bg-cream/40 rounded-3xl p-6 sm:p-8 border border-cream-dark h-full flex flex-col">
               <ul className="space-y-5 text-sm sm:text-base flex-1">
                 <li className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-gold-dark shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ export default async function ContactsMapSection() {
           </FadeIn>
 
           <FadeIn delay={150} className="lg:col-span-3">
-            <div className="relative rounded-xl overflow-hidden border border-cream-dark shadow-sm h-80 lg:h-full min-h-80">
+            <div className="relative rounded-3xl overflow-hidden border border-cream-dark shadow-sm h-80 lg:h-full min-h-80">
               <iframe
                 title={t.mapTitle}
                 src={`https://www.openstreetmap.org/export/embed.html?bbox=${OSM_BBOX}&layer=mapnik&marker=${OSM_MARKER}`}
