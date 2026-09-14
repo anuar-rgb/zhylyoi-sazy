@@ -67,7 +67,7 @@ function LanguageSwitcher({ pathname, className = "" }: { pathname: string; clas
     <Link
       href={pathname}
       locale={otherLocale}
-      className={`px-3 py-1.5 rounded text-xs font-semibold bg-gold text-ocean hover:bg-gold-light transition-colors ${className}`}
+      className={`px-3 py-1.5 rounded-full text-xs font-semibold bg-gold text-ocean hover:bg-gold-light transition-colors ${className}`}
     >
       {otherLabel}
     </Link>
@@ -140,7 +140,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
                   pathname === link.href
                     ? "bg-gold text-ocean"
                     : "text-cream/90 hover:bg-ocean-light hover:text-gold"
@@ -157,7 +157,7 @@ export default function Header() {
             <div className="relative hidden lg:block" ref={moreRef}>
               <button
                 onClick={() => setMoreOpen((v) => !v)}
-                className={`p-2 rounded-md transition-colors ${
+                className={`p-2 rounded-full transition-colors ${
                   moreOpen ? "bg-ocean-light text-gold" : "text-cream/90 hover:bg-ocean-light hover:text-gold"
                 }`}
                 aria-label={t.moreLabel}
@@ -191,7 +191,7 @@ export default function Header() {
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 -mr-2 rounded-md text-cream hover:bg-ocean-light transition-colors"
+              className="lg:hidden p-2 -mr-2 rounded-full text-cream hover:bg-ocean-light transition-colors"
               aria-label={t.menuLabel}
               aria-expanded={menuOpen}
             >
@@ -219,7 +219,7 @@ export default function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className={`block px-4 py-3 rounded-lg text-lg font-medium transition-colors ${
+              className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
                 pathname === link.href
                   ? "bg-gold text-ocean"
                   : "text-cream/90 active:bg-ocean-light"
@@ -236,7 +236,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg text-lg font-medium transition-colors ${
+                className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
                   pathname === link.href
                     ? "bg-gold text-ocean"
                     : "text-cream/90 active:bg-ocean-light"
