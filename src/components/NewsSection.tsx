@@ -85,7 +85,7 @@ export default async function NewsSection() {
   const t = content[locale];
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-white">
+    <section id="news" className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={t.title} subtitle={t.subtitle} />
