@@ -84,7 +84,7 @@ export default async function Hero() {
           <div className="flex flex-col items-start sm:flex-row gap-3 max-w-3xl animate-fade-in-delay-3">
             <a
               href="#afisha"
-              className="btn-primary inline-flex items-center justify-center px-6 sm:px-8 py-3 font-semibold text-base sm:text-lg"
+              className="btn-primary inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-transparent font-semibold text-base sm:text-lg"
             >
               {t.afisha}
             </a>
