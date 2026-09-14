@@ -3,14 +3,18 @@
 import Image from "next/image";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Locale } from "@/i18n/routing";
 
-const content: Record<Locale, { brand: string; tagline: string; nav: { href: string; label: string }[]; menuLabel: string }> = {
+const content: Record<
+  Locale,
+  { brand: string; tagline: string; nav: { href: string; label: string }[]; more: { href: string; label: string }[]; menuLabel: string; moreLabel: string }
+> = {
   kk: {
     brand: "Кең Жылыой",
     tagline: "Жылыой аудандық мәдениет үйі",
     menuLabel: "Мәзір",
+    moreLabel: "Тағы да",
     nav: [
       { href: "/", label: "Басты бет" },
       { href: "/honored", label: "Халықтық үлгілі атағы бар ұжымдар" },
@@ -20,11 +24,17 @@ const content: Record<Locale, { brand: string; tagline: string; nav: { href: str
       { href: "/plan", label: "Даму жоспары" },
       { href: "/contacts", label: "Байланыс" },
     ],
+    more: [
+      { href: "/about", label: "Ансамбль туралы" },
+      { href: "/members", label: "Құрам" },
+      { href: "/repertoire", label: "Репертуар" },
+    ],
   },
   ru: {
     brand: "Кен Жылыой",
     tagline: "Дом культуры Жылыойского района",
     menuLabel: "Меню",
+    moreLabel: "Ещё",
     nav: [
       { href: "/", label: "Главная" },
       { href: "/honored", label: "Коллективы со званием «Народный»" },
@@ -33,6 +43,11 @@ const content: Record<Locale, { brand: string; tagline: string; nav: { href: str
       { href: "/video", label: "Видео" },
       { href: "/plan", label: "План развития" },
       { href: "/contacts", label: "Контакты" },
+    ],
+    more: [
+      { href: "/about", label: "Об ансамбле" },
+      { href: "/members", label: "Состав" },
+      { href: "/repertoire", label: "Репертуар" },
     ],
   },
 };
@@ -58,9 +73,12 @@ export default function Header() {
   const locale = useLocale() as Locale;
   const t = content[locale];
   const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMenuOpen(false);
+    setMoreOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -71,6 +89,24 @@ export default function Header() {
     }
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [moreOpen]);
 
   return (
     <header className="bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10">
@@ -107,6 +143,41 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+
+            <div className="relative" ref={moreRef}>
+              <button
+                onClick={() => setMoreOpen((v) => !v)}
+                className={`p-2 rounded-md transition-colors ${
+                  moreOpen ? "bg-ocean-light text-gold" : "text-cream/90 hover:bg-ocean-light hover:text-gold"
+                }`}
+                aria-label={t.moreLabel}
+                aria-expanded={moreOpen}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <circle cx="4" cy="10" r="1.8" />
+                  <circle cx="10" cy="10" r="1.8" />
+                  <circle cx="16" cy="10" r="1.8" />
+                </svg>
+              </button>
+
+              {moreOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-3xl border border-cream-dark shadow-lg py-2 z-50">
+                  {t.more.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`block px-5 py-2.5 text-sm font-medium transition-colors ${
+                        pathname === link.href
+                          ? "text-gold-dark font-semibold"
+                          : "text-ocean hover:bg-cream/60"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -151,6 +222,25 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+
+          <div className="pt-4 mt-2 border-t border-cream/10">
+            <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wide text-cream/40">{t.moreLabel}</p>
+            {t.more.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className={`block px-4 py-3 rounded-lg text-lg font-medium transition-colors ${
+                  pathname === link.href
+                    ? "bg-gold text-ocean"
+                    : "text-cream/90 active:bg-ocean-light"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
           <div className="pt-4 mt-2 border-t border-cream/10">
             <LanguageSwitcher pathname={pathname} className="text-sm" />
           </div>
