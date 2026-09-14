@@ -143,8 +143,12 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+          </nav>
 
-            <div className="relative" ref={moreRef}>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher pathname={pathname} className="hidden lg:inline-block" />
+
+            <div className="relative hidden lg:block" ref={moreRef}>
               <button
                 onClick={() => setMoreOpen((v) => !v)}
                 className={`p-2 rounded-md transition-colors ${
@@ -178,10 +182,6 @@ export default function Header() {
                 </div>
               )}
             </div>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher pathname={pathname} className="hidden lg:inline-block" />
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
