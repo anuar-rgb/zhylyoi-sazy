@@ -14,6 +14,17 @@ const content: Record<
     infoLabel: string;
     prev: string;
     next: string;
+    signUp: string;
+    modalHeading: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    phoneLabel: string;
+    phonePlaceholder: string;
+    submitLabel: string;
+    cancelLabel: string;
+    waIntro: string;
+    waNameLabel: string;
+    waPhoneLabel: string;
     clubs: {
       title: string;
       description: string;
@@ -32,6 +43,17 @@ const content: Record<
     infoLabel: "Ақпарат алу",
     prev: "Артқа",
     next: "Алға",
+    signUp: "Жазылу",
+    modalHeading: "Үйірмеге жазылу",
+    nameLabel: "Аты-жөніңіз",
+    namePlaceholder: "Атыңызды жазыңыз",
+    phoneLabel: "Телефон нөмірі",
+    phonePlaceholder: "+7 (___) ___-__-__",
+    submitLabel: "WhatsApp арқылы жіберу",
+    cancelLabel: "Болдырмау",
+    waIntro: "Сәлеметсіз бе! Мені {club} бағыты бойынша жазуды сұраймын.",
+    waNameLabel: "Аты-жөні",
+    waPhoneLabel: "Телефон",
     clubs: [
       {
         title: "«Жылыой сазы» фольклорлық ансамблі",
@@ -80,6 +102,17 @@ const content: Record<
     infoLabel: "Узнать больше",
     prev: "Назад",
     next: "Вперёд",
+    signUp: "Записаться",
+    modalHeading: "Запись в кружок",
+    nameLabel: "Ваше имя",
+    namePlaceholder: "Введите имя",
+    phoneLabel: "Номер телефона",
+    phonePlaceholder: "+7 (___) ___-__-__",
+    submitLabel: "Отправить через WhatsApp",
+    cancelLabel: "Отмена",
+    waIntro: "Здравствуйте! Прошу записать меня в направление {club}.",
+    waNameLabel: "Имя",
+    waPhoneLabel: "Телефон",
     clubs: [
       {
         title: "Фольклорный ансамбль «Жылыой сазы»",
@@ -144,7 +177,23 @@ export default async function ClubsSection() {
         </FadeIn>
 
         <FadeIn delay={120}>
-          <ClubsCarousel clubs={t.clubs} activeLabel={t.active} prevLabel={t.prev} nextLabel={t.next} />
+          <ClubsCarousel
+            clubs={t.clubs}
+            activeLabel={t.active}
+            prevLabel={t.prev}
+            nextLabel={t.next}
+            signUpLabel={t.signUp}
+            modalHeading={t.modalHeading}
+            nameLabel={t.nameLabel}
+            namePlaceholder={t.namePlaceholder}
+            phoneLabel={t.phoneLabel}
+            phonePlaceholder={t.phonePlaceholder}
+            submitLabel={t.submitLabel}
+            cancelLabel={t.cancelLabel}
+            waIntro={t.waIntro}
+            waNameLabel={t.waNameLabel}
+            waPhoneLabel={t.waPhoneLabel}
+          />
         </FadeIn>
       </div>
     </section>
