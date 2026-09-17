@@ -1,5 +1,7 @@
 import type { Locale } from "@/i18n/routing";
 
+export type EventCategory = "concert" | "performance" | "exhibition" | "competition" | "children";
+
 export type EventItem = {
   slug: string;
   date: string;
@@ -12,6 +14,7 @@ export type EventItem = {
   description: string;
   location: string;
   organizer: string;
+  categories: EventCategory[];
   image: string;
   /** Placeholder long-form text until real per-event content is provided. */
   fullText: string[];
@@ -32,6 +35,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Қазақ халық әндері мен күйлерінің кеші, ұлттық аспаптар сүйемелдеуімен",
       location: VENUE_KK,
       organizer: "«Жылыой сазы» ансамблі",
+      categories: ["concert"],
       image: "https://images.pexels.com/photos/4218027/pexels-photo-4218027.jpeg",
       fullText: [
         "Кеш барысында «Жылыой сазы» ансамблі мен мәдениет үйінің басқа да ұжымдары қазақ халық әндері мен күйлерінен құралған бағдарлама ұсынады.",
@@ -48,6 +52,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Ауданның жас көрермендеріне арналған қойылым",
       location: VENUE_KK,
       organizer: "Театр үйірмесі",
+      categories: ["performance", "children"],
       image: "https://images.pexels.com/photos/6896181/pexels-photo-6896181.jpeg",
       fullText: [
         "Театр үйірмесінің қатысуымен өтетін қойылым ертегі желісіне негізделген және барлық жастағы балаларға арналған.",
@@ -64,6 +69,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Өңір шеберлері мен балалар шығармашылық үйірмелерінің жұмыстары",
       location: VENUE_KK,
       organizer: "ИЗО үйірмесі",
+      categories: ["exhibition"],
       image: "https://images.pexels.com/photos/2559741/pexels-photo-2559741.jpeg",
       fullText: [
         "Көрмеде өңір шеберлерінің қолөнер туындылары және ИЗО үйірмесінің тәрбиеленушілерінің жұмыстары қойылады.",
@@ -80,6 +86,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Ансамбльдің жарты жылдық шығармашылық есебі, жаңа репертуар үлгілерімен",
       location: VENUE_KK,
       organizer: "«Жылыой сазы» ансамблі",
+      categories: ["concert"],
       image: "/images/gallery/ensemble-photo.jpeg",
       fullText: [
         "Концертте ансамбль соңғы жарты жылда дайындаған жаңа шығармалар тұңғыш рет сахнаға шығарылады.",
@@ -96,6 +103,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Жас өнерпаздардың жылдық жұмысының қорытынды көрсетілімі",
       location: VENUE_KK,
       organizer: "Би және вокал үйірмелері",
+      categories: ["performance", "children"],
       image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
       fullText: [
         "Кешке би және вокал үйірмелерінің барлық тобы қатысады, жыл ішінде меңгерген нөмірлерін ұсынады.",
@@ -114,6 +122,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Вечер казахских народных песен и кюев в сопровождении национальных инструментов",
       location: VENUE_RU,
       organizer: "Ансамбль «Жылыой сазы»",
+      categories: ["concert"],
       image: "https://images.pexels.com/photos/4218027/pexels-photo-4218027.jpeg",
       fullText: [
         "В программе вечера — ансамбль «Жылыой сазы» и другие коллективы дома культуры представят подборку казахских народных песен и кюев.",
@@ -130,6 +139,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Постановка для юных зрителей района",
       location: VENUE_RU,
       organizer: "Театральный кружок",
+      categories: ["performance", "children"],
       image: "https://images.pexels.com/photos/6896181/pexels-photo-6896181.jpeg",
       fullText: [
         "Спектакль театрального кружка по мотивам сказочного сюжета рассчитан на зрителей всех возрастов.",
@@ -146,6 +156,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Работы мастеров региона и детских творческих кружков",
       location: VENUE_RU,
       organizer: "Кружок ИЗО",
+      categories: ["exhibition"],
       image: "https://images.pexels.com/photos/2559741/pexels-photo-2559741.jpeg",
       fullText: [
         "На выставке представлены работы мастеров региона и воспитанников кружка ИЗО и творчества.",
@@ -162,6 +173,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Творческий отчёт ансамбля за полугодие с новыми произведениями репертуара",
       location: VENUE_RU,
       organizer: "Ансамбль «Жылыой сазы»",
+      categories: ["concert"],
       image: "/images/gallery/ensemble-photo.jpeg",
       fullText: [
         "На концерте впервые прозвучат новые произведения, подготовленные ансамблем за последнее полугодие.",
@@ -178,6 +190,7 @@ export const events: Record<Locale, EventItem[]> = {
       description: "Итоговый показ годовой работы юных артистов",
       location: VENUE_RU,
       organizer: "Танцевальный и вокальный кружки",
+      categories: ["performance", "children"],
       image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
       fullText: [
         "В вечере примут участие все группы танцевального и вокального кружков с номерами, подготовленными за год.",
@@ -189,6 +202,29 @@ export const events: Record<Locale, EventItem[]> = {
 
 export function getEvent(locale: Locale, slug: string): EventItem | undefined {
   return events[locale].find((e) => e.slug === slug);
+}
+
+export type DateBucket = "all" | "today" | "week" | "month";
+
+function parseIsoDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/** Whether an event's isoDate falls into the given date bucket, relative to `now`. */
+export function matchesDateBucket(isoDate: string, bucket: DateBucket, now: Date): boolean {
+  if (bucket === "all") return true;
+  const eventDate = parseIsoDate(isoDate);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (bucket === "today") {
+    return eventDate.getTime() === today.getTime();
+  }
+  if (bucket === "week") {
+    const in7Days = new Date(today);
+    in7Days.setDate(in7Days.getDate() + 7);
+    return eventDate.getTime() >= today.getTime() && eventDate.getTime() <= in7Days.getTime();
+  }
+  return eventDate.getFullYear() === now.getFullYear() && eventDate.getMonth() === now.getMonth();
 }
 
 function pad(n: number): string {
