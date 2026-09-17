@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import { clubs } from "@/data/clubs";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, Metadata> = {
@@ -26,52 +27,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const repertoirePreviewKk = ["Комсомол", "Самғау", "Құралай", "Көк бөрі", "Ұлы дала сазы"];
 const repertoirePreviewRu = ["Комсомол", "Самғау", "Құралай", "Көк бөрі", "Ұлы дала сазы"];
-
-const otherCollectivesKk = [
-  {
-    title: "Би үйірмесі",
-    description: "Ұлттық және заманауи би өнерін меңгеруге ниет білдіретін балалар мен жасөспірімдерге арналған.",
-    image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
-  },
-  {
-    title: "Вокал үйірмесі",
-    description: "Ән айту өнерін, дауыс қою негіздерін және сахналық мәдениетті үйренуге мүмкіндік береді.",
-    image: "https://images.pexels.com/photos/8815039/pexels-photo-8815039.jpeg",
-  },
-  {
-    title: "Театр үйірмесі",
-    description: "Актерлік шеберлік, сахналық сөйлеу және қойылымдарға қатысу арқылы өнерге баулиды.",
-    image: "https://images.pexels.com/photos/12165875/pexels-photo-12165875.jpeg",
-  },
-  {
-    title: "ИЗО және қолөнер үйірмесі",
-    description: "Сурет салу, кескіндеме және қолөнер негіздерін үйрете отырып, балалардың шығармашылық қиялын дамытады.",
-    image: "https://images.pexels.com/photos/8382387/pexels-photo-8382387.jpeg",
-  },
-];
-
-const otherCollectivesRu = [
-  {
-    title: "Танцевальный кружок",
-    description: "Для детей и подростков, желающих освоить национальное и современное хореографическое искусство.",
-    image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
-  },
-  {
-    title: "Вокальный кружок",
-    description: "Обучение вокальному искусству, основам постановки голоса и сценической культуре.",
-    image: "https://images.pexels.com/photos/8815039/pexels-photo-8815039.jpeg",
-  },
-  {
-    title: "Театральный кружок",
-    description: "Актёрское мастерство, сценическая речь и участие в постановках дома культуры.",
-    image: "https://images.pexels.com/photos/12165875/pexels-photo-12165875.jpeg",
-  },
-  {
-    title: "Кружок ИЗО и творчества",
-    description: "Рисование, живопись и основы декоративно-прикладного искусства для развития творческого мышления детей.",
-    image: "https://images.pexels.com/photos/8382387/pexels-photo-8382387.jpeg",
-  },
-];
 
 const content = {
   kk: {
@@ -96,7 +51,6 @@ const content = {
     },
     othersTitle: "Басқа да үйірмелер",
     infoLabel: "Ақпарат алу",
-    others: otherCollectivesKk,
   },
   ru: {
     title: "Коллективы",
@@ -120,7 +74,6 @@ const content = {
     },
     othersTitle: "Другие кружки",
     infoLabel: "Узнать больше",
-    others: otherCollectivesRu,
   },
 } satisfies Record<Locale, unknown>;
 
@@ -128,6 +81,7 @@ export default async function CollectivesPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
   const f = t.flagship;
+  const others = clubs[locale];
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -230,12 +184,12 @@ export default async function CollectivesPage() {
           <h3 className="text-xl sm:text-2xl font-bold text-ocean mb-6">{t.othersTitle}</h3>
         </FadeIn>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-          {t.others.map((c, index) => (
-            <FadeIn key={c.title} delay={index * 100}>
+          {others.map((c, index) => (
+            <FadeIn key={c.slug} delay={index * 100}>
               <div className="group bg-white rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden bg-ocean/5">
                   <Image
-                    src={c.image}
+                    src={c.images[0]}
                     alt={c.title}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -246,7 +200,7 @@ export default async function CollectivesPage() {
                   <h4 className="font-bold text-ocean text-base mb-2 leading-tight">{c.title}</h4>
                   <p className="text-ocean/70 text-sm mb-4 flex-1">{c.description}</p>
                   <Link
-                    href="/contacts"
+                    href={`/clubs/${c.slug}`}
                     className="text-sm font-semibold text-ocean hover:text-gold-dark transition-colors inline-flex items-center gap-1"
                   >
                     {t.infoLabel}

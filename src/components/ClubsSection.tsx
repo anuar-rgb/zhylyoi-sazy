@@ -3,6 +3,7 @@ import { getLocale } from "next-intl/server";
 import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
 import ClubsCarousel from "@/components/ClubsCarousel";
+import { clubs } from "@/data/clubs";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -25,7 +26,7 @@ const content: Record<
     waIntro: string;
     waNameLabel: string;
     waPhoneLabel: string;
-    clubs: {
+    ensemble: {
       title: string;
       description: string;
       image: string;
@@ -33,7 +34,7 @@ const content: Record<
       href: string;
       linkLabel: string;
       real?: boolean;
-    }[];
+    };
   }
 > = {
   kk: {
@@ -54,46 +55,16 @@ const content: Record<
     waIntro: "Сәлеметсіз бе! Мені {club} бағыты бойынша жазуды сұраймын.",
     waNameLabel: "Аты-жөні",
     waPhoneLabel: "Телефон",
-    clubs: [
-      {
-        title: "«Жылыой сазы» фольклорлық ансамблі",
-        description:
-          "Домбыра, қобыз, шертер және басқа да ұлттық аспаптарда ойнауды үйретеді. 18 кәсіби өнерпаз құрамында.",
-        image: "/images/gallery/ensemble-photo.jpeg",
-        imagePosition: "top",
-        href: "/collectives",
-        linkLabel: "Ансамбль туралы",
-        real: true,
-      },
-      {
-        title: "Би үйірмесі",
-        description: "Ұлттық және заманауи би өнерін меңгеруге ниет білдіретін балалар мен жасөспірімдерге арналған.",
-        image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
-        href: "/contacts",
-        linkLabel: "Ақпарат алу",
-      },
-      {
-        title: "Вокал үйірмесі",
-        description: "Ән айту өнерін, дауыс қою негіздерін және сахналық мәдениетті үйренуге мүмкіндік береді.",
-        image: "https://images.pexels.com/photos/8815039/pexels-photo-8815039.jpeg",
-        href: "/contacts",
-        linkLabel: "Ақпарат алу",
-      },
-      {
-        title: "Театр үйірмесі",
-        description: "Актерлік шеберлік, сахналық сөйлеу және қойылымдарға қатысу арқылы өнерге баулиды.",
-        image: "https://images.pexels.com/photos/12165875/pexels-photo-12165875.jpeg",
-        href: "/contacts",
-        linkLabel: "Ақпарат алу",
-      },
-      {
-        title: "ИЗО және қолөнер үйірмесі",
-        description: "Сурет салу, кескіндеме және қолөнер негіздерін үйрете отырып, балалардың шығармашылық қиялын дамытады.",
-        image: "https://images.pexels.com/photos/8382387/pexels-photo-8382387.jpeg",
-        href: "/contacts",
-        linkLabel: "Ақпарат алу",
-      },
-    ],
+    ensemble: {
+      title: "«Жылыой сазы» фольклорлық ансамблі",
+      description:
+        "Домбыра, қобыз, шертер және басқа да ұлттық аспаптарда ойнауды үйретеді. 18 кәсіби өнерпаз құрамында.",
+      image: "/images/gallery/ensemble-photo.jpeg",
+      imagePosition: "top",
+      href: "/collectives",
+      linkLabel: "Ансамбль туралы",
+      real: true,
+    },
   },
   ru: {
     title: "Творческие кружки и секции",
@@ -113,52 +84,32 @@ const content: Record<
     waIntro: "Здравствуйте! Прошу записать меня в направление {club}.",
     waNameLabel: "Имя",
     waPhoneLabel: "Телефон",
-    clubs: [
-      {
-        title: "Фольклорный ансамбль «Жылыой сазы»",
-        description:
-          "Обучение игре на домбре, кобызе, шертере и других национальных инструментах. В составе 18 профессиональных артистов.",
-        image: "/images/gallery/ensemble-photo.jpeg",
-        imagePosition: "top",
-        href: "/collectives",
-        linkLabel: "Об ансамбле",
-        real: true,
-      },
-      {
-        title: "Танцевальный кружок",
-        description: "Для детей и подростков, желающих освоить национальное и современное хореографическое искусство.",
-        image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
-        href: "/contacts",
-        linkLabel: "Узнать больше",
-      },
-      {
-        title: "Вокальный кружок",
-        description: "Обучение вокальному искусству, основам постановки голоса и сценической культуре.",
-        image: "https://images.pexels.com/photos/8815039/pexels-photo-8815039.jpeg",
-        href: "/contacts",
-        linkLabel: "Узнать больше",
-      },
-      {
-        title: "Театральный кружок",
-        description: "Актёрское мастерство, сценическая речь и участие в постановках дома культуры.",
-        image: "https://images.pexels.com/photos/12165875/pexels-photo-12165875.jpeg",
-        href: "/contacts",
-        linkLabel: "Узнать больше",
-      },
-      {
-        title: "Кружок ИЗО и творчества",
-        description: "Рисование, живопись и основы декоративно-прикладного искусства для развития творческого мышления детей.",
-        image: "https://images.pexels.com/photos/8382387/pexels-photo-8382387.jpeg",
-        href: "/contacts",
-        linkLabel: "Узнать больше",
-      },
-    ],
+    ensemble: {
+      title: "Фольклорный ансамбль «Жылыой сазы»",
+      description:
+        "Обучение игре на домбре, кобызе, шертере и других национальных инструментах. В составе 18 профессиональных артистов.",
+      image: "/images/gallery/ensemble-photo.jpeg",
+      imagePosition: "top",
+      href: "/collectives",
+      linkLabel: "Об ансамбле",
+      real: true,
+    },
   },
 };
 
 export default async function ClubsSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  const carouselClubs = [
+    t.ensemble,
+    ...clubs[locale].map((c) => ({
+      title: c.title,
+      description: c.description,
+      image: c.images[0],
+      href: `/clubs/${c.slug}`,
+      linkLabel: t.infoLabel,
+    })),
+  ];
 
   return (
     <section id="clubs" className="relative py-12 sm:py-16 lg:py-20 overflow-hidden">
@@ -178,7 +129,7 @@ export default async function ClubsSection() {
 
         <FadeIn delay={120}>
           <ClubsCarousel
-            clubs={t.clubs}
+            clubs={carouselClubs}
             activeLabel={t.active}
             prevLabel={t.prev}
             nextLabel={t.next}
