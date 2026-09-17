@@ -248,7 +248,7 @@ export function buildIcsDataUri(event: EventItem): string {
     "VERSION:2.0",
     "PRODID:-//Keng Zhylyoi//Afisha//KK",
     "BEGIN:VEVENT",
-    `UID:${event.slug}@zhylyoi-sazy`,
+    `UID:${event.slug}@culture-portal-kz`,
     `DTSTART:${start}`,
     `DTEND:${end}`,
     `SUMMARY:${escape(event.title)}`,

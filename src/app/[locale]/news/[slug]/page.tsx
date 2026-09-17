@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
@@ -8,7 +9,13 @@ import ShareButtons from "@/components/ShareButtons";
 import { news, getNewsItem } from "@/data/news";
 import type { Locale } from "@/i18n/routing";
 
-const SITE_URL = "https://zhylyoi-sazy-production.up.railway.app";
+/** Share links need an absolute URL; deriving it from the request keeps the domain out of the source. */
+async function getSiteUrl(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
 
 const content: Record<Locale, { back: string; shareLabel: string; copyLabel: string; copiedLabel: string }> = {
   kk: {
@@ -54,7 +61,7 @@ export default async function NewsDetailPage({
   if (!item) notFound();
 
   const localePrefix = locale === "ru" ? "/ru" : "";
-  const pageUrl = `${SITE_URL}${localePrefix}/news/${item.slug}`;
+  const pageUrl = `${await getSiteUrl()}${localePrefix}/news/${item.slug}`;
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
