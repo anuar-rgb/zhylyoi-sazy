@@ -1,23 +1,25 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { logout } from "./actions";
+import { useState } from "react";
+import { signOut } from "./actions";
 
 export default function LogoutButton() {
-  const router = useRouter();
-
-  async function handleLogout() {
-    await logout();
-    router.refresh();
-  }
+  const [busy, setBusy] = useState(false);
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      className="text-sm font-semibold text-ocean/60 hover:text-ocean transition-colors"
+    <form
+      action={async () => {
+        setBusy(true);
+        await signOut();
+      }}
     >
-      Выйти
-    </button>
+      <button
+        type="submit"
+        disabled={busy}
+        className="text-sm font-semibold text-cream/70 hover:text-gold transition-colors disabled:opacity-50"
+      >
+        Выйти
+      </button>
+    </form>
   );
 }

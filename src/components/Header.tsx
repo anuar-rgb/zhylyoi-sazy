@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+// Staff routes live outside the [locale] segment, so they use a plain link (no locale prefix).
+import NextLink from "next/link";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { useState, useEffect, useRef } from "react";
@@ -8,13 +10,14 @@ import type { Locale } from "@/i18n/routing";
 
 const content: Record<
   Locale,
-  { brand: string; tagline: string; nav: { href: string; label: string }[]; more: { href: string; label: string }[]; menuLabel: string; moreLabel: string }
+  { brand: string; tagline: string; nav: { href: string; label: string }[]; more: { href: string; label: string }[]; menuLabel: string; moreLabel: string; loginLabel: string }
 > = {
   kk: {
     brand: "Кең Жылыой",
     tagline: "Жылыой аудандық мәдениет үйі",
     menuLabel: "Мәзір",
     moreLabel: "Тағы да",
+    loginLabel: "Кіру",
     nav: [
       { href: "/", label: "Басты бет" },
       { href: "/honored", label: "Халықтық үлгілі атағы бар ұжымдар" },
@@ -38,6 +41,7 @@ const content: Record<
     tagline: "Дом культуры Жылыойского района",
     menuLabel: "Меню",
     moreLabel: "Ещё",
+    loginLabel: "Войти",
     nav: [
       { href: "/", label: "Главная" },
       { href: "/honored", label: "Коллективы со званием «Народный»" },
@@ -153,6 +157,13 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <NextLink
+              href="/login"
+              className="hidden lg:inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border border-cream/35 text-cream hover:bg-ocean-light hover:text-gold transition-colors"
+            >
+              {t.loginLabel}
+            </NextLink>
+
             <LanguageSwitcher pathname={pathname} className="hidden lg:inline-block" />
 
             <div className="relative hidden lg:block" ref={moreRef}>
@@ -245,8 +256,15 @@ export default function Header() {
             </Link>
           ))}
 
-          <div className="pt-4 mt-2 border-t border-cream/10">
+          <div className="pt-4 mt-2 border-t border-cream/10 flex items-center gap-3">
             <LanguageSwitcher pathname={pathname} className="text-sm" />
+            <NextLink
+              href="/login"
+              onClick={() => setMenuOpen(false)}
+              className="px-4 py-1.5 rounded-full text-sm font-semibold border border-cream/35 text-cream active:bg-ocean-light transition-colors"
+            >
+              {t.loginLabel}
+            </NextLink>
           </div>
         </nav>
       </div>
