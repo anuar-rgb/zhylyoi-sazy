@@ -1,0 +1,41 @@
+import type { ApplyFormLabels } from "@/components/ClubApplyButton";
+import type { Locale } from "@/i18n/routing";
+
+export const applyFormLabels: Record<Locale, ApplyFormLabels> = {
+  kk: {
+    modalHeading: "Үйірмеге жазылу",
+    clubLabel: "Үйірме",
+    childNameLabel: "Баланың/қатысушының аты-жөні",
+    childNamePlaceholder: "Аты-жөнін жазыңыз",
+    ageLabel: "Жасы",
+    agePlaceholder: "Жасын жазыңыз",
+    phoneLabel: "Ата-ананың телефон нөмірі",
+    phonePlaceholder: "+7 (___) ___-__-__",
+    commentLabel: "Пікір (міндетті емес)",
+    commentPlaceholder: "Қосымша ақпарат жазуға болады",
+    consentLabel: "Дербес деректерді өңдеуге келісім беремін",
+    submitLabel: "Өтінім жіберу",
+    cancelLabel: "Болдырмау",
+    successMessage: "Өтініміңіз қабылданды! Жақын арада сізбен хабарласамыз.",
+    errorMessage: "Жіберу кезінде қате пайда болды. Қайталап көріңіз.",
+    consentRequiredMessage: "Жіберу үшін келісім беру қажет.",
+  },
+  ru: {
+    modalHeading: "Запись в кружок",
+    clubLabel: "Кружок",
+    childNameLabel: "ФИО ребёнка/участника",
+    childNamePlaceholder: "Введите ФИО",
+    ageLabel: "Возраст",
+    agePlaceholder: "Укажите возраст",
+    phoneLabel: "Номер телефона родителя",
+    phonePlaceholder: "+7 (___) ___-__-__",
+    commentLabel: "Комментарий (необязательно)",
+    commentPlaceholder: "Можно указать дополнительную информацию",
+    consentLabel: "Даю согласие на обработку персональных данных",
+    submitLabel: "Отправить заявку",
+    cancelLabel: "Отмена",
+    successMessage: "Ваша заявка принята! Мы свяжемся с вами в ближайшее время.",
+    errorMessage: "Произошла ошибка при отправке. Попробуйте ещё раз.",
+    consentRequiredMessage: "Для отправки нужно дать согласие.",
+  },
+};

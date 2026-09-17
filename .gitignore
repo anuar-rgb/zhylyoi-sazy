@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local application data store (production uses a Railway volume at /data)
+/.data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

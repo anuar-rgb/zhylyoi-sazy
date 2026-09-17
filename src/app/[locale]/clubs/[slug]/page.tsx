@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import ClubApplyButton from "@/components/ClubApplyButton";
 import { clubs, getClub } from "@/data/clubs";
+import { applyFormLabels } from "@/data/applyFormLabels";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -18,16 +19,6 @@ const content: Record<
     schedule: string;
     capacity: string;
     apply: string;
-    modalHeading: string;
-    nameLabel: string;
-    namePlaceholder: string;
-    phoneLabel: string;
-    phonePlaceholder: string;
-    submitLabel: string;
-    cancelLabel: string;
-    waIntro: string;
-    waNameLabel: string;
-    waPhoneLabel: string;
   }
 > = {
   kk: {
@@ -38,16 +29,6 @@ const content: Record<
     schedule: "Сабақ кестесі",
     capacity: "Орын саны",
     apply: "Өтінім беру",
-    modalHeading: "Үйірмеге жазылу",
-    nameLabel: "Аты-жөніңіз",
-    namePlaceholder: "Атыңызды жазыңыз",
-    phoneLabel: "Телефон нөмірі",
-    phonePlaceholder: "+7 (___) ___-__-__",
-    submitLabel: "WhatsApp арқылы жіберу",
-    cancelLabel: "Болдырмау",
-    waIntro: "Сәлеметсіз бе! Мені {club} бағыты бойынша жазуды сұраймын.",
-    waNameLabel: "Аты-жөні",
-    waPhoneLabel: "Телефон",
   },
   ru: {
     back: "Назад к кружкам",
@@ -57,16 +38,6 @@ const content: Record<
     schedule: "Расписание",
     capacity: "Количество мест",
     apply: "Подать заявку",
-    modalHeading: "Запись в кружок",
-    nameLabel: "Ваше имя",
-    namePlaceholder: "Введите имя",
-    phoneLabel: "Номер телефона",
-    phonePlaceholder: "+7 (___) ___-__-__",
-    submitLabel: "Отправить через WhatsApp",
-    cancelLabel: "Отмена",
-    waIntro: "Здравствуйте! Прошу записать меня в направление {club}.",
-    waNameLabel: "Имя",
-    waPhoneLabel: "Телефон",
   },
 };
 
@@ -160,16 +131,7 @@ export default async function ClubDetailPage({
                 clubTitle={club.title}
                 triggerLabel={t.apply}
                 triggerClassName="btn-primary inline-flex items-center justify-center px-6 py-3 text-sm font-semibold"
-                modalHeading={t.modalHeading}
-                nameLabel={t.nameLabel}
-                namePlaceholder={t.namePlaceholder}
-                phoneLabel={t.phoneLabel}
-                phonePlaceholder={t.phonePlaceholder}
-                submitLabel={t.submitLabel}
-                cancelLabel={t.cancelLabel}
-                waIntro={t.waIntro}
-                waNameLabel={t.waNameLabel}
-                waPhoneLabel={t.waPhoneLabel}
+                {...applyFormLabels[locale]}
               />
             </div>
           </div>

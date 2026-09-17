@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/navigation";
-import ClubApplyButton from "@/components/ClubApplyButton";
+import ClubApplyButton, { type ApplyFormLabels } from "@/components/ClubApplyButton";
 
 type Club = {
   title: string;
@@ -21,32 +21,14 @@ export default function ClubsCarousel({
   prevLabel,
   nextLabel,
   signUpLabel,
-  modalHeading,
-  nameLabel,
-  namePlaceholder,
-  phoneLabel,
-  phonePlaceholder,
-  submitLabel,
-  cancelLabel,
-  waIntro,
-  waNameLabel,
-  waPhoneLabel,
+  applyLabels,
 }: {
   clubs: Club[];
   activeLabel: string;
   prevLabel: string;
   nextLabel: string;
   signUpLabel: string;
-  modalHeading: string;
-  nameLabel: string;
-  namePlaceholder: string;
-  phoneLabel: string;
-  phonePlaceholder: string;
-  submitLabel: string;
-  cancelLabel: string;
-  waIntro: string;
-  waNameLabel: string;
-  waPhoneLabel: string;
+  applyLabels: ApplyFormLabels;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -170,16 +152,7 @@ export default function ClubsCarousel({
                   clubTitle={club.title}
                   triggerLabel={signUpLabel}
                   triggerClassName="btn-primary shrink-0 px-4 py-2 text-sm font-semibold"
-                  modalHeading={modalHeading}
-                  nameLabel={nameLabel}
-                  namePlaceholder={namePlaceholder}
-                  phoneLabel={phoneLabel}
-                  phonePlaceholder={phonePlaceholder}
-                  submitLabel={submitLabel}
-                  cancelLabel={cancelLabel}
-                  waIntro={waIntro}
-                  waNameLabel={waNameLabel}
-                  waPhoneLabel={waPhoneLabel}
+                  {...applyLabels}
                 />
               </div>
             </div>
