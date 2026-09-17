@@ -3,22 +3,35 @@ import type { Locale } from "@/i18n/routing";
 export type EventItem = {
   slug: string;
   date: string;
+  /** ISO date (YYYY-MM-DD), used to build calendar files. */
+  isoDate: string;
   time: string;
+  /** Event duration in hours, used to compute the calendar end time. */
+  durationHours: number;
   title: string;
   description: string;
+  location: string;
+  organizer: string;
   image: string;
   /** Placeholder long-form text until real per-event content is provided. */
   fullText: string[];
 };
+
+const VENUE_KK = "«Кең Жылыой» мәдениет үйі, Махамбет даңғылы, 37, Құлсары қаласы";
+const VENUE_RU = "Дом культуры «Кен Жылыой», проспект Махамбет, 37, г. Кульсары";
 
 export const events: Record<Locale, EventItem[]> = {
   kk: [
     {
       slug: "merekelik-kontsert",
       date: "20 қыркүйек",
+      isoDate: "2026-09-20",
       time: "19:00",
+      durationHours: 2,
       title: "Мерекелік концерт",
       description: "Қазақ халық әндері мен күйлерінің кеші, ұлттық аспаптар сүйемелдеуімен",
+      location: VENUE_KK,
+      organizer: "«Жылыой сазы» ансамблі",
       image: "https://images.pexels.com/photos/4218027/pexels-photo-4218027.jpeg",
       fullText: [
         "Кеш барысында «Жылыой сазы» ансамблі мен мәдениет үйінің басқа да ұжымдары қазақ халық әндері мен күйлерінен құралған бағдарлама ұсынады.",
@@ -28,9 +41,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "balalar-teatr",
       date: "4 қазан",
+      isoDate: "2026-10-04",
       time: "18:00",
+      durationHours: 1,
       title: "Балалар театр спектаклі",
       description: "Ауданның жас көрермендеріне арналған қойылым",
+      location: VENUE_KK,
+      organizer: "Театр үйірмесі",
       image: "https://images.pexels.com/photos/6896181/pexels-photo-6896181.jpeg",
       fullText: [
         "Театр үйірмесінің қатысуымен өтетін қойылым ертегі желісіне негізделген және барлық жастағы балаларға арналған.",
@@ -40,9 +57,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "onerkoli-korme",
       date: "15 қазан",
+      isoDate: "2026-10-15",
       time: "11:00",
+      durationHours: 6,
       title: "Қолөнер және сурет көрмесі",
       description: "Өңір шеберлері мен балалар шығармашылық үйірмелерінің жұмыстары",
+      location: VENUE_KK,
+      organizer: "ИЗО үйірмесі",
       image: "https://images.pexels.com/photos/2559741/pexels-photo-2559741.jpeg",
       fullText: [
         "Көрмеде өңір шеберлерінің қолөнер туындылары және ИЗО үйірмесінің тәрбиеленушілерінің жұмыстары қойылады.",
@@ -52,9 +73,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "esep-kontsert",
       date: "1 қараша",
+      isoDate: "2026-11-01",
       time: "17:00",
+      durationHours: 2,
       title: "«Жылыой сазы» есеп концерті",
       description: "Ансамбльдің жарты жылдық шығармашылық есебі, жаңа репертуар үлгілерімен",
+      location: VENUE_KK,
+      organizer: "«Жылыой сазы» ансамблі",
       image: "/images/gallery/ensemble-photo.jpeg",
       fullText: [
         "Концертте ансамбль соңғы жарты жылда дайындаған жаңа шығармалар тұңғыш рет сахнаға шығарылады.",
@@ -64,9 +89,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "bi-vokal-otchet",
       date: "20 қараша",
+      isoDate: "2026-11-20",
       time: "18:30",
+      durationHours: 2,
       title: "Би және вокал үйірмелерінің отчеттік кеші",
       description: "Жас өнерпаздардың жылдық жұмысының қорытынды көрсетілімі",
+      location: VENUE_KK,
+      organizer: "Би және вокал үйірмелері",
       image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
       fullText: [
         "Кешке би және вокал үйірмелерінің барлық тобы қатысады, жыл ішінде меңгерген нөмірлерін ұсынады.",
@@ -78,9 +107,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "merekelik-kontsert",
       date: "20 сентября",
+      isoDate: "2026-09-20",
       time: "19:00",
+      durationHours: 2,
       title: "Праздничный концерт",
       description: "Вечер казахских народных песен и кюев в сопровождении национальных инструментов",
+      location: VENUE_RU,
+      organizer: "Ансамбль «Жылыой сазы»",
       image: "https://images.pexels.com/photos/4218027/pexels-photo-4218027.jpeg",
       fullText: [
         "В программе вечера — ансамбль «Жылыой сазы» и другие коллективы дома культуры представят подборку казахских народных песен и кюев.",
@@ -90,9 +123,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "balalar-teatr",
       date: "4 октября",
+      isoDate: "2026-10-04",
       time: "18:00",
+      durationHours: 1,
       title: "Детский театральный спектакль",
       description: "Постановка для юных зрителей района",
+      location: VENUE_RU,
+      organizer: "Театральный кружок",
       image: "https://images.pexels.com/photos/6896181/pexels-photo-6896181.jpeg",
       fullText: [
         "Спектакль театрального кружка по мотивам сказочного сюжета рассчитан на зрителей всех возрастов.",
@@ -102,9 +139,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "onerkoli-korme",
       date: "15 октября",
+      isoDate: "2026-10-15",
       time: "11:00",
+      durationHours: 6,
       title: "Выставка декоративно-прикладного искусства",
       description: "Работы мастеров региона и детских творческих кружков",
+      location: VENUE_RU,
+      organizer: "Кружок ИЗО",
       image: "https://images.pexels.com/photos/2559741/pexels-photo-2559741.jpeg",
       fullText: [
         "На выставке представлены работы мастеров региона и воспитанников кружка ИЗО и творчества.",
@@ -114,9 +155,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "esep-kontsert",
       date: "1 ноября",
+      isoDate: "2026-11-01",
       time: "17:00",
+      durationHours: 2,
       title: "Отчётный концерт «Жылыой сазы»",
       description: "Творческий отчёт ансамбля за полугодие с новыми произведениями репертуара",
+      location: VENUE_RU,
+      organizer: "Ансамбль «Жылыой сазы»",
       image: "/images/gallery/ensemble-photo.jpeg",
       fullText: [
         "На концерте впервые прозвучат новые произведения, подготовленные ансамблем за последнее полугодие.",
@@ -126,9 +171,13 @@ export const events: Record<Locale, EventItem[]> = {
     {
       slug: "bi-vokal-otchet",
       date: "20 ноября",
+      isoDate: "2026-11-20",
       time: "18:30",
+      durationHours: 2,
       title: "Отчётный вечер танцевального и вокального кружков",
       description: "Итоговый показ годовой работы юных артистов",
+      location: VENUE_RU,
+      organizer: "Танцевальный и вокальный кружки",
       image: "https://images.pexels.com/photos/9480473/pexels-photo-9480473.jpeg",
       fullText: [
         "В вечере примут участие все группы танцевального и вокального кружков с номерами, подготовленными за год.",
@@ -140,4 +189,38 @@ export const events: Record<Locale, EventItem[]> = {
 
 export function getEvent(locale: Locale, slug: string): EventItem | undefined {
   return events[locale].find((e) => e.slug === slug);
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function toIcsDate(isoDate: string, time: string, addHours = 0): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const d = new Date(year, month - 1, day, hour + addHours, minute);
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+}
+
+/** Builds a downloadable data: URI containing a minimal .ics calendar file for the event. */
+export function buildIcsDataUri(event: EventItem): string {
+  const start = toIcsDate(event.isoDate, event.time);
+  const end = toIcsDate(event.isoDate, event.time, event.durationHours);
+  const escape = (s: string) => s.replace(/[,;]/g, (m) => `\\${m}`);
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Keng Zhylyoi//Afisha//KK",
+    "BEGIN:VEVENT",
+    `UID:${event.slug}@zhylyoi-sazy`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${escape(event.title)}`,
+    `DESCRIPTION:${escape(event.description)}`,
+    `LOCATION:${escape(event.location)}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  const ics = lines.join("\r\n");
+  return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
 }
