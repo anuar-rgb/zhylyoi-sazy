@@ -43,3 +43,14 @@ export function appendApplication(record: ApplicationRecord): Promise<void> {
   writeQueue = task.catch(() => {});
   return task;
 }
+
+export function deleteApplication(id: string): Promise<void> {
+  const task = writeQueue.then(async () => {
+    const all = await readAllUnsafe();
+    const remaining = all.filter((a) => a.id !== id);
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.writeFile(FILE_PATH, JSON.stringify(remaining, null, 2), "utf-8");
+  });
+  writeQueue = task.catch(() => {});
+  return task;
+}

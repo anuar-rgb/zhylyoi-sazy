@@ -3,6 +3,7 @@ import { isValidSession, COOKIE_NAME } from "@/lib/adminAuth";
 import { readAllApplications } from "@/lib/applications";
 import LoginForm from "./LoginForm";
 import LogoutButton from "./LogoutButton";
+import DeleteButton from "./DeleteButton";
 
 export const metadata = { robots: { index: false, follow: false } };
 
@@ -40,9 +41,12 @@ export default async function AdminPage() {
                     {new Date(app.createdAt).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" })}
                   </p>
                 </div>
-                <span className="bg-gold/15 text-ocean-dark text-xs font-semibold px-3 py-1.5 rounded-full">
-                  {app.clubTitle}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="bg-gold/15 text-ocean-dark text-xs font-semibold px-3 py-1.5 rounded-full">
+                    {app.clubTitle}
+                  </span>
+                  <DeleteButton id={app.id} childName={app.childName} />
+                </div>
               </div>
 
               <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mb-3">
