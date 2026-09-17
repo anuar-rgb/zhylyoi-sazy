@@ -1,41 +1,56 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
+import FadeIn from "@/components/FadeIn";
 import { news } from "@/data/news";
 import type { Locale } from "@/i18n/routing";
 
-const content: Record<Locale, { title: string; subtitle: string; more: string; seeAll: string }> = {
+const meta: Record<Locale, Metadata> = {
+  kk: {
+    title: "Жаңалықтар",
+    description: "«Кең Жылыой» мәдениет үйінің соңғы жаңалықтары мен оқиғалары.",
+  },
+  ru: {
+    title: "Новости",
+    description: "Последние новости и события Дома культуры «Кен Жылыой».",
+  },
+};
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = (await getLocale()) as Locale;
+  return meta[locale];
+}
+
+const content: Record<Locale, { title: string; subtitle: string; more: string }> = {
   kk: {
     title: "Жаңалықтар",
     subtitle: "Мәдениет үйінің соңғы оқиғалары",
     more: "Толығырақ",
-    seeAll: "Барлық жаңалықтар",
   },
   ru: {
     title: "Новости",
     subtitle: "Последние события Дома культуры",
     more: "Подробнее",
-    seeAll: "Все новости",
   },
 };
 
-export default async function NewsSection() {
+export default async function NewsPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  const featuredNews = news[locale].slice(0, 3);
+  const allNews = news[locale];
 
   return (
-    <section id="news" className="py-12 sm:py-16 lg:py-20 bg-white">
+    <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={t.title} subtitle={t.subtitle} />
         </FadeIn>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
-          {featuredNews.map((item, index) => (
-            <FadeIn key={item.slug} delay={index * 120}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {allNews.map((item, index) => (
+            <FadeIn key={item.slug} delay={index * 100}>
               <Link
                 href={`/news/${item.slug}`}
                 className="group block bg-white rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
@@ -47,7 +62,7 @@ export default async function NewsSection() {
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     style={item.imagePosition ? { objectPosition: item.imagePosition } : undefined}
-                    sizes="(max-width: 640px) 100vw, 33vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                   <div className="absolute top-3 left-3 bg-gold text-ocean-dark text-[11px] font-semibold px-2.5 py-1 rounded-full shadow">
                     {item.tag}
@@ -68,20 +83,6 @@ export default async function NewsSection() {
             </FadeIn>
           ))}
         </div>
-
-        <FadeIn delay={featuredNews.length * 120}>
-          <div className="mt-8 sm:mt-10 text-center">
-            <Link
-              href="/news"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-ocean hover:text-gold-dark transition-colors"
-            >
-              {t.seeAll}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-          </div>
-        </FadeIn>
       </div>
     </section>
   );
