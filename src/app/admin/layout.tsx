@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
+import { getStaffIdentity } from "@/lib/profile";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
 import "../globals.css";
@@ -26,6 +27,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect("/login");
 
+  const identity = await getStaffIdentity();
+
   return (
     <html lang="ru" className={`${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full bg-cream/30">
@@ -36,7 +39,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <p className="text-xs text-cream/60">«Кең Жылыой» мәдениет үйі</p>
             </div>
             <div className="flex items-center gap-4 min-w-0">
-              <span className="text-xs sm:text-sm text-cream/70 truncate max-w-[45vw] sm:max-w-none">{user.email}</span>
+              <div className="min-w-0 text-right max-w-[45vw] sm:max-w-none">
+                <p className="text-xs sm:text-sm text-cream/80 truncate">{identity?.displayName ?? user.email}</p>
+                {identity?.roleLabel && <p className="text-[11px] text-cream/50 truncate">{identity.roleLabel}</p>}
+              </div>
               <LogoutButton />
             </div>
           </div>

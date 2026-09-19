@@ -1,19 +1,18 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getStaffIdentity } from "@/lib/profile";
 import { readAllApplications } from "@/lib/applications";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const identity = await getStaffIdentity();
   const applications = await readAllApplications();
 
   return (
     <div>
       <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-1">Дашборд</h1>
-      <p className="text-sm text-ocean/60 mb-6">Вы вошли как {user?.email}</p>
+      <p className="text-sm text-ocean/60 mb-6">
+        Вы вошли как {identity?.displayName}
+        {identity?.roleLabel && <> · {identity.roleLabel}</>}
+      </p>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Link
