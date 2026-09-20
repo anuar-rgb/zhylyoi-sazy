@@ -15,6 +15,10 @@ export type StaffIdentity = {
   displayName: string;
   /** null when the user has no profile row yet — nothing to label. */
   roleLabel: string | null;
+  /** null for a platform admin, who belongs to no single institution. */
+  organizationId: string | null;
+  /** false when the signed-in account has no row in public.profiles. */
+  hasProfile: boolean;
 };
 
 /**
@@ -37,7 +41,7 @@ export const getStaffIdentity = cache(async (): Promise<StaffIdentity | null> =>
   // profiles are created deliberately, never on sign-up.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role")
+    .select("full_name, role, organization_id")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -47,5 +51,9 @@ export const getStaffIdentity = cache(async (): Promise<StaffIdentity | null> =>
     displayName: fullName || user.email || "Сотрудник",
     // An unknown role still shows something: better a raw value than a blank badge.
     roleLabel: profile ? (ROLE_LABELS[profile.role] ?? profile.role) : null,
+    organizationId: profile?.organization_id ?? null,
+    // A failed query reads as "no profile" too. That errs toward the setup notice
+    // rather than a dashboard of zeros that would look like real data.
+    hasProfile: Boolean(profile),
   };
 });
