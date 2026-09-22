@@ -11,15 +11,19 @@ export async function signOut(): Promise<void> {
   redirect("/");
 }
 
-export async function removeApplication(id: string): Promise<void> {
+export async function removeApplication(id: string): Promise<{ ok: boolean }> {
   // Server actions are publicly reachable endpoints, so the session is re-checked here
   // rather than relying on the page-level guard.
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { ok: false };
 
-  await deleteApplication(id);
-  revalidatePath("/admin/applications");
+  // RLS has the final say: a signed-in editor may delete nothing at all, and that
+  // comes back as zero rows rather than an error. Report it instead of pretending.
+  const ok = await deleteApplication(id);
+  if (ok) revalidatePath("/admin/applications");
+
+  return { ok };
 }

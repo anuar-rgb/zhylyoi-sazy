@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { getDashboardStats, type Metric, type OrganizationCard } from "@/lib/dashboard";
-import { readAllApplications } from "@/lib/applications";
 
 const CARD = "bg-white rounded-3xl p-5 sm:p-6 border border-cream-dark shadow-sm";
 
@@ -103,13 +102,7 @@ export default async function DashboardPage() {
     );
   }
 
-  // Applications still live in the JSON file on the volume; the table is not populated yet.
-  // Counting from the file keeps this card consistent with the applications page.
-  // After the transfer this becomes a count query like the others, and gains a "new" figure.
-  const [stats, applications] = await Promise.all([
-    getDashboardStats(identity.organizationId),
-    readAllApplications(),
-  ]);
+  const stats = await getDashboardStats(identity.organizationId);
 
   return (
     <div>
@@ -125,8 +118,9 @@ export default async function DashboardPage() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         <StatCard
           title="Заявки"
-          primary={{ value: applications.length }}
+          primary={stats.applicationsTotal}
           label="в кружки"
+          secondary={{ metric: stats.applicationsNew, label: "Новых" }}
           href="/admin/applications"
         />
         <StatCard

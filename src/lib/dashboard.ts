@@ -11,6 +11,8 @@ export type OrganizationCard =
   | { kind: "error" };
 
 export type DashboardStats = {
+  applicationsTotal: Metric;
+  applicationsNew: Metric;
   eventsPublished: Metric;
   eventsDraft: Metric;
   newsPublished: Metric;
@@ -77,7 +79,7 @@ export const getDashboardStats = cache(
     const supabase = await createClient();
 
     // head: true asks Postgres for the count without transferring any rows.
-    const countOf = (table: "events" | "news" | "clubs") => {
+    const countOf = (table: "applications" | "events" | "news" | "clubs") => {
       const query = supabase.from(table).select("*", { count: "exact", head: true });
       return organizationId ? query.eq("organization_id", organizationId) : query;
     };
@@ -90,8 +92,18 @@ export const getDashboardStats = cache(
       .order("name")
       .limit(1);
 
-    const [eventsPublished, eventsDraft, newsPublished, newsDraft, clubsActive, organizations] =
-      await Promise.all([
+    const [
+      applicationsTotal,
+      applicationsNew,
+      eventsPublished,
+      eventsDraft,
+      newsPublished,
+      newsDraft,
+      clubsActive,
+      organizations,
+    ] = await Promise.all([
+        countOf("applications"),
+        countOf("applications").eq("status", "new"),
         countOf("events").eq("status", "published"),
         countOf("events").eq("status", "draft"),
         countOf("news").eq("status", "published"),
@@ -101,6 +113,8 @@ export const getDashboardStats = cache(
       ]);
 
     return {
+      applicationsTotal: metric(applicationsTotal),
+      applicationsNew: metric(applicationsNew),
       eventsPublished: metric(eventsPublished),
       eventsDraft: metric(eventsDraft),
       newsPublished: metric(newsPublished),

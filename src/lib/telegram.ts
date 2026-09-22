@@ -1,7 +1,7 @@
-import type { ApplicationRecord } from "@/lib/applications";
+import type { NewApplication } from "@/lib/applications";
 
 /** Sends a best-effort Telegram notification; the application is saved regardless of the outcome. */
-export async function notifyTelegram(record: ApplicationRecord): Promise<void> {
+export async function notifyTelegram(record: NewApplication): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
