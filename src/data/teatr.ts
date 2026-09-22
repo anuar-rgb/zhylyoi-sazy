@@ -7,13 +7,28 @@ import type { Locale } from "@/i18n/routing";
  * The packet is written in Kazakh; the Russian text here is a translation of it.
  * Nothing is invented — a field the packet does not answer is simply absent.
  *
- * Member portraits from the packet are deliberately not published: they show
- * identifiable people and no consent has been recorded. Only posters and stage
- * photographs, which are promotional material, are used.
+ * Portraits and education details are published at the institution's own request,
+ * recorded 2026-09-22. Three members have no card in the packet, so they appear in
+ * the list by name alone.
  */
 
 export type Achievement = { year: string; kk: string; ru: string };
-export type Member = { name: string; kk?: string; ru?: string };
+
+export type Member = {
+  name: string;
+  /** Role or speciality, short enough for a card. */
+  kk?: string;
+  ru?: string;
+  photo?: string;
+  /** Education level as the packet words it. */
+  levelKk?: string;
+  levelRu?: string;
+  /** Institution attended; some members list two. */
+  schoolKk?: string;
+  schoolRu?: string;
+  noteKk?: string;
+  noteRu?: string;
+};
 export type Play = { author: string; title: string };
 export type Poster = { src: string; kk: string; ru: string };
 
@@ -82,24 +97,139 @@ export const achievements: Achievement[] = [
   },
 ];
 
+/** Order matches the cards in the packet; the photo filenames follow that order. */
 export const members: Member[] = [
   {
     name: "Қопал Мағрипа Қопалқызы",
-    kk: "Хореография. Мәдениет саласының үздігі, Жылыой ауданының құрметті азаматы",
-    ru: "Хореография. Отличник сферы культуры, почётный гражданин Жылыойского района",
+    photo: "/images/teatr/members/member-01.jpeg",
+    kk: "Хореография",
+    ru: "Хореография",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Қызылорда «Болашақ» университеті; Батыс Қазақстан инженерлік-гуманитарлық университеті",
+    schoolRu: "Кызылординский университет «Болашақ»; Западно-Казахстанский инженерно-гуманитарный университет",
+    noteKk: "Мәдениет саласының үздігі, Жылыой ауданының құрметті азаматы",
+    noteRu: "Отличник сферы культуры, почётный гражданин Жылыойского района",
   },
-  { name: "Жиенбаева Назгүл Өмірғалиқызы", kk: "Көркемдік жетекші. Дәстүрлі ән өнері", ru: "Художественный руководитель. Традиционное песенное искусство" },
-  { name: "Тасымова Айнұр Қанатқызы", kk: "Театр және кино артисі", ru: "Артистка театра и кино" },
-  { name: "Аманқосов Бекет", kk: "Эстрада вокалы", ru: "Эстрадный вокал" },
-  { name: "Бақытжанұлы Айбол", kk: "Дәстүрлі музыка өнері", ru: "Традиционное музыкальное искусство" },
-  { name: "Нұрханова Жайна Мергенқызы", kk: "Музыка және ән", ru: "Музыка и пение" },
-  { name: "Жұмағалиев Ерғанат Ержанұлы", kk: "Халық әні, терме", ru: "Народная песня, терме" },
-  { name: "Жұмағалиева Нұргүл", kk: "Дәстүрлі өнер", ru: "Традиционное искусство" },
-  { name: "Орынбасарова Аймира Мэлсқызы", kk: "Аудармашы", ru: "Переводчик" },
-  { name: "Амандық Әлібек Аманжанұлы", kk: "Заңгер", ru: "Юрист" },
-  { name: "Асанов Махамбет Жұбандықұлы", kk: "Техник-технолог", ru: "Техник-технолог" },
-  { name: "Ержанов Жақсылық" },
-  { name: "Қоңыров Асқар" },
+  {
+    name: "Жиенбаева Назгүл Өмірғалиқызы",
+    photo: "/images/teatr/members/member-02.jpeg",
+    kk: "Дәстүрлі ән өнері",
+    ru: "Традиционное песенное искусство",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Х. Досмұхамедов атындағы Атырау мемлекеттік университеті",
+    schoolRu: "Атырауский государственный университет имени Х. Досмухамедова",
+    noteKk: "Көркемдік жетекші",
+    noteRu: "Художественный руководитель",
+  },
+  {
+    name: "Тасымова Айнұр Қанатқызы",
+    photo: "/images/teatr/members/member-03.jpeg",
+    kk: "Театр және кино артисі",
+    ru: "Артистка театра и кино",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Т. Қ. Жүргенов атындағы Қазақ ұлттық өнер академиясы",
+    schoolRu: "Казахская национальная академия искусств имени Т. К. Жургенова",
+  },
+  {
+    name: "Аманқосов Бекет",
+    photo: "/images/teatr/members/member-04.jpeg",
+    kk: "Эстрада вокалы мұғалімі",
+    ru: "Преподаватель эстрадного вокала",
+    levelKk: "Орташа",
+    levelRu: "Среднее",
+    schoolKk: "Д. Нұрпейісова атындағы халық музыкасы академиясы, Атырау музыкалық колледжі",
+    schoolRu: "Академия народной музыки имени Д. Нурпеисовой, Атырауский музыкальный колледж",
+  },
+  {
+    name: "Бақытжанұлы Айбол",
+    photo: "/images/teatr/members/member-05.jpeg",
+    kk: "Дәстүрлі музыка өнері",
+    ru: "Традиционное музыкальное искусство",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Х. Досмұхамедов атындағы Атырау мемлекеттік университеті",
+    schoolRu: "Атырауский государственный университет имени Х. Досмухамедова",
+  },
+  {
+    name: "Нұрханова Жайна Мергенқызы",
+    photo: "/images/teatr/members/member-06.jpeg",
+    kk: "Музыка және ән",
+    ru: "Музыка и пение",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Х. Досмұхамедов атындағы Атырау мемлекеттік университеті",
+    schoolRu: "Атырауский государственный университет имени Х. Досмухамедова",
+  },
+  {
+    name: "Ержанов Жақсылық",
+    photo: "/images/teatr/members/member-07.jpeg",
+    kk: "Тасымалдауды ұйымдастыру",
+    ru: "Организация перевозок",
+    levelKk: "Орташа",
+    levelRu: "Среднее",
+    schoolKk: "Атырау бизнес және құқық колледжі",
+    schoolRu: "Атырауский колледж бизнеса и права",
+  },
+  {
+    name: "Орынбасарова Аймира Мэлсқызы",
+    photo: "/images/teatr/members/member-08.jpeg",
+    kk: "Аудармашы",
+    ru: "Переводчик",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Х. Досмұхамедов атындағы Атырау мемлекеттік университеті; Тұран колледжі, «Аударма ісі»",
+    schoolRu: "Атырауский государственный университет имени Х. Досмухамедова; колледж «Туран», «Переводческое дело»",
+  },
+  {
+    name: "Жұмағалиев Ерғанат Ержанұлы",
+    photo: "/images/teatr/members/member-09.jpeg",
+    kk: "Халық әні, терме",
+    ru: "Народная песня, терме",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Х. Досмұхамедов атындағы Атырау мемлекеттік университеті",
+    schoolRu: "Атырауский государственный университет имени Х. Досмухамедова",
+  },
+  {
+    name: "Амандық Әлібек Аманжанұлы",
+    photo: "/images/teatr/members/member-10.jpeg",
+    kk: "Заңгер",
+    ru: "Юрист",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "ҚазИТУ; Қ. Жұбанов атындағы АӨМУ",
+    schoolRu: "КазИТУ; АРГУ имени К. Жубанова",
+  },
+  {
+    name: "Асанов Махамбет Жұбандықұлы",
+    photo: "/images/teatr/members/member-11.jpeg",
+    kk: "Мұнай және газ кен орындарын пайдалану, техник-технолог",
+    ru: "Эксплуатация нефтегазовых месторождений, техник-технолог",
+    levelKk: "Арнайы орта",
+    levelRu: "Среднее специальное",
+    schoolKk: "Т. Байсырымов атындағы Құлсары гуманитарлық-техникалық колледжі (2018–2022)",
+    schoolRu: "Кульсаринский гуманитарно-технический колледж имени Т. Байсырымова (2018–2022)",
+  },
+  {
+    name: "Қоңыров Асқар",
+    photo: "/images/teatr/members/member-12.jpeg",
+    levelKk: "Орта",
+    levelRu: "Среднее",
+  },
+  {
+    name: "Жұмағалиева Нұргүл",
+    photo: "/images/teatr/members/member-13.jpeg",
+    kk: "Дәстүрлі өнер",
+    ru: "Традиционное искусство",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Х. Досмұхамедов атындағы Атырау мемлекеттік университеті",
+    schoolRu: "Атырауский государственный университет имени Х. Досмухамедова",
+  },
+  // The packet lists these three among the members but gives them no card.
   { name: "Елеуова Мөлдір Дәуренқызы" },
   { name: "Орынғалиев Еламан" },
   { name: "Каманова Жанаргүл" },
@@ -165,6 +295,7 @@ export const content: Record<
     achievementsTitle: string;
     membersTitle: string;
     membersNote: string;
+    educationLabel: string;
     repertoireTitle: string;
     postersTitle: string;
     videosTitle: string;
@@ -191,6 +322,7 @@ export const content: Record<
     achievementsTitle: "Тарихы мен жетістіктері",
     membersTitle: "Ұжым құрамы",
     membersNote: "Барлығы 16 мүше: 1 кәсіби актриса және 12 әуесқой актер.",
+    educationLabel: "Білімі",
     repertoireTitle: "Репертуар",
     postersTitle: "Қойылымдар",
     videosTitle: "Бейнежазбалар",
@@ -216,6 +348,7 @@ export const content: Record<
     achievementsTitle: "История и достижения",
     membersTitle: "Состав коллектива",
     membersNote: "Всего 16 участников: одна профессиональная актриса и двенадцать актёров-любителей.",
+    educationLabel: "Образование",
     repertoireTitle: "Репертуар",
     postersTitle: "Спектакли",
     videosTitle: "Видео",

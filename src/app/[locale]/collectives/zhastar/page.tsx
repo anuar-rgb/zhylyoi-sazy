@@ -138,22 +138,68 @@ export default async function ZhastarPage() {
           </div>
         </FadeIn>
 
-        {/* Names only. The packet also holds portraits and education details, which
-            are not published without the participants' consent. */}
+        {/* Portraits and education published at the institution's request. Three members
+            have no card in the source packet and fall through to the plain list below. */}
         <FadeIn>
           <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">{t.membersTitle}</h2>
           <p className="text-xs text-ocean/50 mb-4">{t.membersNote}</p>
-          <div className={`${CARD} p-5 sm:p-6 mb-10`}>
-            <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
-              {members.map((m) => (
-                <li key={m.name}>
-                  <p className="text-sm font-medium text-ocean">{m.name}</p>
-                  {m[locale] && <p className="text-xs text-ocean/50 leading-snug">{m[locale]}</p>}
-                </li>
-              ))}
-            </ul>
-          </div>
         </FadeIn>
+
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {members
+            .filter((m) => m.photo)
+            .map((m, index) => (
+              <FadeIn key={m.name} delay={index * 60}>
+                <div className={`${CARD} overflow-hidden h-full flex flex-col`}>
+                  <div className="relative aspect-[3/4] bg-ocean/5">
+                    <Image
+                      src={m.photo as string}
+                      alt={m.name}
+                      fill
+                      className="object-cover"
+                      style={{ objectPosition: "top" }}
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
+                    />
+                  </div>
+                  <div className="p-4 flex flex-col flex-1">
+                    <p className="text-sm font-bold text-ocean leading-snug">{m.name}</p>
+                    {(locale === "kk" ? m.noteKk : m.noteRu) && (
+                      <p className="text-[11px] text-gold-dark font-semibold mt-1 leading-snug">
+                        {locale === "kk" ? m.noteKk : m.noteRu}
+                      </p>
+                    )}
+                    {m[locale] && <p className="text-xs text-ocean/70 mt-1.5 leading-snug">{m[locale]}</p>}
+                    {(locale === "kk" ? m.levelKk : m.levelRu) && (
+                      <p className="text-[11px] text-ocean/45 mt-2 leading-snug">
+                        {t.educationLabel}: {locale === "kk" ? m.levelKk : m.levelRu}
+                      </p>
+                    )}
+                    {(locale === "kk" ? m.schoolKk : m.schoolRu) && (
+                      <p className="text-[11px] text-ocean/45 leading-snug">
+                        {locale === "kk" ? m.schoolKk : m.schoolRu}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+        </div>
+
+        {members.some((m) => !m.photo) && (
+          <FadeIn>
+            <div className={`${CARD} p-5 sm:p-6 mb-10`}>
+              <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
+                {members
+                  .filter((m) => !m.photo)
+                  .map((m) => (
+                    <li key={m.name} className="text-sm font-medium text-ocean">
+                      {m.name}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          </FadeIn>
+        )}
 
         <FadeIn>
           <h2 className="text-lg sm:text-xl font-bold text-ocean mb-4">{t.videosTitle}</h2>
