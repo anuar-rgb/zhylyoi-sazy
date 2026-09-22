@@ -1,5 +1,5 @@
 {
-  "$schema": "https://railway.com/railway.schema.json",
+  "$schema": "https://railway.app/railway.schema.json",
   "deploy": {
     "startCommand": "node node_modules/next/dist/bin/next start"
   }
