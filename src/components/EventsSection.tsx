@@ -5,6 +5,7 @@ import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
 import { listPublicCultureEvents } from "@/lib/cultureEvents";
 import { toEventView } from "@/lib/eventView";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -28,6 +29,7 @@ const content: Record<
 export default async function EventsSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  const text = await getSiteText(locale);
   // Ближайшие три: DAL отдаёт по возрастанию даты.
   const featuredEvents = (await listPublicCultureEvents()).slice(0, 3).map((e) => toEventView(e, locale));
 
@@ -35,7 +37,7 @@ export default async function EventsSection() {
     <section id="afisha" className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <SectionTitle title={t.title} subtitle={t.subtitle} />
+          <SectionTitle title={text("events.title")} subtitle={text("events.subtitle")} />
         </FadeIn>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">

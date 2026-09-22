@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import { getSiteOrganization, localizedOrganization } from "@/lib/organization";
 import { telHref } from "@/lib/contactLinks";
+import { getSiteText } from "@/lib/orgContent";
 import SectionTitle from "@/components/SectionTitle";
 import type { Locale } from "@/i18n/routing";
 
@@ -51,9 +52,9 @@ const content: Record<
 export default async function ContactsMapSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  // Address and phone come from the institution card, so an edit in the admin
-  // panel reaches the front page. Working hours are still in the text above:
-  // they have no column yet and belong to the next step.
+  // Address and phone come from the institution card; the working hours come from
+  // the editable texts. Both reach this block from the admin panel.
+  const text = await getSiteText(locale);
   const organization = await getSiteOrganization();
   const address = (organization && localizedOrganization(organization, locale, "address")) ?? t.address;
 
@@ -92,9 +93,9 @@ export default async function ContactsMapSection() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-ocean/80">
-                    {t.hours}
+                    {text("contacts.hours")}
                     <br />
-                    {t.lunch}
+                    {text("contacts.lunch")}
                   </span>
                 </li>
               </ul>

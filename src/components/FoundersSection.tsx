@@ -1,56 +1,26 @@
 import { getLocale } from "next-intl/server";
 import FadeIn from "@/components/FadeIn";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
-
-const content: Record<
-  Locale,
-  {
-    eyebrow: string;
-    orgs: { name: string; role: string }[];
-  }
-> = {
-  kk: {
-    eyebrow: "Құрылтайшы және басшылық орган",
-    orgs: [
-      {
-        name: "Жылыой ауданының әкімдігі",
-        role: "Құрылтайшы",
-      },
-      {
-        name: "Жылыой ауданы мәдениет, тілдерді дамыту, дене шынықтыру және спорт бөлімі",
-        role: "Жоғары тұрған ұйым",
-      },
-    ],
-  },
-  ru: {
-    eyebrow: "Учредитель и вышестоящая организация",
-    orgs: [
-      {
-        name: "Акимат Жылыойского района",
-        role: "Учредитель",
-      },
-      {
-        name: "Отдел культуры, развития языков, физической культуры и спорта Жылыойского района",
-        role: "Вышестоящая организация",
-      },
-    ],
-  },
-};
 
 export default async function FoundersSection() {
   const locale = (await getLocale()) as Locale;
-  const t = content[locale];
+  const text = await getSiteText(locale);
+  const orgs = [
+    { name: text("founders.org1Name"), role: text("founders.org1Role") },
+    { name: text("founders.org2Name"), role: text("founders.org2Role") },
+  ];
 
   return (
     <section className="py-10 sm:py-12 bg-white border-t border-cream-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <p className="text-center text-ocean/50 text-xs font-semibold uppercase tracking-wide mb-6">
-            {t.eyebrow}
+            {text("founders.eyebrow")}
           </p>
         </FadeIn>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
-          {t.orgs.map((org, index) => (
+          {orgs.map((org, index) => (
             <FadeIn key={org.name} delay={index * 100}>
               <div className="flex items-center gap-4 h-full bg-cream/40 border border-cream-dark rounded-3xl px-5 py-4">
                 <div className="shrink-0 w-11 h-11 rounded-full bg-ocean/10 flex items-center justify-center">

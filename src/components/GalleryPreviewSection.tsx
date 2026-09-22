@@ -3,6 +3,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
 const videos = [
@@ -44,12 +45,13 @@ const content: Record<
 export default async function GalleryPreviewSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  const text = await getSiteText(locale);
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-cream/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <SectionTitle title={t.title} subtitle={t.subtitle} />
+          <SectionTitle title={text("gallery.title")} subtitle={text("gallery.subtitle")} />
         </FadeIn>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8">

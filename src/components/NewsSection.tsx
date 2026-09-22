@@ -5,6 +5,7 @@ import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
 import { listPublicCultureNews } from "@/lib/cultureNews";
 import { toNewsView } from "@/lib/newsView";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<Locale, { title: string; subtitle: string; more: string; seeAll: string }> = {
@@ -25,13 +26,14 @@ const content: Record<Locale, { title: string; subtitle: string; more: string; s
 export default async function NewsSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  const text = await getSiteText(locale);
   const featuredNews = (await listPublicCultureNews()).slice(0, 3).map((n) => toNewsView(n, locale));
 
   return (
     <section id="news" className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <SectionTitle title={t.title} subtitle={t.subtitle} />
+          <SectionTitle title={text("news.title")} subtitle={text("news.subtitle")} />
         </FadeIn>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">

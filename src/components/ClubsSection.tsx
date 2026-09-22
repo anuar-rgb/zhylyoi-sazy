@@ -5,6 +5,7 @@ import SectionTitle from "@/components/SectionTitle";
 import ClubsCarousel from "@/components/ClubsCarousel";
 import { listPublicCultureClubs, localized } from "@/lib/cultureClubs";
 import { applyFormLabels } from "@/data/applyFormLabels";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -71,10 +72,11 @@ const content: Record<
 export default async function ClubsSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  const text = await getSiteText(locale);
   // A carousel card is a photo with a link, so a club still missing either one is
   // left to the /collectives list, which renders both cases properly.
   const carouselClubs = [
-    t.ensemble,
+    { ...t.ensemble, title: text("clubs.ensembleTitle"), description: text("clubs.ensembleDescription") },
     ...(await listPublicCultureClubs("club")).flatMap((club) => {
       const image = club.images[0]?.url;
       if (!image || !club.slug) return [];
@@ -103,7 +105,7 @@ export default async function ClubsSection() {
       <div className="absolute inset-0 -z-10 bg-cream/50" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <SectionTitle title={t.title} subtitle={t.subtitle} />
+          <SectionTitle title={text("clubs.title")} subtitle={text("clubs.subtitle")} />
         </FadeIn>
 
         <FadeIn delay={120}>

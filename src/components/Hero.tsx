@@ -1,5 +1,6 @@
 import { getImageProps } from "next/image";
 import { getLocale } from "next-intl/server";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -29,8 +30,9 @@ const content: Record<
 export default async function Hero() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  const text = await getSiteText(locale);
 
-  const common = { alt: t.eyebrow, sizes: "100vw", quality: 80 };
+  const common = { alt: text("hero.eyebrow"), sizes: "100vw", quality: 80 };
   const {
     props: { srcSet: desktopSrcSet },
   } = getImageProps({
@@ -69,15 +71,15 @@ export default async function Hero() {
         <div className="absolute inset-0 flex flex-col justify-between sm:justify-end p-5 sm:p-8 lg:p-12 pt-16 sm:pt-8 lg:pt-12 pb-24 sm:pb-16 lg:pb-20">
           <div className="max-w-3xl">
             <p className="text-gold font-medium tracking-wide uppercase text-xs sm:text-sm mb-2 sm:mb-3 animate-fade-in">
-              {t.eyebrow}
+              {text("hero.eyebrow")}
             </p>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-3 sm:mb-5 leading-tight text-white animate-fade-in-delay-1">
-              <span className="text-gold">{t.titleGold}</span>
+              <span className="text-gold">{text("hero.titleGold")}</span>
               <br />
-              <span className="text-cream">{t.titleCream}</span>
+              <span className="text-cream">{text("hero.titleCream")}</span>
             </h1>
             <p className="text-sm sm:text-lg lg:text-xl text-white/70 sm:mb-7 max-w-xl leading-relaxed animate-fade-in-delay-2">
-              {t.subtitle}
+              {text("hero.subtitle")}
             </p>
           </div>
 

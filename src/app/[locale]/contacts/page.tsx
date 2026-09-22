@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import { getSiteOrganization, localizedOrganization } from "@/lib/organization";
 import { telHref } from "@/lib/contactLinks";
+import { getSiteText } from "@/lib/orgContent";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import type { Locale } from "@/i18n/routing";
@@ -97,8 +98,13 @@ const content = {
 export default async function ContactsPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  // Address, phone and email come from the institution card. Working hours, the
-  // director and the legal name stay in the text: they have no columns yet.
+  // Address, phone and email come from the institution card; the hours, the
+  // rehearsal schedule and the legal details come from the editable texts.
+  const text = await getSiteText(locale);
+  const rehearsals = [1, 2].map((n) => ({
+    day: text(`contacts.rehearsal${n}Day`),
+    time: text(`contacts.rehearsal${n}Time`),
+  }));
   const organization = await getSiteOrganization();
   const address = (organization && localizedOrganization(organization, locale, "address")) ?? t.address.join(", ");
 
@@ -172,9 +178,9 @@ export default async function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-ocean mb-1">{t.hoursTitle}</h3>
-                  <p className="text-ocean/70">{t.hours}</p>
-                  <p className="text-ocean/70">{t.lunch}</p>
-                  <p className="text-ocean/50 text-sm mt-1">{t.weekend}</p>
+                  <p className="text-ocean/70">{text("contacts.hours")}</p>
+                  <p className="text-ocean/70">{text("contacts.lunch")}</p>
+                  <p className="text-ocean/50 text-sm mt-1">{text("contacts.weekend")}</p>
                 </div>
               </div>
             </div>
@@ -239,7 +245,7 @@ export default async function ContactsPage() {
             <div className="bg-gold/10 rounded-3xl p-6 border border-gold/20">
               <h3 className="font-bold text-ocean mb-2">{t.rehearsalTitle}</h3>
               <ul className="space-y-2 text-ocean/70 text-sm">
-                {t.rehearsal.map((r) => (
+                {rehearsals.map((r) => (
                   <li key={r.day} className="flex justify-between">
                     <span>{r.day}</span>
                     <span className="font-medium">{r.time}</span>
@@ -247,7 +253,7 @@ export default async function ContactsPage() {
                 ))}
               </ul>
               <p className="text-ocean/50 text-xs mt-3">
-                {t.rehearsalNote}
+                {text("contacts.rehearsalNote")}
               </p>
             </div>
           </div>
@@ -260,7 +266,7 @@ export default async function ContactsPage() {
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
               <div>
                 <dt className="text-ocean/50">{t.legalFullNameLabel}</dt>
-                <dd className="text-ocean/80 mt-0.5">{t.legalFullName}</dd>
+                <dd className="text-ocean/80 mt-0.5">{text("contacts.legalFullName")}</dd>
               </div>
               <div>
                 <dt className="text-ocean/50">{t.bsnLabel}</dt>
@@ -268,11 +274,11 @@ export default async function ContactsPage() {
               </div>
               <div>
                 <dt className="text-ocean/50">{t.directorLabel}</dt>
-                <dd className="text-ocean/80 mt-0.5">{t.director}</dd>
+                <dd className="text-ocean/80 mt-0.5">{text("contacts.director")}</dd>
               </div>
               <div>
                 <dt className="text-ocean/50">{t.founderLabel}</dt>
-                <dd className="text-ocean/80 mt-0.5">{t.founder}</dd>
+                <dd className="text-ocean/80 mt-0.5">{text("contacts.founder")}</dd>
               </div>
             </dl>
           </div>
