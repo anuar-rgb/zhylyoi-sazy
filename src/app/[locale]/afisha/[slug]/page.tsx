@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
-import { events, getEvent, buildIcsDataUri } from "@/data/events";
+import { getPublicCultureEventBySlug } from "@/lib/cultureEvents";
+import { buildIcsDataUri, toEventView } from "@/lib/eventView";
 import type { Locale } from "@/i18n/routing";
 
 const WHATSAPP_PHONE_DIGITS = "77789276387";
@@ -38,9 +39,9 @@ const content: Record<
   },
 };
 
-export function generateStaticParams() {
-  return events.kk.map((event) => ({ slug: event.slug }));
-}
+// No generateStaticParams here on purpose: events are created and edited in the
+// admin panel, so the page is rendered per request. One added today appears
+// without a rebuild, and one that was deleted stops resolving immediately.
 
 export async function generateMetadata({
   params,
@@ -49,8 +50,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const locale = (await getLocale()) as Locale;
-  const event = getEvent(locale, slug);
-  if (!event) return {};
+  const record = await getPublicCultureEventBySlug(slug);
+  if (!record) return {};
+  const event = toEventView(record, locale);
   return { title: event.title, description: event.description };
 }
 
@@ -62,9 +64,11 @@ export default async function EventDetailPage({
   const { slug } = await params;
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  const event = getEvent(locale, slug);
+  const record = await getPublicCultureEventBySlug(slug);
 
-  if (!event) notFound();
+  if (!record) notFound();
+
+  const event = toEventView(record, locale);
 
   const waMessage = `${t.waIntro} «${event.title}» (${event.date}, ${event.time}).`;
   const waHref = `https://wa.me/${WHATSAPP_PHONE_DIGITS}?text=${encodeURIComponent(waMessage)}`;
@@ -87,15 +91,17 @@ export default async function EventDetailPage({
 
         <FadeIn>
           <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-cream-dark">
-            <div className="relative aspect-[16/9]">
-              <Image
-                src={event.image}
-                alt={event.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 768px"
-                priority
-              />
+            <div className="relative aspect-[16/9] bg-ocean/5">
+              {event.image && (
+                <Image
+                  src={event.image}
+                  alt={event.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 768px"
+                  priority
+                />
+              )}
               <div className="absolute top-4 left-4 bg-ocean text-cream text-sm font-semibold px-3 py-1.5 rounded-full shadow">
                 {event.date}
               </div>

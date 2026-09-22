@@ -145,7 +145,8 @@ export default function EventForm({
           />
           <Field name="location_kk" label="Место (kk)" defaultValue={event?.locationKk} />
           <Field name="location_ru" label="Место (ru)" defaultValue={event?.locationRu} />
-          <Field name="organizer" label="Организатор" defaultValue={event?.organizer} />
+          <Field name="organizer_kk" label="Организатор (kk)" defaultValue={event?.organizerKk} />
+          <Field name="organizer_ru" label="Организатор (ru)" defaultValue={event?.organizerRu} />
           <Field name="age_limit" label="Возрастное ограничение" defaultValue={event?.ageLimit} placeholder="например: 6+" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">Время указывается по Атырау (UTC+5).</p>

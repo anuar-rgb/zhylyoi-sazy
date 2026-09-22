@@ -1,7 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
-import type { Locale } from "@/i18n/routing";
 import { EVENT_CATEGORIES, EVENT_STATUSES, type EventCategory, type EventStatus } from "@/lib/eventFields";
 
 export * from "@/lib/eventFields";
@@ -26,7 +25,8 @@ export type CultureEventRecord = {
   eventDate: string;
   endDate: string | null;
   categories: EventCategory[];
-  organizer: string | null;
+  organizerKk: string | null;
+  organizerRu: string | null;
   ageLimit: string | null;
   images: EventImage[];
 };
@@ -35,7 +35,7 @@ const COLUMNS =
   "id, organization_id, slug, status, title, title_kk, title_ru, " +
   "description_kk, description_ru, full_text_kk, full_text_ru, " +
   "location_kk, location_ru, event_date, end_date, categories, " +
-  "organizer, age_limit, images";
+  "organizer_kk, organizer_ru, age_limit, images";
 
 type Row = Record<string, unknown>;
 
@@ -83,30 +83,11 @@ function toRecord(row: Row): CultureEventRecord {
     eventDate: String(row.event_date),
     endDate: str(row.end_date),
     categories: toCategories(row.categories),
-    organizer: str(row.organizer),
+    organizerKk: str(row.organizer_kk),
+    organizerRu: str(row.organizer_ru),
     ageLimit: str(row.age_limit),
     images: toImages(row.images),
   };
-}
-
-/** Picks the viewer's language, falling back to the other rather than showing nothing. */
-export function localizedEvent(
-  record: CultureEventRecord,
-  locale: Locale,
-  field: "title" | "description" | "fullText" | "location"
-): string | null {
-  const kk = record[`${field}Kk` as keyof CultureEventRecord] as string | null;
-  const ru = record[`${field}Ru` as keyof CultureEventRecord] as string | null;
-  return locale === "kk" ? (kk ?? ru) : (ru ?? kk);
-}
-
-/** Splits stored long text into paragraphs on blank lines. */
-export function paragraphs(text: string | null): string[] {
-  if (!text) return [];
-  return text
-    .split(/\r?\n\s*\r?\n/)
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
 }
 
 /**

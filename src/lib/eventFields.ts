@@ -36,6 +36,7 @@ export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
  * dependence on the server's own zone, which on Railway is UTC.
  */
 export const INSTITUTION_OFFSET = "+05:00";
+export const INSTITUTION_TIME_ZONE = "Asia/Aqtau";
 const INSTITUTION_OFFSET_MS = 5 * 60 * 60 * 1000;
 
 /**
@@ -69,6 +70,36 @@ export function formatEventDateTime(iso: string | null): string {
   return new Date(parsed).toLocaleString("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "Asia/Aqtau",
+    timeZone: INSTITUTION_TIME_ZONE,
   });
 }
+
+/**
+ * The shape localizedEvent reads: a record carrying `<field>Kk` and `<field>Ru`.
+ *
+ * Declared structurally rather than by importing the record type, so this module
+ * keeps no link to the server-only data layer and stays safe in the browser.
+ */
+type LocalizedEventFields = Record<string, unknown>;
+
+/** Picks the viewer's language, falling back to the other rather than showing nothing. */
+export function localizedEvent(
+  record: LocalizedEventFields,
+  locale: "kk" | "ru",
+  field: "title" | "description" | "fullText" | "location" | "organizer"
+): string | null {
+  const kk = record[`${field}Kk`];
+  const ru = record[`${field}Ru`];
+  const pick = locale === "kk" ? (kk ?? ru) : (ru ?? kk);
+  return typeof pick === "string" && pick.length > 0 ? pick : null;
+}
+
+/** Splits stored long text into paragraphs on blank lines. */
+export function paragraphs(text: string | null): string[] {
+  if (!text) return [];
+  return text
+    .split(/\r?\n\s*\r?\n/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+}
+

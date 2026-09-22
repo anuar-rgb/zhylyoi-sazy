@@ -3,7 +3,9 @@ import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import AfishaFilters from "@/components/AfishaFilters";
-import { events, type EventCategory } from "@/data/events";
+import { listPublicCultureEvents } from "@/lib/cultureEvents";
+import { toEventView } from "@/lib/eventView";
+import type { EventCategory } from "@/lib/eventFields";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, Metadata> = {
@@ -66,7 +68,7 @@ const content: Record<
 export default async function AfishaPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  const allEvents = events[locale];
+  const allEvents = (await listPublicCultureEvents()).map((e) => toEventView(e, locale));
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
