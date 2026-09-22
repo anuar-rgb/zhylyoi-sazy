@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
-import { canPublish } from "@/lib/roles";
 import { getSiteOrganizationId } from "@/lib/organization";
 import EventForm from "../EventForm";
 import { createEvent } from "../actions";
@@ -15,5 +14,5 @@ export default async function NewEventPage() {
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
-  return <EventForm organizationId={organizationId} action={createEvent} heading="Новое мероприятие" canPublish={canPublish(identity.role)} />;
+  return <EventForm organizationId={organizationId} action={createEvent} heading="Новое мероприятие" />;
 }

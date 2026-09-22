@@ -17,8 +17,8 @@ import { MEDIA_BUCKET } from "@/lib/storage";
 
 export type FormState = { error: string | null };
 
-/** What RLS enforces: only an administrator may publish or touch a published record. */
-const PUBLISH_DENIED = "Опубликовать и править опубликованное может только администратор учреждения.";
+/** Kept as a readable fallback: RLS still has the final say on every write. */
+const PUBLISH_DENIED = "Недостаточно прав для этого изменения.";
 
 /** A trimmed value, or null — an empty input means "unknown", not an empty string. */
 function field(form: FormData, name: string): string | null {
@@ -173,7 +173,6 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
 
   // RLS filters rows instead of refusing the statement, so a denied edit changes
   // nothing and reports no error. Without this check it would look like success.
-  // An editor may only change drafts — a published event needs an administrator.
   if (count === 0) {
     return { error: PUBLISH_DENIED };
   }

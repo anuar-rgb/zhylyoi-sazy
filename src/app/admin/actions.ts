@@ -20,7 +20,7 @@ export async function removeApplication(id: string): Promise<{ ok: boolean }> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
 
-  // RLS has the final say: a signed-in editor may delete nothing at all, and that
+  // RLS has the final say: a signed-in user may delete nothing at all, and that
   // comes back as zero rows rather than an error. Report it instead of pretending.
   const ok = await deleteApplication(id);
   if (ok) revalidatePath("/admin/applications");

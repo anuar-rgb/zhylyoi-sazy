@@ -1,13 +1,17 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-/** Mirrors the role CHECK constraint on public.profiles. */
+/**
+ * Mirrors the role CHECK constraint on public.profiles.
+ *
+ * Three roles by design: the platform owner, one administrator per region, one per
+ * institution. There is no "prepares but cannot publish" role — whoever holds a
+ * profile does everything within their scope.
+ */
 const ROLE_LABELS: Record<string, string> = {
   platform_admin: "Администратор платформы",
-  regional_admin: "Региональный администратор",
+  regional_admin: "Администратор области",
   organization_admin: "Администратор учреждения",
-  editor: "Редактор",
-  manager: "Менеджер",
 };
 
 export type StaffIdentity = {

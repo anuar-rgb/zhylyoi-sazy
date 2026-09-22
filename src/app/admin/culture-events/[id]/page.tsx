@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
-import { canPublish } from "@/lib/roles";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureEventById } from "@/lib/cultureEvents";
 import EventForm from "../EventForm";
@@ -27,7 +26,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       organizationId={organizationId}
       action={updateEvent}
       heading={event.titleRu ?? event.titleKk ?? "Мероприятие"}
-      canPublish={canPublish(identity.role)}
+     
     />
   );
 }

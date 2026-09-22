@@ -56,16 +56,12 @@ export default function EventForm({
   organizationId,
   action,
   heading,
-  canPublish,
 }: {
   event?: CultureEventRecord;
   organizationId: string;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
-  /** Mirrors the RLS rule, so the form does not offer a status the database will refuse. */
-  canPublish: boolean;
 }) {
-  const statuses = canPublish ? EVENT_STATUSES : EVENT_STATUSES.filter((s) => s === "draft" || s === "pending");
   const [state, formAction, pending] = useActionState(action, { error: null });
   const [images, setImages] = useState<EventImage[]>(event?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -230,7 +226,7 @@ export default function EventForm({
               Статус
             </label>
             <select id="status" name="status" defaultValue={event?.status ?? "draft"} className={INPUT}>
-              {statuses.map((status) => (
+              {EVENT_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {EVENT_STATUS_LABELS[status]}
                 </option>
@@ -240,7 +236,6 @@ export default function EventForm({
         </div>
         <p className="text-xs text-ocean/40 mt-1.5">
           На сайте показываются только опубликованные. Страница будет доступна по адресу /afisha/&lt;адрес&gt;.
-          {!canPublish && " Публикует администратор учреждения."}
         </p>
       </div>
 
