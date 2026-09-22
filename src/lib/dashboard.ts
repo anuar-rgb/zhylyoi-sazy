@@ -79,7 +79,7 @@ export const getDashboardStats = cache(
     const supabase = await createClient();
 
     // head: true asks Postgres for the count without transferring any rows.
-    const countOf = (table: "applications" | "events" | "news" | "culture_clubs") => {
+    const countOf = (table: "applications" | "culture_events" | "culture_news" | "culture_clubs") => {
       const query = supabase.from(table).select("*", { count: "exact", head: true });
       return organizationId ? query.eq("organization_id", organizationId) : query;
     };
@@ -104,10 +104,10 @@ export const getDashboardStats = cache(
     ] = await Promise.all([
         countOf("applications"),
         countOf("applications").eq("status", "new"),
-        countOf("events").eq("status", "published"),
-        countOf("events").eq("status", "draft"),
-        countOf("news").eq("status", "published"),
-        countOf("news").eq("status", "draft"),
+        countOf("culture_events").eq("status", "published"),
+        countOf("culture_events").eq("status", "draft"),
+        countOf("culture_news").eq("status", "published"),
+        countOf("culture_news").eq("status", "draft"),
         countOf("culture_clubs").eq("is_active", true),
         organizationId ? organizationQuery.eq("id", organizationId) : organizationQuery,
       ]);

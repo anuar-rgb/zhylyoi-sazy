@@ -4,10 +4,9 @@ import { useActionState, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureClubImage, CultureClubRecord } from "@/lib/cultureClubs";
 import type { FormState } from "./actions";
-
-const BUCKET = "club-images";
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -76,17 +75,15 @@ export default function ClubForm({
     const added: CultureClubImage[] = [];
 
     for (const file of files) {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      // The first segment is what the Storage policy checks.
-      const path = `${organizationId}/clubs/${crypto.randomUUID()}.${ext}`;
+      const path = mediaPath(organizationId, "culture-clubs", file.name);
 
-      const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
+      const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, file, { upsert: false });
       if (error) {
         setUploadError(`Не удалось загрузить «${file.name}»: ${error.message}`);
         break;
       }
 
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
       added.push({ url: data.publicUrl, path });
     }
 

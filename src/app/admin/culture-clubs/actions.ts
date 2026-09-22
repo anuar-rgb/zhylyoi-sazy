@@ -6,10 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureClubById, type CultureClubImage } from "@/lib/cultureClubs";
+import { MEDIA_BUCKET } from "@/lib/storage";
 
 export type FormState = { error: string | null };
-
-const BUCKET = "club-images";
 
 /** A trimmed value, or null — an empty input means "unknown", not an empty string. */
 function field(form: FormData, name: string): string | null {
@@ -175,7 +174,7 @@ export async function deleteClub(id: string): Promise<{ ok: boolean; error?: str
   // Only after the row is gone, and only for files that are actually ours —
   // seeded images point at Pexels and have no path.
   const paths = club.images.map((i) => i.path).filter((p): p is string => p !== null);
-  if (paths.length > 0) await supabase.storage.from(BUCKET).remove(paths);
+  if (paths.length > 0) await supabase.storage.from(MEDIA_BUCKET).remove(paths);
 
   revalidateClub(club.slug);
   return { ok: true };
