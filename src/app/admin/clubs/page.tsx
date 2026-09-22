@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { listClubs } from "@/lib/clubs";
 import DeleteClubButton from "./DeleteClubButton";

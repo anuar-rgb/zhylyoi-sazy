@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Image from "next/image";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { ClubImage, ClubRecord } from "@/lib/clubs";
 import type { FormState } from "./actions";
