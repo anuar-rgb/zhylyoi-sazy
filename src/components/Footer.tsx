@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { getSiteOrganization, localizedOrganization } from "@/lib/organization";
+import { telHref } from "@/lib/contactLinks";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -12,7 +14,7 @@ const content: Record<
     navTitle: string;
     nav: { href: string; label: string }[];
     contactsTitle: string;
-    address: string[];
+    phoneLabel: string;
     copyright: string;
   }
 > = {
@@ -31,7 +33,7 @@ const content: Record<
       { href: "/contacts", label: "Байланыс" },
     ],
     contactsTitle: "Байланыс",
-    address: ["Атырау облысы, Жылыой ауданы", "Құлсары қ., Махамбет даңғылы, 37", "Тел: +7 778 927 63 87", "dk.kenzhylyoi@gmail.com"],
+    phoneLabel: "Тел",
     copyright: "«Кең Жылыой» Жылыой аудандық мәдениет үйі",
   },
   ru: {
@@ -49,12 +51,7 @@ const content: Record<
       { href: "/contacts", label: "Контакты" },
     ],
     contactsTitle: "Контакты",
-    address: [
-      "Атырауская область, Жылыойский район",
-      "г. Кульсары, проспект Махамбет, 37",
-      "Тел: +7 778 927 63 87",
-      "dk.kenzhylyoi@gmail.com",
-    ],
+    phoneLabel: "Тел",
     copyright: "Дом культуры «Кен Жылыой» Жылыойского района",
   },
 };
@@ -62,6 +59,10 @@ const content: Record<
 export default async function Footer() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  // Контакты берутся из карточки учреждения, чтобы правка в админке доходила
+  // до подвала на каждой странице.
+  const organization = await getSiteOrganization();
+  const address = organization ? localizedOrganization(organization, locale, "address") : null;
 
   return (
     <footer className="bg-ocean-dark text-cream/80 mt-auto">
@@ -96,9 +97,22 @@ export default async function Footer() {
           <div>
             <h3 className="text-gold font-semibold mb-4">{t.contactsTitle}</h3>
             <ul className="space-y-2 text-sm">
-              {t.address.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
+              {address && <li className="whitespace-pre-line">{address}</li>}
+              {organization?.phone && (
+                <li>
+                  {t.phoneLabel}:{" "}
+                  <a href={telHref(organization.phone)} className="hover:text-gold transition-colors">
+                    {organization.phone}
+                  </a>
+                </li>
+              )}
+              {organization?.email && (
+                <li>
+                  <a href={`mailto:${organization.email}`} className="hover:text-gold transition-colors">
+                    {organization.email}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>

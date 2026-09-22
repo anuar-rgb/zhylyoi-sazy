@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
+import { getSiteOrganization, localizedOrganization } from "@/lib/organization";
+import { telHref } from "@/lib/contactLinks";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import type { Locale } from "@/i18n/routing";
@@ -95,6 +97,10 @@ const content = {
 export default async function ContactsPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  // Address, phone and email come from the institution card. Working hours, the
+  // director and the legal name stay in the text: they have no columns yet.
+  const organization = await getSiteOrganization();
+  const address = (organization && localizedOrganization(organization, locale, "address")) ?? t.address.join(", ");
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -116,9 +122,7 @@ export default async function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-ocean mb-1">{t.addressTitle}</h3>
-                  {t.address.map((line) => (
-                    <p key={line} className="text-ocean/70">{line}</p>
-                  ))}
+                  <p className="text-ocean/70 whitespace-pre-line">{address}</p>
                 </div>
               </div>
             </div>
@@ -132,7 +136,11 @@ export default async function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-ocean mb-1">{t.phoneTitle}</h3>
-                  <a href="tel:+77789276387" className="text-ocean/70 hover:text-gold transition-colors">+7 778 927 63 87</a>
+                  {organization?.phone ? (
+                    <a href={telHref(organization.phone)} className="text-ocean/70 hover:text-gold transition-colors">
+                      {organization.phone}
+                    </a>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -146,7 +154,11 @@ export default async function ContactsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-ocean mb-1">{t.emailTitle}</h3>
-                  <a href="mailto:dk.kenzhylyoi@gmail.com" className="text-ocean/70 hover:text-gold transition-colors">dk.kenzhylyoi@gmail.com</a>
+                  {organization?.email ? (
+                    <a href={`mailto:${organization.email}`} className="text-ocean/70 hover:text-gold transition-colors">
+                      {organization.email}
+                    </a>
+                  ) : null}
                 </div>
               </div>
             </div>
