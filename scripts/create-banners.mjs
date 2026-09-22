@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import path from "path";
 import { fileURLToPath } from "url";
+import { PUBLIC_SITE_HOST } from "./siteUrl.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.join(__dirname, "..", "public");
@@ -19,7 +20,7 @@ async function createBannerA5() {
     .resize(W, 900, { fit: "cover", position: "top" })
     .toBuffer();
 
-  const logo = await sharp(path.join(gallery, "logo.jpeg"))
+  const logo = await sharp(path.join(gallery, "logo.png"))
     .resize(200, 200, { fit: "cover" })
     .composite([{
       input: Buffer.from(`<svg width="200" height="200"><circle cx="100" cy="100" r="100" fill="white"/></svg>`),
@@ -101,7 +102,7 @@ async function createBannerA5() {
     <text x="570" y="1900" font-family="Arial, sans-serif" font-size="34" fill="${CREAM}" opacity="0.85">Ансамбльдің толық портфолиосымен,</text>
     <text x="570" y="1945" font-family="Arial, sans-serif" font-size="34" fill="${CREAM}" opacity="0.85">құрамымен және бейнежазбаларымен</text>
     <text x="570" y="1990" font-family="Arial, sans-serif" font-size="34" fill="${CREAM}" opacity="0.85">танысыңыз</text>
-    <text x="570" y="2080" font-family="Arial, sans-serif" font-size="28" fill="${GOLD}" opacity="0.7">zhylyoi-sazy-production.up.railway.app</text>
+    <text x="570" y="2080" font-family="Arial, sans-serif" font-size="28" fill="${GOLD}" opacity="0.7">${PUBLIC_SITE_HOST}</text>
 
     <!-- Footer contacts -->
     <text x="${W / 2}" y="2330" font-family="Arial, sans-serif" font-size="32" fill="${DARKRED}" text-anchor="middle">📞 +7 778 927 63 87    ✉ dk.kenzhylyoi@gmail.com</text>
@@ -129,7 +130,7 @@ async function createBannerSquare() {
     .resize(W, 500, { fit: "cover", position: "top" })
     .toBuffer();
 
-  const logo = await sharp(path.join(gallery, "logo.jpeg"))
+  const logo = await sharp(path.join(gallery, "logo.png"))
     .resize(120, 120, { fit: "cover" })
     .composite([{
       input: Buffer.from(`<svg width="120" height="120"><circle cx="60" cy="60" r="60" fill="white"/></svg>`),
@@ -189,7 +190,7 @@ async function createBannerSquare() {
 
     <text x="300" y="800" font-family="Arial, sans-serif" font-size="34" fill="${GOLD}" font-weight="700">QR-кодты сканерлеңіз!</text>
     <text x="300" y="845" font-family="Arial, sans-serif" font-size="22" fill="${CREAM}" opacity="0.85">Толық портфолио, құрам, бейнелер</text>
-    <text x="300" y="920" font-family="Arial, sans-serif" font-size="18" fill="${GOLD}" opacity="0.7">zhylyoi-sazy-production.up.railway.app</text>
+    <text x="300" y="920" font-family="Arial, sans-serif" font-size="18" fill="${GOLD}" opacity="0.7">${PUBLIC_SITE_HOST}</text>
 
     <!-- Footer -->
     <text x="${W / 2}" y="1030" font-family="Arial, sans-serif" font-size="20" fill="${DARKRED}" text-anchor="middle">📞 +7 778 927 63 87 · ✉ dk.kenzhylyoi@gmail.com · 📍 Жылыой ауданы</text>
@@ -219,7 +220,7 @@ async function createBannerWide() {
     .resize(960, H, { fit: "cover", position: "center" })
     .toBuffer();
 
-  const logo = await sharp(path.join(gallery, "logo.jpeg"))
+  const logo = await sharp(path.join(gallery, "logo.png"))
     .resize(140, 140, { fit: "cover" })
     .composite([{
       input: Buffer.from(`<svg width="140" height="140"><circle cx="70" cy="70" r="70" fill="white"/></svg>`),
@@ -270,7 +271,7 @@ async function createBannerWide() {
     <text x="350" y="690" font-family="Arial, sans-serif" font-size="36" fill="${GOLD}" font-weight="700">QR-кодты сканерлеңіз!</text>
     <text x="350" y="740" font-family="Arial, sans-serif" font-size="22" fill="${CREAM}" opacity="0.85">Толық портфолио, құрам,</text>
     <text x="350" y="775" font-family="Arial, sans-serif" font-size="22" fill="${CREAM}" opacity="0.85">бейнежазбалар</text>
-    <text x="350" y="835" font-family="Arial, sans-serif" font-size="18" fill="${GOLD}" opacity="0.6">zhylyoi-sazy-production.up.railway.app</text>
+    <text x="350" y="835" font-family="Arial, sans-serif" font-size="18" fill="${GOLD}" opacity="0.6">${PUBLIC_SITE_HOST}</text>
 
     <!-- Footer -->
     <text x="80" y="970" font-family="Arial, sans-serif" font-size="22" fill="${CREAM}" opacity="0.6">📞 +7 778 927 63 87</text>
