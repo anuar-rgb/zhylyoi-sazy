@@ -86,6 +86,7 @@ export default async function ClubsSection() {
           description: localized(club, locale, "description") ?? "",
           image,
           href: `/clubs/${club.slug}`,
+          slug: club.slug,
           linkLabel: t.infoLabel,
         },
       ];

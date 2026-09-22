@@ -23,7 +23,10 @@ export async function removeApplication(id: string): Promise<{ ok: boolean }> {
   // RLS has the final say: a signed-in user may delete nothing at all, and that
   // comes back as zero rows rather than an error. Report it instead of pretending.
   const ok = await deleteApplication(id);
-  if (ok) revalidatePath("/admin/applications");
+  // "layout", and /admin rather than the page: the badge with the count of new ones
+  // lives in the admin layout, so refreshing only the applications page would leave a
+  // stale number sitting in the navigation beside the corrected list.
+  if (ok) revalidatePath("/admin", "layout");
 
   return { ok };
 }
@@ -38,11 +41,8 @@ export async function markApplication(id: string, status: ApplicationStatus): Pr
   if (!user) return { ok: false };
 
   const ok = await setApplicationStatus(id, status);
-  if (ok) {
-    revalidatePath("/admin/applications");
-    // The dashboard counts the new ones.
-    revalidatePath("/admin");
-  }
+  // Covers the list, the dashboard counters and the badge in the layout in one call.
+  if (ok) revalidatePath("/admin", "layout");
 
   return { ok };
 }

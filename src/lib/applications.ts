@@ -11,6 +11,21 @@ export type ApplicationRecord = {
   childName: string;
   age: string;
   parentPhone: string;
+  /**
+   * The club this application points at, when it points at a real one.
+   *
+   * Null for the ensemble card on the home page, which is not a culture_clubs row,
+   * and for anything signed up for before the link was recorded. Grouping falls back
+   * to clubTitle in that case.
+   */
+  clubId: string | null;
+  /**
+   * What the club was called at the moment of applying.
+   *
+   * Kept beside the link on purpose: renaming a club must not rewrite the history of
+   * what people signed up for, and a deleted club would otherwise leave an
+   * application with nothing to show at all.
+   */
   clubTitle: string;
   comment: string;
   consent: boolean;
@@ -29,8 +44,8 @@ export type NewApplication = {
 };
 
 const COLUMNS =
-  "id, created_at, applicant_name, applicant_age, applicant_phone, club_title, message, consent_given, " +
-  "status, processed_at";
+  "id, created_at, applicant_name, applicant_age, applicant_phone, club_id, club_title, message, " +
+  "consent_given, status, processed_at";
 
 type ApplicationRow = {
   id: string;
@@ -38,6 +53,7 @@ type ApplicationRow = {
   applicant_name: string;
   applicant_age: string | null;
   applicant_phone: string;
+  club_id: string | null;
   club_title: string | null;
   message: string | null;
   consent_given: boolean;
@@ -53,6 +69,7 @@ function toRecord(row: ApplicationRow): ApplicationRecord {
     childName: row.applicant_name,
     age: row.applicant_age ?? "",
     parentPhone: row.applicant_phone,
+    clubId: row.club_id,
     clubTitle: row.club_title ?? "",
     comment: row.message ?? "",
     consent: row.consent_given,
@@ -98,7 +115,8 @@ export async function readAllApplications(): Promise<ApplicationRecord[]> {
  */
 export async function appendApplication(
   input: NewApplication,
-  organizationId: string
+  organizationId: string,
+  clubId: string | null
 ): Promise<boolean> {
   const supabase = await createClient();
 
@@ -107,6 +125,7 @@ export async function appendApplication(
     applicant_name: input.childName,
     applicant_age: input.age,
     applicant_phone: input.parentPhone,
+    club_id: clubId,
     club_title: input.clubTitle,
     message: input.comment || null,
     consent_given: true,
@@ -114,6 +133,27 @@ export async function appendApplication(
   });
 
   return !error;
+}
+
+/**
+ * How many applications nobody has picked up yet.
+ *
+ * Feeds the badge in the admin navigation, which renders on every admin page, so it
+ * asks for the count alone: head: true transfers no rows at all.
+ *
+ * Returns 0 when the query fails. The badge is a prompt to look, not a record — a
+ * failed count must not put a number on screen that nothing stands behind, and must
+ * not take the surrounding navigation down with it.
+ */
+export async function countNewApplications(): Promise<number> {
+  const supabase = await createClient();
+
+  const { count, error } = await supabase
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "new");
+
+  return error ? 0 : (count ?? 0);
 }
 
 /**

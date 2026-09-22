@@ -24,12 +24,15 @@ export type ApplyFormLabels = {
 
 type ClubApplyButtonProps = ApplyFormLabels & {
   clubTitle: string;
+  /** Address of the club being applied to; omitted where the card is not a club. */
+  clubSlug?: string;
   triggerLabel: string;
   triggerClassName: string;
 };
 
 export default function ClubApplyButton({
   clubTitle,
+  clubSlug,
   triggerLabel,
   triggerClassName,
   modalHeading,
@@ -94,6 +97,7 @@ export default function ClubApplyButton({
       age,
       parentPhone: phone,
       clubTitle,
+      clubSlug,
       comment,
       consent,
     });

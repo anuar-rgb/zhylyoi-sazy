@@ -177,6 +177,7 @@ export default async function ClubDetailPage({
 
               <ClubApplyButton
                 clubTitle={title}
+                clubSlug={slug}
                 triggerLabel={t.apply}
                 triggerClassName="btn-primary inline-flex items-center justify-center px-6 py-3 text-sm font-semibold"
                 {...applyFormLabels[locale]}

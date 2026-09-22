@@ -1,10 +1,23 @@
 "use server";
 
 import { appendApplication, type NewApplication } from "@/lib/applications";
+import { getPublicCultureClubBySlug } from "@/lib/cultureClubs";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { notifyTelegram } from "@/lib/telegram";
 
-export type ApplicationInput = NewApplication & { consent: boolean };
+export type ApplicationInput = NewApplication & {
+  consent: boolean;
+  /**
+   * Which club, as it appears in the page address.
+   *
+   * A slug rather than an id: this arrives from the browser, and a server function is
+   * a public endpoint, so an id would have to be checked against the institution
+   * anyway. Looking the slug up does that check as part of the lookup.
+   *
+   * Absent for the ensemble card on the home page, which is not a club.
+   */
+  clubSlug?: string;
+};
 
 export type SubmitResult =
   | { ok: true }
@@ -29,7 +42,12 @@ export async function submitClubApplication(input: ApplicationInput): Promise<Su
     comment: input.comment.trim(),
   };
 
-  const stored = await appendApplication(application, organizationId);
+  // Resolved, never taken on trust. A club that belongs to another institution, is
+  // hidden, or does not exist comes back as null and the application is still stored
+  // under its title — losing the link is better than losing the application.
+  const club = input.clubSlug ? await getPublicCultureClubBySlug(input.clubSlug) : null;
+
+  const stored = await appendApplication(application, organizationId, club?.id ?? null);
   if (!stored) return { ok: false, error: "failed" };
 
   // Only once the application is safely stored. A notification about a submission that

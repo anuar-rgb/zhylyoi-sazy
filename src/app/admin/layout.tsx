@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
+import { countNewApplications } from "@/lib/applications";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
 import "../globals.css";
@@ -28,7 +29,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect("/login");
 
-  const identity = await getStaffIdentity();
+  // In the layout rather than on the applications page: the point of the badge is
+  // that it is seen while working on something else. RLS scopes the count to what
+  // this person may read, so nobody is told about another institution's applications.
+  const [identity, newApplications] = await Promise.all([getStaffIdentity(), countNewApplications()]);
 
   return (
     <html lang="ru" className={`${montserrat.variable} h-full antialiased`}>
@@ -64,7 +68,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {/* min-w-0: without it the grid item's default min-width:auto stretches to the
               nav's full content width, so the nav's horizontal scroll never engages on mobile. */}
           <aside className="min-w-0 lg:sticky lg:top-8 lg:self-start">
-            <AdminNav />
+            <AdminNav newApplications={newApplications} />
           </aside>
           <main className="min-w-0">{children}</main>
         </div>

@@ -12,6 +12,8 @@ type Club = {
   imagePosition?: string;
   href: string;
   linkLabel: string;
+  /** Absent on the ensemble card, which links to /collectives rather than to a club. */
+  slug?: string;
   real?: boolean;
 };
 
@@ -150,6 +152,7 @@ export default function ClubsCarousel({
                 </Link>
                 <ClubApplyButton
                   clubTitle={club.title}
+                  clubSlug={club.slug}
                   triggerLabel={signUpLabel}
                   triggerClassName="btn-primary shrink-0 px-4 py-2 text-sm font-semibold"
                   {...applyLabels}
