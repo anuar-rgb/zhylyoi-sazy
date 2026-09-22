@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 
+/** Mirrors the CHECK constraint on applications.status. */
+export const APPLICATION_STATUSES = ["new", "in_progress", "completed", "rejected"] as const;
+export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
+
 /** A stored application, in the shape the admin UI reads. */
 export type ApplicationRecord = {
   id: string;
@@ -10,6 +14,9 @@ export type ApplicationRecord = {
   clubTitle: string;
   comment: string;
   consent: boolean;
+  status: ApplicationStatus;
+  /** ISO instant of the moment it was marked processed, null while it is new. */
+  processedAt: string | null;
 };
 
 /** What the public form submits. id and created_at belong to the database. */
@@ -22,7 +29,8 @@ export type NewApplication = {
 };
 
 const COLUMNS =
-  "id, created_at, applicant_name, applicant_age, applicant_phone, club_title, message, consent_given";
+  "id, created_at, applicant_name, applicant_age, applicant_phone, club_title, message, consent_given, " +
+  "status, processed_at";
 
 type ApplicationRow = {
   id: string;
@@ -33,6 +41,8 @@ type ApplicationRow = {
   club_title: string | null;
   message: string | null;
   consent_given: boolean;
+  status: string;
+  processed_at: string | null;
 };
 
 /** Keeps the database column names from leaking into the pages that render applications. */
@@ -46,6 +56,10 @@ function toRecord(row: ApplicationRow): ApplicationRecord {
     clubTitle: row.club_title ?? "",
     comment: row.message ?? "",
     consent: row.consent_given,
+    status: APPLICATION_STATUSES.includes(row.status as ApplicationStatus)
+      ? (row.status as ApplicationStatus)
+      : "new",
+    processedAt: row.processed_at,
   };
 }
 
@@ -66,7 +80,9 @@ export async function readAllApplications(): Promise<ApplicationRecord[]> {
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
-  return (data as ApplicationRow[]).map(toRecord);
+  // The long select string makes supabase-js infer a string-error type; the shape
+  // is asserted here instead, as in the other data modules.
+  return (data as unknown as ApplicationRow[]).map(toRecord);
 }
 
 /**
@@ -113,6 +129,39 @@ export async function deleteApplication(id: string): Promise<boolean> {
   const { error, count } = await supabase
     .from("applications")
     .delete({ count: "exact" })
+    .eq("id", id);
+
+  return !error && count === 1;
+}
+
+/**
+ * Marks an application processed, or puts it back among the new ones.
+ *
+ * processed_by and processed_at travel with the status so the record says who
+ * handled it and when, rather than only that somebody did. Clearing the status
+ * clears them too, otherwise a returned application would keep a stale signature.
+ *
+ * Judged by the row count: a caller without rights updates nothing and gets no
+ * error, because RLS filters rows instead of refusing the statement.
+ */
+export async function setApplicationStatus(id: string, status: ApplicationStatus): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const handled = status !== "new";
+
+  const { error, count } = await supabase
+    .from("applications")
+    .update(
+      {
+        status,
+        processed_by: handled ? (user?.id ?? null) : null,
+        processed_at: handled ? new Date().toISOString() : null,
+      },
+      { count: "exact" }
+    )
     .eq("id", id);
 
   return !error && count === 1;
