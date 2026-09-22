@@ -128,7 +128,7 @@ export default async function DashboardPage() {
           primary={stats.eventsPublished}
           label="опубликовано"
           secondary={{ metric: stats.eventsDraft, label: "Черновиков" }}
-          href="/admin/events"
+          href="/admin/culture-events"
         />
         <StatCard
           title="Новости"

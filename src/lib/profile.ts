@@ -15,6 +15,8 @@ export type StaffIdentity = {
   displayName: string;
   /** null when the user has no profile row yet — nothing to label. */
   roleLabel: string | null;
+  /** The raw role, for deciding what the interface offers. Null without a profile. */
+  role: string | null;
   /** null for a platform admin, who belongs to no single institution. */
   organizationId: string | null;
   /** false when the signed-in account has no row in public.profiles. */
@@ -51,6 +53,7 @@ export const getStaffIdentity = cache(async (): Promise<StaffIdentity | null> =>
     displayName: fullName || user.email || "Сотрудник",
     // An unknown role still shows something: better a raw value than a blank badge.
     roleLabel: profile ? (ROLE_LABELS[profile.role] ?? profile.role) : null,
+    role: profile?.role ?? null,
     organizationId: profile?.organization_id ?? null,
     // A failed query reads as "no profile" too. That errs toward the setup notice
     // rather than a dashboard of zeros that would look like real data.
