@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { CONTENT_GROUPS } from "@/lib/siteContent";
 import type { ContentOverrides } from "@/lib/orgContent";
+import TranslateRow from "@/components/admin/TranslateRow";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -90,7 +91,7 @@ export default function ContentForm({
                         );
                       })}
                     </div>
-                    <p className="text-[11px] text-ocean/30 mt-1">слева казахский, справа русский</p>
+                    <TranslateRow kk={`${field.key}__kk`} ru={`${field.key}__ru`} className="mt-1" />
                   </div>
                 );
               })}

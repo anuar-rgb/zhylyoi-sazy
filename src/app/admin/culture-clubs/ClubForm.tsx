@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureClubImage, CultureClubRecord } from "@/lib/cultureClubs";
+import TranslateRow from "@/components/admin/TranslateRow";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -131,9 +132,11 @@ export default function ClubForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="description_kk" label="Краткое описание (kk)" defaultValue={club?.descriptionKk} textarea rows={3} />
           <Field name="description_ru" label="Краткое описание (ru)" defaultValue={club?.descriptionRu} textarea rows={3} />
+          <TranslateRow kk="description_kk" ru="description_ru" className="sm:col-span-2 -mt-1" />
           <Field name="full_text_kk" label="Полное описание (kk)" defaultValue={club?.fullTextKk} textarea rows={7} />
           <Field name="full_text_ru" label="Полное описание (ru)" defaultValue={club?.fullTextRu} textarea rows={7} />
         </div>
+        <TranslateRow kk="full_text_kk" ru="full_text_ru" className="mt-2" />
         <p className="text-xs text-ocean/40 mt-2">Абзацы разделяйте пустой строкой.</p>
       </div>
 

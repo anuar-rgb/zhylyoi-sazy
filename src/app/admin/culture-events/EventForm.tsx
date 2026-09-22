@@ -13,6 +13,7 @@ import {
   isoToDateTimeInput,
 } from "@/lib/eventFields";
 import type { CultureEventRecord, EventImage } from "@/lib/cultureEvents";
+import TranslateRow from "@/components/admin/TranslateRow";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -124,6 +125,7 @@ export default function EventForm({
           <Field name="title_kk" label="Название (kk)" defaultValue={event?.titleKk} />
           <Field name="title_ru" label="Название (ru)" defaultValue={event?.titleRu} />
         </div>
+          <TranslateRow kk="title_kk" ru="title_ru" className="sm:col-span-2 -mt-1" />
         <p className="text-xs text-ocean/40 mt-2">Достаточно одного языка — второй подставится автоматически.</p>
       </div>
 
@@ -179,9 +181,11 @@ export default function EventForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="description_kk" label="Краткое описание (kk)" defaultValue={event?.descriptionKk} textarea rows={3} />
           <Field name="description_ru" label="Краткое описание (ru)" defaultValue={event?.descriptionRu} textarea rows={3} />
+          <TranslateRow kk="description_kk" ru="description_ru" className="sm:col-span-2 -mt-1" />
           <Field name="full_text_kk" label="Полное описание (kk)" defaultValue={event?.fullTextKk} textarea rows={7} />
           <Field name="full_text_ru" label="Полное описание (ru)" defaultValue={event?.fullTextRu} textarea rows={7} />
         </div>
+        <TranslateRow kk="full_text_kk" ru="full_text_ru" className="mt-2" />
         <p className="text-xs text-ocean/40 mt-2">Абзацы разделяйте пустой строкой.</p>
       </div>
 
