@@ -4,7 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
-import { listPublicClubs, localized } from "@/lib/clubs";
+import { listPublicCultureClubs, localized } from "@/lib/cultureClubs";
 import { content as teatrContent, posters as teatrPosters } from "@/data/teatr";
 import type { Locale } from "@/i18n/routing";
 
@@ -82,7 +82,7 @@ export default async function CollectivesPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
   const f = t.flagship;
-  const others = await listPublicClubs("club");
+  const others = await listPublicCultureClubs("club");
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">

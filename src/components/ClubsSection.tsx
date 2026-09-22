@@ -3,7 +3,7 @@ import { getLocale } from "next-intl/server";
 import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
 import ClubsCarousel from "@/components/ClubsCarousel";
-import { listPublicClubs, localized } from "@/lib/clubs";
+import { listPublicCultureClubs, localized } from "@/lib/cultureClubs";
 import { applyFormLabels } from "@/data/applyFormLabels";
 import type { Locale } from "@/i18n/routing";
 
@@ -75,7 +75,7 @@ export default async function ClubsSection() {
   // left to the /collectives list, which renders both cases properly.
   const carouselClubs = [
     t.ensemble,
-    ...(await listPublicClubs("club")).flatMap((club) => {
+    ...(await listPublicCultureClubs("club")).flatMap((club) => {
       const image = club.images[0]?.url;
       if (!image || !club.slug) return [];
       return [

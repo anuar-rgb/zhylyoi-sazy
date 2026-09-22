@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { getClubById, type ClubImage } from "@/lib/clubs";
+import { getCultureClubById, type CultureClubImage } from "@/lib/cultureClubs";
 
 export type FormState = { error: string | null };
 
@@ -20,7 +20,7 @@ function field(form: FormData, name: string): string | null {
 }
 
 /** The images widget submits its state as JSON in a hidden input. */
-function parseImages(form: FormData): ClubImage[] {
+function parseImages(form: FormData): CultureClubImage[] {
   const raw = form.get("images");
   if (typeof raw !== "string" || !raw) return [];
   try {
@@ -83,7 +83,7 @@ function payload(form: FormData) {
 
 /** Both public pages read clubs directly, so a change has to reach them too. */
 function revalidateClub(slug: string | null) {
-  revalidatePath("/admin/clubs");
+  revalidatePath("/admin/culture-clubs");
   revalidatePath("/[locale]/collectives", "page");
   if (slug) revalidatePath(`/[locale]/clubs/${slug}`, "page");
 }
@@ -104,7 +104,7 @@ export async function createClub(_prev: FormState, form: FormData): Promise<Form
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("clubs").insert({
+  const { error } = await supabase.from("culture_clubs").insert({
     ...data,
     organization_id: organizationId,
     kind: "club",
@@ -119,7 +119,7 @@ export async function createClub(_prev: FormState, form: FormData): Promise<Form
   }
 
   revalidateClub(slug);
-  redirect("/admin/clubs");
+  redirect("/admin/culture-clubs");
 }
 
 export async function updateClub(_prev: FormState, form: FormData): Promise<FormState> {
@@ -136,11 +136,11 @@ export async function updateClub(_prev: FormState, form: FormData): Promise<Form
 
   // The previous slug also needs revalidating, or the old address keeps serving
   // a page that no longer exists there.
-  const before = await getClubById(id);
+  const before = await getCultureClubById(id);
 
   const supabase = await createClient();
   const { error, count } = await supabase
-    .from("clubs")
+    .from("culture_clubs")
     .update({ ...data, slug }, { count: "exact" })
     .eq("id", id);
 
@@ -156,18 +156,18 @@ export async function updateClub(_prev: FormState, form: FormData): Promise<Form
 
   revalidateClub(slug);
   if (before?.slug && before.slug !== slug) revalidateClub(before.slug);
-  redirect("/admin/clubs");
+  redirect("/admin/culture-clubs");
 }
 
 export async function deleteClub(id: string): Promise<{ ok: boolean; error?: string }> {
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { ok: false, error: "Профиль сотрудника не настроен." };
 
-  const club = await getClubById(id);
+  const club = await getCultureClubById(id);
   if (!club) return { ok: false, error: "Кружок не найден." };
 
   const supabase = await createClient();
-  const { error, count } = await supabase.from("clubs").delete({ count: "exact" }).eq("id", id);
+  const { error, count } = await supabase.from("culture_clubs").delete({ count: "exact" }).eq("id", id);
 
   if (error) return { ok: false, error: "Не удалось удалить кружок." };
   if (count === 0) return { ok: false, error: "Недостаточно прав для удаления." };

@@ -5,7 +5,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import ClubApplyButton from "@/components/ClubApplyButton";
-import { getPublicClubBySlug, localized, paragraphs } from "@/lib/clubs";
+import { getPublicCultureClubBySlug, localized, paragraphs } from "@/lib/cultureClubs";
 import { applyFormLabels } from "@/data/applyFormLabels";
 import type { Locale } from "@/i18n/routing";
 
@@ -58,7 +58,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const locale = (await getLocale()) as Locale;
-  const club = await getPublicClubBySlug(slug);
+  const club = await getPublicCultureClubBySlug(slug);
   if (!club) return {};
 
   return {
@@ -75,7 +75,7 @@ export default async function ClubDetailPage({
   const { slug } = await params;
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  const club = await getPublicClubBySlug(slug);
+  const club = await getPublicCultureClubBySlug(slug);
 
   if (!club) notFound();
 

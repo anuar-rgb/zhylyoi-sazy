@@ -7,7 +7,7 @@ const items = [
   { href: "/admin", label: "Дашборд" },
   { href: "/admin/events", label: "Мероприятия" },
   { href: "/admin/news", label: "Новости" },
-  { href: "/admin/clubs", label: "Кружки" },
+  { href: "/admin/culture-clubs", label: "Кружки" },
   { href: "/admin/applications", label: "Заявки" },
   { href: "/admin/settings", label: "Настройки" },
 ];

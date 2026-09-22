@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
-import { listClubs } from "@/lib/clubs";
+import { listCultureClubs } from "@/lib/cultureClubs";
 import DeleteClubButton from "./DeleteClubButton";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
@@ -26,7 +26,7 @@ export default async function ClubsPage() {
   }
 
   // RLS scopes this to the viewer's institution; a platform admin sees all of them.
-  const clubs = await listClubs("club");
+  const clubs = await listCultureClubs("club");
 
   return (
     <div>
@@ -34,7 +34,7 @@ export default async function ClubsPage() {
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">
           Кружки <span className="text-ocean/40 font-normal">({clubs.length})</span>
         </h1>
-        <Link href="/admin/clubs/new" className="btn-primary px-5 py-2.5 text-sm font-semibold">
+        <Link href="/admin/culture-clubs/new" className="btn-primary px-5 py-2.5 text-sm font-semibold">
           Добавить кружок
         </Link>
       </div>
@@ -73,7 +73,7 @@ export default async function ClubsPage() {
                         </span>
                       )}
                       <Link
-                        href={`/admin/clubs/${club.id}`}
+                        href={`/admin/culture-clubs/${club.id}`}
                         className="text-xs font-semibold text-ocean hover:text-gold-dark"
                       >
                         Изменить

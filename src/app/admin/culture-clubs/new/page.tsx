@@ -6,13 +6,13 @@ import { createClub } from "../actions";
 
 export default async function NewClubPage() {
   const identity = await getStaffIdentity();
-  if (!identity?.hasProfile) redirect("/admin/clubs");
+  if (!identity?.hasProfile) redirect("/admin/culture-clubs");
 
   // The form needs the institution up front: uploads go into its folder, and the
   // Storage policy checks that folder before the club row even exists.
   // A platform admin belongs to none, so fall back to the site's own institution.
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
-  if (!organizationId) redirect("/admin/clubs");
+  if (!organizationId) redirect("/admin/culture-clubs");
 
   return <ClubForm organizationId={organizationId} action={createClub} heading="Новый кружок" />;
 }

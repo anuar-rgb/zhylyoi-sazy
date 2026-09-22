@@ -9,11 +9,11 @@ import type { Locale } from "@/i18n/routing";
  * `path` is null for images that live outside our bucket — the seeded stock photos
  * point at Pexels. Only a non-null path can be removed from Storage.
  */
-export type ClubImage = { url: string; path: string | null };
+export type CultureClubImage = { url: string; path: string | null };
 
-export type ClubKind = "club" | "creative_collective";
+export type CultureClubKind = "club" | "creative_collective";
 
-export type ClubRecord = {
+export type CultureClubRecord = {
   id: string;
   organizationId: string;
   kind: string;
@@ -33,7 +33,7 @@ export type ClubRecord = {
   managerName: string | null;
   contactPhone: string | null;
   capacity: number | null;
-  images: ClubImage[];
+  images: CultureClubImage[];
 };
 
 const COLUMNS =
@@ -49,7 +49,7 @@ function str(value: unknown): string | null {
 }
 
 /** images is jsonb, so it arrives as parsed JSON of unknown shape. */
-function toImages(value: unknown): ClubImage[] {
+function toImages(value: unknown): CultureClubImage[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
     if (!item || typeof item !== "object") return [];
@@ -60,7 +60,7 @@ function toImages(value: unknown): ClubImage[] {
   });
 }
 
-function toRecord(row: Row): ClubRecord {
+function toRecord(row: Row): CultureClubRecord {
   return {
     id: String(row.id),
     organizationId: String(row.organization_id),
@@ -88,9 +88,9 @@ function toRecord(row: Row): ClubRecord {
 }
 
 /** Picks the viewer's language, falling back to the other one rather than showing nothing. */
-export function localized(record: ClubRecord, locale: Locale, field: "name" | "direction" | "description" | "fullText" | "schedule"): string | null {
-  const kk = record[`${field}Kk` as keyof ClubRecord] as string | null;
-  const ru = record[`${field}Ru` as keyof ClubRecord] as string | null;
+export function localized(record: CultureClubRecord, locale: Locale, field: "name" | "direction" | "description" | "fullText" | "schedule"): string | null {
+  const kk = record[`${field}Kk` as keyof CultureClubRecord] as string | null;
+  const ru = record[`${field}Ru` as keyof CultureClubRecord] as string | null;
   return locale === "kk" ? (kk ?? ru) : (ru ?? kk);
 }
 
@@ -113,9 +113,9 @@ export function paragraphs(text: string | null): string[] {
  * A failed query returns an empty list rather than throwing, so one bad request
  * cannot take down the page around it.
  */
-export async function listClubs(kind?: ClubKind): Promise<ClubRecord[]> {
+export async function listCultureClubs(kind?: CultureClubKind): Promise<CultureClubRecord[]> {
   const supabase = await createClient();
-  const query = supabase.from("clubs").select(COLUMNS).order("name");
+  const query = supabase.from("culture_clubs").select(COLUMNS).order("name");
   const { data, error } = kind ? await query.eq("kind", kind) : await query;
 
   if (error || !data) return [];
@@ -123,9 +123,9 @@ export async function listClubs(kind?: ClubKind): Promise<ClubRecord[]> {
 }
 
 /** One club by id, for the edit form. Null when missing or not visible to the caller. */
-export async function getClubById(id: string): Promise<ClubRecord | null> {
+export async function getCultureClubById(id: string): Promise<CultureClubRecord | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("clubs").select(COLUMNS).eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("culture_clubs").select(COLUMNS).eq("id", id).maybeSingle();
 
   if (error || !data) return null;
   return toRecord(data as unknown as Row);
@@ -145,14 +145,14 @@ export async function getClubById(id: string): Promise<ClubRecord | null> {
  *
  * Memoized per request, so the page and its generateMetadata share one query.
  */
-export const getPublicClubBySlug = cache(
-  async (slug: string, kind: ClubKind = "club"): Promise<ClubRecord | null> => {
+export const getPublicCultureClubBySlug = cache(
+  async (slug: string, kind: CultureClubKind = "club"): Promise<CultureClubRecord | null> => {
     const organizationId = await getSiteOrganizationId();
     if (!organizationId) return null;
 
     const supabase = await createClient();
     const { data, error } = await supabase
-      .from("clubs")
+      .from("culture_clubs")
       .select(COLUMNS)
       .eq("organization_id", organizationId)
       .eq("slug", slug)
@@ -166,13 +166,13 @@ export const getPublicClubBySlug = cache(
 );
 
 /** Active clubs of this site's institution, for the public section. Scoped for the same reason. */
-export const listPublicClubs = cache(async (kind: ClubKind = "club"): Promise<ClubRecord[]> => {
+export const listPublicCultureClubs = cache(async (kind: CultureClubKind = "club"): Promise<CultureClubRecord[]> => {
   const organizationId = await getSiteOrganizationId();
   if (!organizationId) return [];
 
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("clubs")
+    .from("culture_clubs")
     .select(COLUMNS)
     .eq("organization_id", organizationId)
     .eq("kind", kind)

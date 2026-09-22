@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import type { ClubImage, ClubRecord } from "@/lib/clubs";
+import type { CultureClubImage, CultureClubRecord } from "@/lib/cultureClubs";
 import type { FormState } from "./actions";
 
 const BUCKET = "club-images";
@@ -51,13 +51,13 @@ export default function ClubForm({
   action,
   heading,
 }: {
-  club?: ClubRecord;
+  club?: CultureClubRecord;
   organizationId: string;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
-  const [images, setImages] = useState<ClubImage[]>(club?.images ?? []);
+  const [images, setImages] = useState<CultureClubImage[]>(club?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -73,7 +73,7 @@ export default function ClubForm({
     setUploading(true);
     setUploadError(null);
     const supabase = createClient();
-    const added: ClubImage[] = [];
+    const added: CultureClubImage[] = [];
 
     for (const file of files) {
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -110,7 +110,7 @@ export default function ClubForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/clubs" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href="/admin/culture-clubs" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
@@ -216,7 +216,7 @@ export default function ClubForm({
         >
           {pending ? "Сохранение…" : "Сохранить"}
         </button>
-        <Link href="/admin/clubs" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href="/admin/culture-clubs" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
