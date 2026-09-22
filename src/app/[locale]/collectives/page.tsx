@@ -4,7 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
-import { clubs } from "@/data/clubs";
+import { listPublicClubs, localized } from "@/lib/clubs";
 import { content as teatrContent, posters as teatrPosters } from "@/data/teatr";
 import type { Locale } from "@/i18n/routing";
 
@@ -82,7 +82,7 @@ export default async function CollectivesPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
   const f = t.flagship;
-  const others = clubs[locale];
+  const others = await listPublicClubs("club");
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -222,34 +222,45 @@ export default async function CollectivesPage() {
           <h3 className="text-xl sm:text-2xl font-bold text-ocean mb-6">{t.othersTitle}</h3>
         </FadeIn>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-          {others.map((c, index) => (
-            <FadeIn key={c.slug} delay={index * 100}>
-              <div className="group bg-white rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                <div className="relative aspect-square overflow-hidden bg-ocean/5">
-                  <Image
-                    src={c.images[0]}
-                    alt={c.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
+          {others.map((club, index) => {
+            const title = localized(club, locale, "name") ?? "";
+            const description = localized(club, locale, "description");
+            const cover = club.images[0]?.url;
+
+            return (
+              <FadeIn key={club.id} delay={index * 100}>
+                <div className="group bg-white rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+                  <div className="relative aspect-square overflow-hidden bg-ocean/5">
+                    {cover && (
+                      <Image
+                        src={cover}
+                        alt={title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      />
+                    )}
+                  </div>
+                  <div className="p-4 sm:p-5 flex flex-col flex-1">
+                    <h4 className="font-bold text-ocean text-base mb-2 leading-tight">{title}</h4>
+                    {description && <p className="text-ocean/70 text-sm mb-4 flex-1">{description}</p>}
+                    {/* A club without an address has no page of its own, so it is shown without a link. */}
+                    {club.slug && (
+                      <Link
+                        href={`/clubs/${club.slug}`}
+                        className="text-sm font-semibold text-ocean hover:text-gold-dark transition-colors inline-flex items-center gap-1 mt-auto"
+                      >
+                        {t.infoLabel}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </Link>
+                    )}
+                  </div>
                 </div>
-                <div className="p-4 sm:p-5 flex flex-col flex-1">
-                  <h4 className="font-bold text-ocean text-base mb-2 leading-tight">{c.title}</h4>
-                  <p className="text-ocean/70 text-sm mb-4 flex-1">{c.description}</p>
-                  <Link
-                    href={`/clubs/${c.slug}`}
-                    className="text-sm font-semibold text-ocean hover:text-gold-dark transition-colors inline-flex items-center gap-1"
-                  >
-                    {t.infoLabel}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </Link>
-                </div>
-              </div>
-            </FadeIn>
-          ))}
+              </FadeIn>
+            );
+          })}
         </div>
       </div>
     </section>

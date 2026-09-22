@@ -3,7 +3,7 @@ import { getLocale } from "next-intl/server";
 import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
 import ClubsCarousel from "@/components/ClubsCarousel";
-import { clubs } from "@/data/clubs";
+import { listPublicClubs, localized } from "@/lib/clubs";
 import { applyFormLabels } from "@/data/applyFormLabels";
 import type { Locale } from "@/i18n/routing";
 
@@ -71,15 +71,23 @@ const content: Record<
 export default async function ClubsSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  // A carousel card is a photo with a link, so a club still missing either one is
+  // left to the /collectives list, which renders both cases properly.
   const carouselClubs = [
     t.ensemble,
-    ...clubs[locale].map((c) => ({
-      title: c.title,
-      description: c.description,
-      image: c.images[0],
-      href: `/clubs/${c.slug}`,
-      linkLabel: t.infoLabel,
-    })),
+    ...(await listPublicClubs("club")).flatMap((club) => {
+      const image = club.images[0]?.url;
+      if (!image || !club.slug) return [];
+      return [
+        {
+          title: localized(club, locale, "name") ?? "",
+          description: localized(club, locale, "description") ?? "",
+          image,
+          href: `/clubs/${club.slug}`,
+          linkLabel: t.infoLabel,
+        },
+      ];
+    }),
   ];
 
   return (
