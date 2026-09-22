@@ -6,7 +6,8 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import ShareButtons from "@/components/ShareButtons";
-import { news, getNewsItem } from "@/data/news";
+import { getPublicCultureNewsBySlug } from "@/lib/cultureNews";
+import { toNewsView } from "@/lib/newsView";
 import type { Locale } from "@/i18n/routing";
 
 /** Share links need an absolute URL; deriving it from the request keeps the domain out of the source. */
@@ -32,9 +33,9 @@ const content: Record<Locale, { back: string; shareLabel: string; copyLabel: str
   },
 };
 
-export function generateStaticParams() {
-  return news.kk.map((item) => ({ slug: item.slug }));
-}
+// No generateStaticParams here on purpose: news is written in the admin panel,
+// so the page is rendered per request. An item published today appears without a
+// rebuild, and one that was deleted stops resolving immediately.
 
 export async function generateMetadata({
   params,
@@ -43,8 +44,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const locale = (await getLocale()) as Locale;
-  const item = getNewsItem(locale, slug);
-  if (!item) return {};
+  const record = await getPublicCultureNewsBySlug(slug);
+  if (!record) return {};
+  const item = toNewsView(record, locale);
   return { title: item.title, description: item.excerpt };
 }
 
@@ -56,9 +58,11 @@ export default async function NewsDetailPage({
   const { slug } = await params;
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  const item = getNewsItem(locale, slug);
+  const record = await getPublicCultureNewsBySlug(slug);
 
-  if (!item) notFound();
+  if (!record) notFound();
+
+  const item = toNewsView(record, locale);
 
   const localePrefix = locale === "ru" ? "/ru" : "";
   const pageUrl = `${await getSiteUrl()}${localePrefix}/news/${item.slug}`;
@@ -80,16 +84,18 @@ export default async function NewsDetailPage({
 
         <FadeIn>
           <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-cream-dark">
-            <div className="relative aspect-[16/9]">
-              <Image
-                src={item.images[0]}
-                alt={item.title}
-                fill
-                className="object-cover"
-                style={item.imagePosition ? { objectPosition: item.imagePosition } : undefined}
-                sizes="(max-width: 768px) 100vw, 768px"
-                priority
-              />
+            <div className="relative aspect-[16/9] bg-ocean/5">
+              {/* News without a photo renders the placeholder background instead of crashing. */}
+              {item.images[0] && (
+                <Image
+                  src={item.images[0]}
+                  alt={item.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 768px"
+                  priority
+                />
+              )}
               <div className="absolute top-4 left-4 bg-gold text-ocean-dark text-sm font-semibold px-3 py-1.5 rounded-full shadow">
                 {item.tag}
               </div>

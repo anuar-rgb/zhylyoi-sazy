@@ -4,7 +4,8 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
-import { news } from "@/data/news";
+import { listPublicCultureNews } from "@/lib/cultureNews";
+import { toNewsView } from "@/lib/newsView";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, Metadata> = {
@@ -39,7 +40,7 @@ const content: Record<Locale, { title: string; subtitle: string; more: string }>
 export default async function NewsPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
-  const allNews = news[locale];
+  const allNews = (await listPublicCultureNews()).map((n) => toNewsView(n, locale));
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -50,20 +51,22 @@ export default async function NewsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {allNews.map((item, index) => (
-            <FadeIn key={item.slug} delay={index * 100}>
+            <FadeIn key={item.id} delay={index * 100}>
               <Link
                 href={`/news/${item.slug}`}
                 className="group block bg-white rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-ocean/5">
-                  <Image
-                    src={item.images[0]}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    style={item.imagePosition ? { objectPosition: item.imagePosition } : undefined}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
+                  {/* News without a photo renders the placeholder background instead of crashing. */}
+                  {item.images[0] && (
+                    <Image
+                      src={item.images[0]}
+                      alt={item.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  )}
                   <div className="absolute top-3 left-3 bg-gold text-ocean-dark text-[11px] font-semibold px-2.5 py-1 rounded-full shadow">
                     {item.tag}
                   </div>

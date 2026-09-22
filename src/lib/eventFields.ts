@@ -18,15 +18,12 @@ export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
   children: "Для детей",
 };
 
-export const EVENT_STATUSES = ["draft", "pending", "published", "archived"] as const;
-export type EventStatus = (typeof EVENT_STATUSES)[number];
-
-export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
-  draft: "Черновик",
-  pending: "На проверке",
-  published: "Опубликовано",
-  archived: "В архиве",
-};
+// Статусы общие для афиши и новостей — один источник истины.
+export {
+  PUBLISH_STATUSES as EVENT_STATUSES,
+  PUBLISH_STATUS_LABELS as EVENT_STATUS_LABELS,
+  type PublishStatus as EventStatus,
+} from "@/lib/publishStatus";
 
 /**
  * The institution's time zone, Asia/Aqtau, as a fixed offset.
@@ -86,7 +83,7 @@ type LocalizedEventFields = Record<string, unknown>;
 export function localizedEvent(
   record: LocalizedEventFields,
   locale: "kk" | "ru",
-  field: "title" | "description" | "fullText" | "location" | "organizer"
+  field: "title" | "description" | "fullText" | "location" | "organizer" | "tag" | "excerpt" | "content"
 ): string | null {
   const kk = record[`${field}Kk`];
   const ru = record[`${field}Ru`];
