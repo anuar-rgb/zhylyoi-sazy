@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
@@ -38,7 +39,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <p className="font-bold text-gold leading-tight">Панель управления</p>
               <p className="text-xs text-cream/60">«Кең Жылыой» мәдениет үйі</p>
             </div>
-            <div className="flex items-center gap-4 min-w-0">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              {/* Plain next/link, not the next-intl one: staff routes are outside the
+                  localized segment, so "/" lands on the site in its default language. */}
+              <Link
+                href="/"
+                className="shrink-0 inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-cream/80 hover:text-gold transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                <span className="hidden sm:inline">На сайт</span>
+              </Link>
               <div className="min-w-0 text-right max-w-[45vw] sm:max-w-none">
                 <p className="text-xs sm:text-sm text-cream/80 truncate">{identity?.displayName ?? user.email}</p>
                 {identity?.roleLabel && <p className="text-[11px] text-cream/50 truncate">{identity.roleLabel}</p>}
