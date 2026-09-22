@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import { clubs } from "@/data/clubs";
+import { content as teatrContent, posters as teatrPosters } from "@/data/teatr";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, Metadata> = {
@@ -174,6 +175,43 @@ export default async function CollectivesPage() {
                     </svg>
                   </Link>
                 </div>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* Second collective holding the "Народный" title, alongside the ensemble above */}
+        <FadeIn>
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-cream-dark mb-12 sm:mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2">
+              <div className="relative aspect-[4/3] sm:aspect-auto sm:min-h-[260px]">
+                <Image
+                  src={teatrPosters[3].src}
+                  alt={teatrContent[locale].title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                />
+              </div>
+              <div className="p-6 sm:p-8 flex flex-col">
+                <span className="self-start bg-gold text-ocean-dark text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+                  {teatrContent[locale].badge}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-bold text-ocean mb-3 leading-tight">
+                  {teatrContent[locale].title}
+                </h3>
+                <p className="text-ocean/70 text-sm sm:text-base leading-relaxed mb-6 flex-1">
+                  {teatrContent[locale].lead}
+                </p>
+                <Link
+                  href="/collectives/zhastar"
+                  className="btn-primary inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-semibold self-start"
+                >
+                  {t.infoLabel}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
               </div>
             </div>
           </div>
