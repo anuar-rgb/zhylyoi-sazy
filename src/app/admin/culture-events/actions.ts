@@ -14,6 +14,7 @@ import {
   type EventStatus,
 } from "@/lib/eventFields";
 import { MEDIA_BUCKET } from "@/lib/storage";
+import { slugify } from "@/lib/slug";
 
 export type FormState = { error: string | null };
 
@@ -57,14 +58,6 @@ function parseCategories(form: FormData): EventCategory[] {
 function parseStatus(form: FormData): EventStatus {
   const value = form.get("status");
   return EVENT_STATUSES.includes(value as EventStatus) ? (value as EventStatus) : "draft";
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
 }
 
 /**
@@ -114,7 +107,9 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   if (!data.title) return { error: "Укажите название хотя бы на одном языке." };
   if (!data.event_date) return { error: "Укажите дату и время начала." };
 
-  const slug = field(form, "slug") ?? slugify(data.title);
+  const typed = field(form, "slug");
+  // Applied to a typed address too: it ends up in a URL people copy and send.
+  const slug = typed ? slugify(typed) : slugify(data.title);
   if (!slug) return { error: "Не удалось составить адрес страницы. Заполните поле «Адрес»." };
 
   // A platform admin belongs to no institution, so fall back to the site's own.
@@ -156,7 +151,12 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   if (!data.title) return { error: "Укажите название хотя бы на одном языке." };
   if (!data.event_date) return { error: "Укажите дату и время начала." };
 
-  const slug = field(form, "slug") ?? slugify(data.title);
+  const typed = field(form, "slug");
+  // Applied to a typed address too: it ends up in a URL people copy and send.
+  const slug = typed ? slugify(typed) : slugify(data.title);
+  // An address of only punctuation transliterates to nothing; storing that empty
+  // string would collide with the next such record under the unique index.
+  if (!slug) return { error: "Не удалось составить адрес страницы. Заполните поле «Адрес»." };
 
   const supabase = await createClient();
   const { error, count } = await supabase

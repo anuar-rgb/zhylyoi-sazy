@@ -219,24 +219,34 @@ export default function EventForm({
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Публикация</p>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="slug" label="Адрес страницы" defaultValue={event?.slug} placeholder="например: konsert-25" />
-          <div>
-            <label className={LABEL} htmlFor="status">
-              Статус
-            </label>
-            <select id="status" name="status" defaultValue={event?.status ?? "draft"} className={INPUT}>
-              {EVENT_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {EVENT_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className={LABEL} htmlFor="status">
+            Статус
+          </label>
+          <select id="status" name="status" defaultValue={event?.status ?? "draft"} className={INPUT}>
+            {EVENT_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {EVENT_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
         </div>
-        <p className="text-xs text-ocean/40 mt-1.5">
-          На сайте показываются только опубликованные. Страница будет доступна по адресу /afisha/&lt;адрес&gt;.
-        </p>
+        <p className="text-xs text-ocean/40 mt-1.5">На сайте показываются только опубликованные.</p>
+
+        {/* The address is derived from the title, so it is out of the way by default.
+            A native <details> keeps it in the form and submitted either way. */}
+        <details className="mt-4 border-t border-cream-dark pt-4">
+          <summary className="text-sm font-medium text-ocean/70 cursor-pointer select-none hover:text-ocean">
+            Дополнительно
+          </summary>
+          <div className="mt-3">
+            <Field name="slug" label="Адрес страницы" defaultValue={event?.slug} placeholder="составится из названия" />
+            <p className="text-xs text-ocean/40 mt-1.5">
+              Часть ссылки на страницу мероприятия: /afisha/&lt;адрес&gt;. Оставьте пустым — составится из
+              названия. Менять стоит, только если нужна ссылка короче.
+            </p>
+          </div>
+        </details>
       </div>
 
       <div className="flex items-center gap-3">

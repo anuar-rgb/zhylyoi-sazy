@@ -7,6 +7,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureClubById, type CultureClubImage } from "@/lib/cultureClubs";
 import { MEDIA_BUCKET } from "@/lib/storage";
+import { slugify } from "@/lib/slug";
 
 export type FormState = { error: string | null };
 
@@ -34,14 +35,6 @@ function parseImages(form: FormData): CultureClubImage[] {
   } catch {
     return [];
   }
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
 }
 
 /**
@@ -94,7 +87,9 @@ export async function createClub(_prev: FormState, form: FormData): Promise<Form
   const data = payload(form);
   if (!data.name) return { error: "Укажите название хотя бы на одном языке." };
 
-  const slug = field(form, "slug") ?? slugify(data.name);
+  const typed = field(form, "slug");
+  // Applied to a typed address too: it ends up in a URL people copy and send.
+  const slug = typed ? slugify(typed) : slugify(data.name);
   if (!slug) return { error: "Не удалось составить адрес страницы. Заполните поле «Адрес»." };
 
   // A platform admin belongs to no institution, so fall back to the site's own.
@@ -131,7 +126,12 @@ export async function updateClub(_prev: FormState, form: FormData): Promise<Form
   const data = payload(form);
   if (!data.name) return { error: "Укажите название хотя бы на одном языке." };
 
-  const slug = field(form, "slug") ?? slugify(data.name);
+  const typed = field(form, "slug");
+  // Applied to a typed address too: it ends up in a URL people copy and send.
+  const slug = typed ? slugify(typed) : slugify(data.name);
+  // An address of only punctuation transliterates to nothing; storing that empty
+  // string would collide with the next such record under the unique index.
+  if (!slug) return { error: "Не удалось составить адрес страницы. Заполните поле «Адрес»." };
 
   // The previous slug also needs revalidating, or the old address keeps serving
   // a page that no longer exists there.

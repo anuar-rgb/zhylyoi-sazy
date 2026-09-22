@@ -185,15 +185,6 @@ export default function ClubForm({
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Публикация</p>
-        <Field
-          name="slug"
-          label="Адрес страницы"
-          defaultValue={club?.slug}
-          placeholder="например: bi"
-        />
-        <p className="text-xs text-ocean/40 mt-1.5 mb-4">
-          Страница будет доступна по адресу /clubs/&lt;адрес&gt;. Оставьте пустым — составится из названия.
-        </p>
         <label className="flex items-center gap-2.5 text-sm text-ocean/70 cursor-pointer">
           <input
             type="checkbox"
@@ -203,6 +194,21 @@ export default function ClubForm({
           />
           <span>Показывать на сайте</span>
         </label>
+
+        {/* The address is derived from the name, so it is out of the way by default.
+            A native <details> keeps it in the form and submitted either way. */}
+        <details className="mt-4 border-t border-cream-dark pt-4">
+          <summary className="text-sm font-medium text-ocean/70 cursor-pointer select-none hover:text-ocean">
+            Дополнительно
+          </summary>
+          <div className="mt-3">
+            <Field name="slug" label="Адрес страницы" defaultValue={club?.slug} placeholder="составится из названия" />
+            <p className="text-xs text-ocean/40 mt-1.5">
+              Часть ссылки на страницу кружка: /clubs/&lt;адрес&gt;. Оставьте пустым — составится из
+              названия. Менять стоит, только если нужна ссылка короче.
+            </p>
+          </div>
+        </details>
       </div>
 
       <div className="flex items-center gap-3">
