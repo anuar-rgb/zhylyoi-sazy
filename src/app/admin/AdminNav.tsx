@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
  */
 const items = [
   { href: "/admin", label: "Дашборд" },
+  { href: "/admin/culture-collectives", label: "Коллективы" },
   { href: "/admin/culture-staff", label: "Сотрудники" },
   { href: "/admin/culture-members", label: "Состав ансамбля" },
   { href: "/admin/culture-repertoire", label: "Репертуар" },
