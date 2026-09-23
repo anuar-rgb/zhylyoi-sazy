@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
+import { translateFieldPair } from "@/lib/autoTranslate";
 import type { Locale } from "@/i18n/routing";
 
 /** Same shape as a club's image: `path` is null for anything outside our bucket. */
@@ -49,10 +50,11 @@ function toRecord(row: Row): CultureStaffRecord {
     id: String(row.id),
     organizationId: String(row.organization_id),
     isActive: row.is_active === true,
-    // name is the non-null service column; it backs the localized ones so a person
-    // whose name was entered in one language still has a name in the other.
-    nameKk: str(row.name_kk) ?? str(row.name),
-    nameRu: str(row.name_ru) ?? str(row.name),
+    // Not backed by the service `name` column here: that would make a name typed
+    // in only one language look, to translateFieldPair below, as if both were
+    // already filled — masking a gap instead of letting it be translated.
+    nameKk: str(row.name_kk),
+    nameRu: str(row.name_ru),
     roleKk: str(row.role_kk),
     roleRu: str(row.role_ru),
     descriptionKk: str(row.description_kk),
@@ -62,6 +64,19 @@ function toRecord(row: Row): CultureStaffRecord {
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
     images: toImages(row.images),
   };
+}
+
+/** Every kk/ru pair a staff member carries, for filling gaps on public pages. */
+const LOCALIZED_FIELD_PAIRS: [kk: keyof CultureStaffRecord & string, ru: keyof CultureStaffRecord & string][] = [
+  ["nameKk", "nameRu"],
+  ["roleKk", "roleRu"],
+  ["descriptionKk", "descriptionRu"],
+];
+
+async function fillPublicTranslations(records: CultureStaffRecord[]): Promise<CultureStaffRecord[]> {
+  let filled = records;
+  for (const [kk, ru] of LOCALIZED_FIELD_PAIRS) filled = await translateFieldPair(filled, kk, ru);
+  return filled;
 }
 
 /** Picks the viewer's language, falling back to the other rather than showing nothing. */
@@ -132,5 +147,5 @@ export const listPublicCultureStaff = cache(async (): Promise<CultureStaffRecord
     .order("name");
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toRecord);
+  return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
 });

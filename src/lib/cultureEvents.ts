@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { EVENT_CATEGORIES, EVENT_STATUSES, type EventCategory, type EventStatus } from "@/lib/eventFields";
+import { translateFieldPair } from "@/lib/autoTranslate";
 
 export * from "@/lib/eventFields";
 
@@ -70,10 +71,11 @@ function toRecord(row: Row): CultureEventRecord {
     organizationId: String(row.organization_id),
     slug: str(row.slug),
     status: toStatus(row.status),
-    // title is the non-null service column; it backs the localized ones so the
-    // UI never shows an empty heading.
-    titleKk: str(row.title_kk) ?? str(row.title),
-    titleRu: str(row.title_ru) ?? str(row.title),
+    // Not backed by the service `title` column here: that would make a title
+    // typed in only one language look, to translateFieldPair below, as if both
+    // were already filled — masking a gap instead of letting it be translated.
+    titleKk: str(row.title_kk),
+    titleRu: str(row.title_ru),
     descriptionKk: str(row.description_kk),
     descriptionRu: str(row.description_ru),
     fullTextKk: str(row.full_text_kk),
@@ -88,6 +90,21 @@ function toRecord(row: Row): CultureEventRecord {
     ageLimit: str(row.age_limit),
     images: toImages(row.images),
   };
+}
+
+/** Every kk/ru pair an event carries, for filling gaps on public pages. */
+const LOCALIZED_FIELD_PAIRS: [kk: keyof CultureEventRecord & string, ru: keyof CultureEventRecord & string][] = [
+  ["titleKk", "titleRu"],
+  ["descriptionKk", "descriptionRu"],
+  ["fullTextKk", "fullTextRu"],
+  ["locationKk", "locationRu"],
+  ["organizerKk", "organizerRu"],
+];
+
+async function fillPublicTranslations(records: CultureEventRecord[]): Promise<CultureEventRecord[]> {
+  let filled = records;
+  for (const [kk, ru] of LOCALIZED_FIELD_PAIRS) filled = await translateFieldPair(filled, kk, ru);
+  return filled;
 }
 
 /**
@@ -136,7 +153,7 @@ export const listPublicCultureEvents = cache(async (): Promise<CultureEventRecor
     .order("event_date", { ascending: true });
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toRecord);
+  return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
 });
 
 /** One published event by its public address. */
@@ -154,5 +171,6 @@ export const getPublicCultureEventBySlug = cache(async (slug: string): Promise<C
     .maybeSingle();
 
   if (error || !data) return null;
-  return toRecord(data as unknown as Row);
+  const [filled] = await fillPublicTranslations([toRecord(data as unknown as Row)]);
+  return filled;
 });

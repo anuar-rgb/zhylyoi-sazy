@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
+import { translateFieldPair } from "@/lib/autoTranslate";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -46,9 +47,11 @@ function toRecord(row: Row): CultureVideoRecord {
     id: String(row.id),
     organizationId: String(row.organization_id),
     isActive: row.is_active === true,
-    // title is the non-null service column; it backs the localized ones.
-    titleKk: str(row.title_kk) ?? str(row.title),
-    titleRu: str(row.title_ru) ?? str(row.title),
+    // Not backed by the service `title` column here: that would make a title typed
+    // in only one language look, to translateFieldPair below, as if both were
+    // already filled — masking a gap instead of letting it be translated.
+    titleKk: str(row.title_kk),
+    titleRu: str(row.title_ru),
     descriptionKk: str(row.description_kk),
     descriptionRu: str(row.description_ru),
     venueKk: str(row.venue_kk),
@@ -60,6 +63,19 @@ function toRecord(row: Row): CultureVideoRecord {
     filePath: str(row.file_path),
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
   };
+}
+
+/** Every kk/ru pair a recording carries, for filling gaps on public pages. */
+const LOCALIZED_FIELD_PAIRS: [kk: keyof CultureVideoRecord & string, ru: keyof CultureVideoRecord & string][] = [
+  ["titleKk", "titleRu"],
+  ["descriptionKk", "descriptionRu"],
+  ["venueKk", "venueRu"],
+];
+
+async function fillPublicTranslations(records: CultureVideoRecord[]): Promise<CultureVideoRecord[]> {
+  let filled = records;
+  for (const [kk, ru] of LOCALIZED_FIELD_PAIRS) filled = await translateFieldPair(filled, kk, ru);
+  return filled;
 }
 
 /** Picks the viewer's language, falling back to the other rather than showing nothing. */
@@ -128,5 +144,5 @@ export const listPublicCultureVideos = cache(async (): Promise<CultureVideoRecor
     .order("title");
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toRecord).filter(isPlayable);
+  return fillPublicTranslations((data as unknown as Row[]).map(toRecord).filter(isPlayable));
 });

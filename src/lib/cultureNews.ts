@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { toPublishStatus, type PublishStatus } from "@/lib/publishStatus";
+import { translateFieldPair } from "@/lib/autoTranslate";
 
 /** Same shape the other sections use: `path` is null for images outside our bucket. */
 export type NewsImage = { url: string; path: string | null };
@@ -52,10 +53,11 @@ function toRecord(row: Row): CultureNewsRecord {
     organizationId: String(row.organization_id),
     slug: str(row.slug),
     status: toPublishStatus(row.status),
-    // title is the non-null service column; it backs the localized ones so the
-    // UI never shows an empty heading.
-    titleKk: str(row.title_kk) ?? str(row.title),
-    titleRu: str(row.title_ru) ?? str(row.title),
+    // Not backed by the service `title` column here: that would make a title
+    // typed in only one language look, to translateFieldPair below, as if both
+    // were already filled — masking a gap instead of letting it be translated.
+    titleKk: str(row.title_kk),
+    titleRu: str(row.title_ru),
     tagKk: str(row.tag_kk),
     tagRu: str(row.tag_ru),
     excerptKk: str(row.excerpt_kk),
@@ -65,6 +67,20 @@ function toRecord(row: Row): CultureNewsRecord {
     publishedAt: str(row.published_at),
     images: toImages(row.images),
   };
+}
+
+/** Every kk/ru pair a news item carries, for filling gaps on public pages. */
+const LOCALIZED_FIELD_PAIRS: [kk: keyof CultureNewsRecord & string, ru: keyof CultureNewsRecord & string][] = [
+  ["titleKk", "titleRu"],
+  ["tagKk", "tagRu"],
+  ["excerptKk", "excerptRu"],
+  ["contentKk", "contentRu"],
+];
+
+async function fillPublicTranslations(records: CultureNewsRecord[]): Promise<CultureNewsRecord[]> {
+  let filled = records;
+  for (const [kk, ru] of LOCALIZED_FIELD_PAIRS) filled = await translateFieldPair(filled, kk, ru);
+  return filled;
 }
 
 /**
@@ -114,7 +130,7 @@ export const listPublicCultureNews = cache(async (): Promise<CultureNewsRecord[]
     .order("published_at", { ascending: false });
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toRecord);
+  return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
 });
 
 /** One published item by its public address. */
@@ -132,5 +148,6 @@ export const getPublicCultureNewsBySlug = cache(async (slug: string): Promise<Cu
     .maybeSingle();
 
   if (error || !data) return null;
-  return toRecord(data as unknown as Row);
+  const [filled] = await fillPublicTranslations([toRecord(data as unknown as Row)]);
+  return filled;
 });

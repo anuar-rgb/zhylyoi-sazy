@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { asRepertoireCategory, type RepertoireCategory } from "@/lib/repertoireFields";
+import { translateFieldPair } from "@/lib/autoTranslate";
 import type { Locale } from "@/i18n/routing";
 
 export type CultureRepertoireRecord = {
@@ -34,10 +35,11 @@ function toRecord(row: Row): CultureRepertoireRecord {
     id: String(row.id),
     organizationId: String(row.organization_id),
     isActive: row.is_active === true,
-    // title is the non-null service column; it backs the localized ones so a piece
-    // entered in one language still has a title in the other.
-    titleKk: str(row.title_kk) ?? str(row.title),
-    titleRu: str(row.title_ru) ?? str(row.title),
+    // Not backed by the service `title` column here: that would make a title typed
+    // in only one language look, to translateFieldPair below, as if both were
+    // already filled — masking a gap instead of letting it be translated.
+    titleKk: str(row.title_kk),
+    titleRu: str(row.title_ru),
     authorKk: str(row.author_kk),
     authorRu: str(row.author_ru),
     noteKk: str(row.note_kk),
@@ -45,6 +47,19 @@ function toRecord(row: Row): CultureRepertoireRecord {
     category: asRepertoireCategory(str(row.category)),
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
   };
+}
+
+/** Every kk/ru pair a piece carries, for filling gaps on public pages. */
+const LOCALIZED_FIELD_PAIRS: [kk: keyof CultureRepertoireRecord & string, ru: keyof CultureRepertoireRecord & string][] = [
+  ["titleKk", "titleRu"],
+  ["authorKk", "authorRu"],
+  ["noteKk", "noteRu"],
+];
+
+async function fillPublicTranslations(records: CultureRepertoireRecord[]): Promise<CultureRepertoireRecord[]> {
+  let filled = records;
+  for (const [kk, ru] of LOCALIZED_FIELD_PAIRS) filled = await translateFieldPair(filled, kk, ru);
+  return filled;
 }
 
 /** Picks the viewer's language, falling back to the other rather than showing nothing. */
@@ -111,5 +126,5 @@ export const listPublicCultureRepertoire = cache(async (): Promise<CultureRepert
     .order("title");
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toRecord);
+  return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
 });

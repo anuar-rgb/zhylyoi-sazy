@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { translateFieldPair } from "@/lib/autoTranslate";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -31,12 +32,14 @@ function toRecord(row: Record<string, unknown>): OrganizationRecord {
     id: String(row.id),
     slug: String(row.slug),
     type: String(row.type),
-    // name and address are the older single-language columns; they back the
-    // localized ones so a half-filled row still shows something.
-    nameKk: str(row.name_kk) ?? str(row.name),
-    nameRu: str(row.name_ru) ?? str(row.name),
-    addressKk: str(row.address_kk) ?? str(row.address),
-    addressRu: str(row.address_ru) ?? str(row.address),
+    // Not backed by the older single-language columns here: that would make a
+    // name or address typed in only one language look, to translateFieldPair
+    // below, as if both were already filled — masking a gap instead of letting
+    // it be translated.
+    nameKk: str(row.name_kk),
+    nameRu: str(row.name_ru),
+    addressKk: str(row.address_kk),
+    addressRu: str(row.address_ru),
     phone: str(row.phone),
     email: str(row.email),
   };
@@ -60,7 +63,10 @@ export const getSiteOrganization = cache(async (): Promise<OrganizationRecord | 
     .maybeSingle();
 
   if (error || !data) return null;
-  return toRecord(data as unknown as Record<string, unknown>);
+  const record = toRecord(data as unknown as Record<string, unknown>);
+  const [withName] = await translateFieldPair([record], "nameKk", "nameRu");
+  const [filled] = await translateFieldPair([withName], "addressKk", "addressRu");
+  return filled;
 });
 
 /**

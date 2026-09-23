@@ -1,7 +1,23 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
+import { translateFieldPair } from "@/lib/autoTranslate";
 import type { Locale } from "@/i18n/routing";
+
+/** Every kk/ru pair a club or collective carries, for filling gaps on public pages. */
+const LOCALIZED_FIELD_PAIRS: [kk: keyof CultureClubRecord & string, ru: keyof CultureClubRecord & string][] = [
+  ["nameKk", "nameRu"],
+  ["directionKk", "directionRu"],
+  ["descriptionKk", "descriptionRu"],
+  ["fullTextKk", "fullTextRu"],
+  ["scheduleKk", "scheduleRu"],
+];
+
+async function fillPublicTranslations(records: CultureClubRecord[]): Promise<CultureClubRecord[]> {
+  let filled = records;
+  for (const [kk, ru] of LOCALIZED_FIELD_PAIRS) filled = await translateFieldPair(filled, kk, ru);
+  return filled;
+}
 
 /**
  * A club or creative collective.
@@ -74,10 +90,12 @@ function toRecord(row: Row): CultureClubRecord {
     kind: String(row.kind ?? "club"),
     slug: str(row.slug),
     isActive: row.is_active === true,
-    // name is the non-null service column; it backs the localized ones when a
-    // translation is missing, so the UI never shows an empty title.
-    nameKk: str(row.name_kk) ?? str(row.name),
-    nameRu: str(row.name_ru) ?? str(row.name),
+    // Deliberately not backed by the service `name` column here: doing so would
+    // make a name entered in only one language look, to the type system and to
+    // translateFieldPair below, as if both languages were already filled —
+    // masking a genuine gap instead of letting it be translated or shown honestly.
+    nameKk: str(row.name_kk),
+    nameRu: str(row.name_ru),
     directionKk: str(row.direction_kk),
     directionRu: str(row.direction_ru),
     descriptionKk: str(row.description_kk),
@@ -171,7 +189,8 @@ export const getPublicCultureClubBySlug = cache(
       .maybeSingle();
 
     if (error || !data) return null;
-    return toRecord(data as unknown as Row);
+    const [filled] = await fillPublicTranslations([toRecord(data as unknown as Row)]);
+    return filled;
   }
 );
 
@@ -190,7 +209,7 @@ export const listPublicCultureClubs = cache(async (kind: CultureClubKind = "club
     .order("name");
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toRecord);
+  return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
 });
 
 /**
