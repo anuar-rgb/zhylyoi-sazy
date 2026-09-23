@@ -4,12 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import {
-  clearTelegramToken,
-  saveTelegramSettings,
-  sendTelegramTest,
-  type TelegramTestResult,
-} from "@/lib/orgTelegram";
 
 export type FormState = { error: string | null; saved: boolean };
 
@@ -61,46 +55,4 @@ export async function updateOrganization(_prev: FormState, form: FormData): Prom
   revalidatePath("/[locale]", "layout");
 
   return { error: null, saved: true };
-}
-
-export type TelegramState = { error: string | null; saved: boolean; tested: TelegramTestResult | null };
-
-/** Resolves the institution this administrator acts for, or an error to show. */
-async function currentOrganization(): Promise<{ id: string } | { error: string }> {
-  const identity = await getStaffIdentity();
-  if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
-
-  const id = identity.organizationId ?? (await getSiteOrganizationId());
-  if (!id) return { error: "Не удалось определить учреждение." };
-
-  return { id };
-}
-
-export async function updateTelegram(_prev: TelegramState, form: FormData): Promise<TelegramState> {
-  const org = await currentOrganization();
-  if ("error" in org) return { error: org.error, saved: false, tested: null };
-
-  // The form never shows the stored token, so an empty field has to mean "leave it
-  // alone". Erasing it is the separate button below, which says what it does.
-  if (form.get("intent") === "clear") {
-    const cleared = await clearTelegramToken(org.id);
-    if (!cleared) return { error: "Недостаточно прав, чтобы убрать токен.", saved: false, tested: null };
-    revalidatePath("/admin/settings");
-    return { error: null, saved: true, tested: null };
-  }
-
-  if (form.get("intent") === "test") {
-    const tested = await sendTelegramTest(org.id);
-    return { error: null, saved: false, tested };
-  }
-
-  const botToken = field(form, "bot_token");
-  const chatId = field(form, "chat_id");
-  const isEnabled = form.get("is_enabled") === "on";
-
-  const saved = await saveTelegramSettings(org.id, { botToken, chatId, isEnabled });
-  if (!saved) return { error: "Не удалось сохранить настройки бота.", saved: false, tested: null };
-
-  revalidatePath("/admin/settings");
-  return { error: null, saved: true, tested: null };
 }

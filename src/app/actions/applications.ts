@@ -3,7 +3,6 @@
 import { appendApplication, type NewApplication } from "@/lib/applications";
 import { getPublicCultureClubBySlug } from "@/lib/cultureClubs";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { notifyTelegram } from "@/lib/telegram";
 
 export type ApplicationInput = NewApplication & {
   consent: boolean;
@@ -50,9 +49,9 @@ export async function submitClubApplication(input: ApplicationInput): Promise<Su
   const stored = await appendApplication(application, organizationId, club?.id ?? null);
   if (!stored) return { ok: false, error: "failed" };
 
-  // Only once the application is safely stored. A notification about a submission that
-  // was never saved would send someone looking for a record that does not exist.
-  await notifyTelegram(application);
-
+  // Nothing is sent anywhere. The application waits in the admin panel, where the
+  // count of new ones sits on the Заявки item in the navigation. That means somebody
+  // has to open the panel to learn it arrived — a deliberate choice, not an
+  // oversight, and the reason to revisit this if applications ever start waiting.
   return { ok: true };
 }
