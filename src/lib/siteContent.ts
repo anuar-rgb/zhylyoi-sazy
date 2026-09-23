@@ -522,6 +522,12 @@ export const CONTENT_GROUPS: ContentGroup[] = [
         kk: "18 кәсіби өнерпаз — өнер оқу орындарының түлектері",
         ru: "18 профессиональных артистов — выпускники учебных заведений искусств",
       },
+      {
+        key: "membersPage.educationLabel",
+        label: "Состав — подпись перед уровнем образования",
+        kk: "Білімі",
+        ru: "Образование",
+      },
       { key: "repertoirePage.title", label: "Репертуар — заголовок", kk: "Репертуар", ru: "Репертуар" },
       {
         key: "repertoirePage.subtitle",
