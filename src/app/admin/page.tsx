@@ -90,7 +90,6 @@ export default async function DashboardPage() {
   if (!identity?.hasProfile) {
     return (
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-6">Дашборд</h1>
         <div className={`${CARD} p-8`}>
           <p className="font-semibold text-ocean mb-2">Профиль сотрудника не настроен</p>
           <p className="text-sm text-ocean/60">
@@ -106,7 +105,9 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-1">Дашборд</h1>
+      {/* No heading: the navigation on the left already says Дашборд and marks it
+          as the current page, so repeating the word here only pushed the content
+          down. The line below is what this page actually has to say first. */}
       <p className="text-sm text-ocean/60">
         Вы вошли как {identity.displayName}
         {identity.roleLabel && <> · {identity.roleLabel}</>}
