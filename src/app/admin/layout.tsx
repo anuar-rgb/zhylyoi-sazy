@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
-import { countNewApplications } from "@/lib/applications";
+import { countUnseenApplications } from "@/lib/applications";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
 import "../globals.css";
@@ -32,7 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // In the layout rather than on the applications page: the point of the badge is
   // that it is seen while working on something else. RLS scopes the count to what
   // this person may read, so nobody is told about another institution's applications.
-  const [identity, newApplications] = await Promise.all([getStaffIdentity(), countNewApplications()]);
+  const [identity, newApplications] = await Promise.all([getStaffIdentity(), countUnseenApplications()]);
 
   return (
     <html lang="ru" className={`${montserrat.variable} h-full antialiased`}>

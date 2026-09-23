@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { deleteApplication, setApplicationStatus, type ApplicationStatus } from "@/lib/applications";
+import { deleteApplication, setApplicationStatus, markApplicationsSeen, type ApplicationStatus } from "@/lib/applications";
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
@@ -42,6 +42,23 @@ export async function markApplication(id: string, status: ApplicationStatus): Pr
 
   const ok = await setApplicationStatus(id, status);
   // Covers the list, the dashboard counters and the badge in the layout in one call.
+  if (ok) revalidatePath("/admin", "layout");
+
+  return { ok };
+}
+
+/**
+ * Clears the red dot: called once, client-side, when the applications list has
+ * actually rendered in the browser (see markApplicationsSeen for why not sooner).
+ */
+export async function markSeen(): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const ok = await markApplicationsSeen();
   if (ok) revalidatePath("/admin", "layout");
 
   return { ok };

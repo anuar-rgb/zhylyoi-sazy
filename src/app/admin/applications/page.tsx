@@ -2,6 +2,7 @@ import { readAllApplications, type ApplicationRecord } from "@/lib/applications"
 import { telHref } from "@/lib/contactLinks";
 import DeleteButton from "../DeleteButton";
 import MarkProcessedButton from "./MarkProcessedButton";
+import MarkSeenOnView from "./MarkSeenOnView";
 
 type ClubSummary = {
   key: string;
@@ -70,6 +71,7 @@ const STATUS_STYLE: Record<string, string> = {
 export default async function ApplicationsPage() {
   const applications = await readAllApplications();
   const pending = applications.filter((app) => app.status === "new").length;
+  const hasUnseen = applications.some((app) => !app.seenAt);
   const byClub = summarizeByClub(applications);
   // Newest first, so the ends of the list are the ends of the period.
   const newest = applications[0];
@@ -77,6 +79,7 @@ export default async function ApplicationsPage() {
 
   return (
     <div>
+      <MarkSeenOnView hasUnseen={hasUnseen} />
       <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-6">
         Заявки в кружки{" "}
         <span className="text-ocean/40 font-normal">

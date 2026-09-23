@@ -32,6 +32,12 @@ export type ApplicationRecord = {
   status: ApplicationStatus;
   /** ISO instant of the moment it was marked processed, null while it is new. */
   processedAt: string | null;
+  /**
+   * ISO instant of the last time staff opened the applications list while this
+   * row was unseen, null if nobody has yet. Independent of `status`: this is
+   * what the red dot in the admin navigation tracks, not the work queue.
+   */
+  seenAt: string | null;
 };
 
 /** What the public form submits. id and created_at belong to the database. */
@@ -45,7 +51,7 @@ export type NewApplication = {
 
 const COLUMNS =
   "id, created_at, applicant_name, applicant_age, applicant_phone, club_id, club_title, message, " +
-  "consent_given, status, processed_at";
+  "consent_given, status, processed_at, seen_at";
 
 type ApplicationRow = {
   id: string;
@@ -59,6 +65,7 @@ type ApplicationRow = {
   consent_given: boolean;
   status: string;
   processed_at: string | null;
+  seen_at: string | null;
 };
 
 /** Keeps the database column names from leaking into the pages that render applications. */
@@ -77,6 +84,7 @@ function toRecord(row: ApplicationRow): ApplicationRecord {
       ? (row.status as ApplicationStatus)
       : "new",
     processedAt: row.processed_at,
+    seenAt: row.seen_at,
   };
 }
 
@@ -136,24 +144,49 @@ export async function appendApplication(
 }
 
 /**
- * How many applications nobody has picked up yet.
+ * How many applications nobody has opened the list to look at yet.
  *
- * Feeds the badge in the admin navigation, which renders on every admin page, so it
- * asks for the count alone: head: true transfers no rows at all.
+ * Feeds the red dot in the admin navigation, which renders on every admin page, so
+ * it asks for the count alone: head: true transfers no rows at all. Deliberately
+ * independent of `status` — a dot that only cleared once someone pressed
+ * «Обработана» stayed lit through applications that had already been read and were
+ * simply waiting on someone else, which looked like a bug.
  *
  * Returns 0 when the query fails. The badge is a prompt to look, not a record — a
  * failed count must not put a number on screen that nothing stands behind, and must
  * not take the surrounding navigation down with it.
  */
-export async function countNewApplications(): Promise<number> {
+export async function countUnseenApplications(): Promise<number> {
   const supabase = await createClient();
 
   const { count, error } = await supabase
     .from("applications")
     .select("*", { count: "exact", head: true })
-    .eq("status", "new");
+    .is("seen_at", null);
 
   return error ? 0 : (count ?? 0);
+}
+
+/**
+ * Marks every not-yet-seen application (within what this caller may read) as seen,
+ * in one round trip.
+ *
+ * Called from the client once the applications list has actually rendered in the
+ * browser — never from the server component that fetches the list, which would also
+ * run when Next.js prefetches the link on hover and clear the dot before anyone had
+ * really looked.
+ *
+ * A caller without update rights affects zero rows and gets no error, same as every
+ * other write here; that is fine to treat as success, since "nothing to mark" and
+ * "not allowed to mark" look identical to the person who never sees a red dot either
+ * way.
+ */
+export async function markApplicationsSeen(): Promise<boolean> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("applications").update({ seen_at: new Date().toISOString() }).is("seen_at", null);
+
+  return !error;
 }
 
 /**
