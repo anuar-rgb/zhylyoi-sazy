@@ -74,10 +74,38 @@ function payload(form: FormData) {
   };
 }
 
-/** The public page reads the table directly, so a change has to reach it too. */
+/**
+ * Where to go after saving.
+ *
+ * The form carries it when it was opened from inside a collective, so adding an
+ * artist there does not dump the person back into the general list.
+ *
+ * Only paths inside the panel are honoured. The value arrives from the browser
+ * with the rest of the form, and a server action is a public endpoint: without
+ * this check it would be a redirect to anywhere somebody cared to name.
+ */
+const MEMBERS = "/admin/culture-members";
+
+function destination(form: FormData): string {
+  const raw = form.get("return_to");
+  if (typeof raw !== "string") return MEMBERS;
+  return /^\/admin(\/[\w/-]*)?$/.test(raw) ? raw : MEMBERS;
+}
+
+/**
+ * Everything that counts or lists artists.
+ *
+ * The collectives section shows how many belong to each, and a collective's own
+ * page shows the roster as cards — both go stale when somebody is added, moved
+ * between collectives or removed. The public roster page groups by collective,
+ * and a collective's public page lists its own.
+ */
 function revalidateMembers() {
   revalidatePath("/admin/culture-members");
+  revalidatePath("/admin/culture-collectives");
+  revalidatePath("/admin/culture-collectives/[id]", "page");
   revalidatePath("/[locale]/members", "page");
+  revalidatePath("/[locale]/collectives/[slug]", "page");
 }
 
 export async function createMember(_prev: FormState, form: FormData): Promise<FormState> {
@@ -97,7 +125,7 @@ export async function createMember(_prev: FormState, form: FormData): Promise<Fo
   if (error) return { error: "Не удалось сохранить артиста." };
 
   revalidateMembers();
-  redirect("/admin/culture-members");
+  redirect(destination(form));
 }
 
 export async function updateMember(_prev: FormState, form: FormData): Promise<FormState> {
@@ -123,7 +151,7 @@ export async function updateMember(_prev: FormState, form: FormData): Promise<Fo
   if (count === 0) return { error: "Недостаточно прав для редактирования." };
 
   revalidateMembers();
-  redirect("/admin/culture-members");
+  redirect(destination(form));
 }
 
 export async function deleteMember(id: string): Promise<{ ok: boolean; error?: string }> {

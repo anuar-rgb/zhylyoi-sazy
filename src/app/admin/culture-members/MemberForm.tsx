@@ -49,6 +49,8 @@ export default function MemberForm({
   member,
   organizationId,
   collectives,
+  defaultClubId,
+  returnTo,
   action,
   heading,
 }: {
@@ -56,6 +58,10 @@ export default function MemberForm({
   organizationId: string;
   /** The institution's collectives, for the picker. Passed in so the form stays client-side. */
   collectives: { id: string; name: string }[];
+  /** Preselected when adding from inside a collective. */
+  defaultClubId?: string;
+  /** Where to go after saving, when the form was opened from a collective. */
+  returnTo?: string;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -103,11 +109,12 @@ export default function MemberForm({
   return (
     <form action={formAction} className="space-y-5">
       {member && <input type="hidden" name="id" value={member.id} />}
+      {returnTo && <input type="hidden" name="return_to" value={returnTo} />}
       <input type="hidden" name="images" value={JSON.stringify(images)} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-members" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href={returnTo ?? "/admin/culture-members"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
@@ -118,7 +125,7 @@ export default function MemberForm({
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Коллектив</p>
-        <select id="club_id" name="club_id" defaultValue={member?.clubId ?? ""} className={INPUT}>
+        <select id="club_id" name="club_id" defaultValue={member?.clubId ?? defaultClubId ?? ""} className={INPUT}>
           <option value="">Без коллектива</option>
           {collectives.map((collective) => (
             <option key={collective.id} value={collective.id}>
@@ -263,7 +270,7 @@ export default function MemberForm({
         >
           {pending ? "Сохранение…" : "Сохранить"}
         </button>
-        <Link href="/admin/culture-members" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href={returnTo ?? "/admin/culture-members"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>

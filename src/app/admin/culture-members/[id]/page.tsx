@@ -6,8 +6,14 @@ import { listCultureClubs } from "@/lib/cultureClubs";
 import MemberForm from "../MemberForm";
 import { updateMember } from "../actions";
 
-export default async function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function EditMemberPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const [{ id }, { from }] = await Promise.all([params, searchParams]);
 
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) redirect("/admin/culture-members");
@@ -26,11 +32,17 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
     name: c.nameRu ?? c.nameKk ?? "Коллектив",
   }));
 
+  // Opened from a collective page: saving and cancelling both go back there
+  // rather than to the general list. Checked against the collectives this person
+  // can see, so the address bar cannot send them somewhere else.
+  const known = from && collectives.some((c) => c.id === from) ? from : undefined;
+
   return (
     <MemberForm
       member={member}
       organizationId={organizationId}
       collectives={collectives}
+      returnTo={known ? `/admin/culture-collectives/${known}` : undefined}
       action={updateMember}
       heading={member.nameRu ?? member.nameKk ?? "Артист"}
     />
