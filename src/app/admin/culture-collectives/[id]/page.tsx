@@ -48,10 +48,11 @@ export default async function EditCollectivePage({ params }: { params: Promise<{
 
       {/* Outside the form on purpose: these are links and their own delete
           buttons, and nesting them in the form would make the browser submit the
-          collective whenever somebody pressed one. */}
-      <RosterCards collectiveId={collective.id} members={members} />
+          collective whenever somebody pressed one. Репертуар and Видео come right
+          after the form; Состав (the roster) goes last. */}
       <RepertoireCards collectiveId={collective.id} pieces={repertoire} />
       <VideoCards collectiveId={collective.id} videos={videos} />
+      <RosterCards collectiveId={collective.id} members={members} />
     </div>
   );
 }
