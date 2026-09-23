@@ -27,6 +27,7 @@
     "playwright": "^1.62.1",
     "playwright-core": "^1.62.1",
     "qrcode": "^1.5.4",
+    "railway": "^3.11.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
