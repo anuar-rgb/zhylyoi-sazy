@@ -53,6 +53,25 @@ function Field({
   );
 }
 
+/**
+ * A numbered card header — same four groups every time (basics, media, contacts,
+ * publishing), numbered so the form reads as a short sequence instead of a wall of
+ * identical white cards.
+ */
+function SectionHeading({ index, title, hint }: { index: number; title: string; hint?: string }) {
+  return (
+    <div className="flex items-start gap-3 mb-4">
+      <span className="shrink-0 w-7 h-7 rounded-full bg-ocean/10 text-ocean text-sm font-bold grid place-items-center">
+        {index}
+      </span>
+      <div className="min-w-0 pt-0.5">
+        <p className="text-sm font-semibold text-ocean">{title}</p>
+        {hint && <p className="text-xs text-ocean/40 mt-0.5">{hint}</p>}
+      </div>
+    </div>
+  );
+}
+
 export default function CollectiveForm({
   collective,
   organizationId,
@@ -131,7 +150,8 @@ export default function CollectiveForm({
       )}
 
       <div className={CARD}>
-        <p className="text-sm font-semibold text-ocean mb-4">Название</p>
+        <SectionHeading index={1} title="Основная информация" hint="Название, вид, руководитель и описание коллектива" />
+
         <div className="grid sm:grid-cols-2 gap-4">
           <BilingualField kkName="name_kk" ruName="name_ru" label="Название" defaultKk={collective?.nameKk} defaultRu={collective?.nameRu} />
           <BilingualField
@@ -143,12 +163,57 @@ export default function CollectiveForm({
             placeholderKk="Халықтық театр"
             placeholderRu="Народный театр"
           />
+          <Field
+            name="manager_name"
+            label="Художественный руководитель"
+            defaultValue={collective?.managerName}
+            placeholder="Жиенбаева Назгүл Өмірғалиқызы"
+          />
+          <Field
+            name="founded_year"
+            label="Год основания"
+            type="number"
+            min={1800}
+            max={2200}
+            defaultValue={collective?.foundedYear?.toString()}
+            placeholder="1957"
+          />
         </div>
-      </div>
 
-      <div className={CARD}>
-        <p className="text-sm font-semibold text-ocean mb-4">Описание</p>
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="border-t border-cream-dark mt-5 pt-5">
+          <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">
+            <input
+              type="checkbox"
+              name="is_honored"
+              checked={honored}
+              onChange={(e) => setHonored(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
+            />
+            <span>
+              Звание «Народный»
+              <span className="block text-xs text-ocean/40">
+                По этой галочке собирается страница «Коллективы со званием „Народный“». Год можно не указывать —
+                звание при этом остаётся, просто на странице не будет строки с годом.
+              </span>
+            </span>
+          </label>
+
+          {honored && (
+            <div className="mt-3 sm:w-1/2 sm:pr-2">
+              <Field
+                name="honored_since"
+                label="Год присвоения звания"
+                type="number"
+                min={1800}
+                max={2200}
+                defaultValue={collective?.honoredSince?.toString()}
+                placeholder="2008"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4 border-t border-cream-dark mt-5 pt-5">
           <BilingualField
             kkName="description_kk"
             ruName="description_ru"
@@ -175,7 +240,7 @@ export default function CollectiveForm({
       </div>
 
       <div className={CARD}>
-        <p className="text-sm font-semibold text-ocean mb-4">Фотографии</p>
+        <SectionHeading index={2} title="Медиа" hint="Фотографии для карточки и страницы коллектива" />
 
         {images.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -214,57 +279,8 @@ export default function CollectiveForm({
       </div>
 
       <div className={CARD}>
-        <p className="text-sm font-semibold text-ocean mb-4">История и звание</p>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field
-            name="founded_year"
-            label="Год основания"
-            type="number"
-            min={1800}
-            max={2200}
-            defaultValue={collective?.foundedYear?.toString()}
-            placeholder="1957"
-          />
-          {honored && (
-            <Field
-              name="honored_since"
-              label="Год присвоения звания"
-              type="number"
-              min={1800}
-              max={2200}
-              defaultValue={collective?.honoredSince?.toString()}
-              placeholder="2008"
-            />
-          )}
-        </div>
-
-        <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer mt-4">
-          <input
-            type="checkbox"
-            name="is_honored"
-            checked={honored}
-            onChange={(e) => setHonored(e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
-          />
-          <span>
-            Звание «Народный»
-            <span className="block text-xs text-ocean/40">
-              По этой галочке собирается страница «Коллективы со званием „Народный“». Год можно не указывать —
-              звание при этом остаётся, просто на странице не будет строки с годом.
-            </span>
-          </span>
-        </label>
-      </div>
-
-      <div className={CARD}>
-        <p className="text-sm font-semibold text-ocean mb-4">Руководитель и связь</p>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field
-            name="manager_name"
-            label="Художественный руководитель"
-            defaultValue={collective?.managerName}
-            placeholder="Жиенбаева Назгүл Өмірғалиқызы"
-          />
+        <SectionHeading index={3} title="Контакты" hint="Как связаться с коллективом" />
+        <div className="sm:w-1/2 sm:pr-2">
           <Field
             name="contact_phone"
             label="Телефон"
@@ -275,7 +291,7 @@ export default function CollectiveForm({
       </div>
 
       <div className={CARD}>
-        <p className="text-sm font-semibold text-ocean mb-4">Показ на сайте</p>
+        <SectionHeading index={4} title="Публикация" hint="Виден ли коллектив на сайте и по какому адресу" />
 
         <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">
           <input
@@ -316,7 +332,9 @@ export default function CollectiveForm({
         </details>
       </div>
 
-      <div className="flex items-center gap-3">
+      {/* Sticky rather than a plain row at the end: on a form this long, Save should
+          never be more than a scroll-glance away. */}
+      <div className="sticky bottom-0 -mx-1 px-1 py-3 bg-cream/95 backdrop-blur border-t border-cream-dark flex items-center gap-3">
         <button
           type="submit"
           disabled={pending || uploading}
