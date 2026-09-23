@@ -3,13 +3,15 @@ import type { Locale } from "@/i18n/routing";
 /**
  * «Жастар» халықтық театры — a creative collective of the culture house.
  *
- * Source: the institution's own presentation packet (ТЕАТР ТУРАЛЫ.docx, 2026-09).
- * The packet is written in Kazakh; the Russian text here is a translation of it.
- * Nothing is invented — a field the packet does not answer is simply absent.
+ * Source: the institution's own presentation packet (ТЕАТР ТУРАЛЫ.docx, 2026-09;
+ * corrected packet ТЕАТР ТУРАЛЫ новый.docx, 2026-09-23, which added one member and
+ * one card). The packet is written in Kazakh; the Russian text here is a
+ * translation of it. Nothing is invented — a field the packet does not answer is
+ * simply absent.
  *
  * Portraits and education details are published at the institution's own request,
- * recorded 2026-09-22. Three members have no card in the packet, so they appear in
- * the list by name alone.
+ * recorded 2026-09-22 and updated 2026-09-23. Two members have no card in the
+ * packet, so they appear in the list by name alone.
  */
 
 export type Achievement = { year: string; kk: string; ru: string };
@@ -84,6 +86,11 @@ export const achievements: Achievement[] = [
     year: "2023",
     kk: "Берік Қорқытовтың шығармашылығына арналған облыстық фестивальде «Үздік музыкалық қойылым» номинациясы.",
     ru: "Номинация «Лучший музыкальный спектакль» на областном фестивале, посвящённом творчеству Берика Коркытова.",
+  },
+  {
+    year: "2023",
+    kk: "Саид Ахмад өзбек драматургінің «Келіндер көтерілісі» комедиялық қойылымын қойды.",
+    ru: "Поставлен комедийный спектакль «Келіндер көтерілісі» узбекского драматурга Саида Ахмада.",
   },
   {
     year: "2026",
@@ -229,9 +236,24 @@ export const members: Member[] = [
     schoolKk: "Х. Досмұхамедов атындағы Атырау мемлекеттік университеті",
     schoolRu: "Атырауский государственный университет имени Х. Досмухамедова",
   },
-  // The packet lists these three among the members but gives them no card.
+  {
+    name: "Айсанова Асылжан Ақжайыққызы",
+    photo: "/images/teatr/members/member-14.jpeg",
+    kk: "Химиялық және биохимиялық инженерия",
+    ru: "Химическая и биохимическая инженерия",
+    levelKk: "Жоғары",
+    levelRu: "Высшее",
+    schoolKk: "Қ. И. Сәтбаев атындағы Қазақ ұлттық техникалық зерттеу университеті",
+    schoolRu: "Казахский национальный исследовательский технический университет имени К. И. Сатпаева",
+  },
+  {
+    name: "Орынғалиев Еламан",
+    photo: "/images/teatr/members/member-15.jpeg",
+    noteKk: "Дыбыс операторы",
+    noteRu: "Звукооператор",
+  },
+  // The packet lists these two among the members but gives them no card.
   { name: "Елеуова Мөлдір Дәуренқызы" },
-  { name: "Орынғалиев Еламан" },
   { name: "Каманова Жанаргүл" },
 ];
 
@@ -321,7 +343,7 @@ export const content: Record<
     leaderLabel: "Көркемдік жетекші",
     achievementsTitle: "Тарихы мен жетістіктері",
     membersTitle: "Ұжым құрамы",
-    membersNote: "Барлығы 16 мүше: 1 кәсіби актриса және 12 әуесқой актер.",
+    membersNote: "Барлығы 17 мүше: 1 кәсіби актриса және 12 әуесқой актер.",
     educationLabel: "Білімі",
     repertoireTitle: "Репертуар",
     postersTitle: "Қойылымдар",
@@ -347,7 +369,7 @@ export const content: Record<
     leaderLabel: "Художественный руководитель",
     achievementsTitle: "История и достижения",
     membersTitle: "Состав коллектива",
-    membersNote: "Всего 16 участников: одна профессиональная актриса и двенадцать актёров-любителей.",
+    membersNote: "Всего 17 участников: одна профессиональная актриса и двенадцать актёров-любителей.",
     educationLabel: "Образование",
     repertoireTitle: "Репертуар",
     postersTitle: "Спектакли",

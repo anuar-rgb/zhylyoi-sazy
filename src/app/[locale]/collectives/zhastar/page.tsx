@@ -138,7 +138,7 @@ export default async function ZhastarPage() {
           </div>
         </FadeIn>
 
-        {/* Portraits and education published at the institution's request. Three members
+        {/* Portraits and education published at the institution's request. Two members
             have no card in the source packet and fall through to the plain list below. */}
         <FadeIn>
           <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">{t.membersTitle}</h2>
