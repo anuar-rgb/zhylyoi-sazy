@@ -6,18 +6,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureMemberRecord, MemberImage } from "@/lib/cultureMembers";
-import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
-
-const TRANSLATE_PAIRS = [
-  { kk: "name_kk", ru: "name_ru" },
-  { kk: "role_kk", ru: "role_ru" },
-  { kk: "education_kk", ru: "education_ru" },
-  { kk: "specialty_kk", ru: "specialty_ru" },
-  { kk: "level_kk", ru: "level_ru" },
-  { kk: "note_kk", ru: "note_ru" },
-];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -124,12 +114,9 @@ export default function MemberForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <div className="flex items-center gap-4">
-          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
-          <Link href={returnTo ?? "/admin/culture-members"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-            Отмена
-          </Link>
-        </div>
+        <Link href={returnTo ?? "/admin/culture-members"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+          Отмена
+        </Link>
       </div>
 
       {state.error && (

@@ -4,15 +4,8 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { youtubeId, youtubeThumbnailUrl, youtubeWatchUrl } from "@/lib/youtube";
 import type { CultureVideoRecord } from "@/lib/cultureVideos";
-import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
-
-const TRANSLATE_PAIRS = [
-  { kk: "title_kk", ru: "title_ru" },
-  { kk: "description_kk", ru: "description_ru" },
-  { kk: "venue_kk", ru: "venue_ru" },
-];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -83,12 +76,9 @@ export default function VideoForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <div className="flex items-center gap-4">
-          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
-          <Link href={returnTo ?? "/admin/culture-videos"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-            Отмена
-          </Link>
-        </div>
+        <Link href={returnTo ?? "/admin/culture-videos"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+          Отмена
+        </Link>
       </div>
 
       {state.error && (

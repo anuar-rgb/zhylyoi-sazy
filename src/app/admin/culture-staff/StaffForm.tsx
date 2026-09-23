@@ -6,15 +6,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureStaffRecord, StaffImage } from "@/lib/cultureStaff";
-import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
-
-const TRANSLATE_PAIRS = [
-  { kk: "name_kk", ru: "name_ru" },
-  { kk: "role_kk", ru: "role_ru" },
-  { kk: "description_kk", ru: "description_ru" },
-];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -111,12 +104,9 @@ export default function StaffForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <div className="flex items-center gap-4">
-          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
-          <Link href="/admin/culture-staff" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-            Отмена
-          </Link>
-        </div>
+        <Link href="/admin/culture-staff" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+          Отмена
+        </Link>
       </div>
 
       {state.error && (
