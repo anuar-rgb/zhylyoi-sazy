@@ -1,48 +1,15 @@
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
-import VideoCard, { type VideoItem } from "@/components/VideoCard";
+import VideoCard from "@/components/VideoCard";
 import { getSiteText } from "@/lib/orgContent";
+import { listPublicCultureVideos, localizedVideo } from "@/lib/cultureVideos";
 import type { Locale } from "@/i18n/routing";
-
-// The recordings themselves are still listed here. Unlike the headings around them
-// they are not text but files, and giving an administrator the ability to add one
-// needs a table and an upload; that waits on its own migration. Everything else on
-// this page is editable today.
-const videos: Record<Locale, VideoItem[]> = {
-  kk: [
-    {
-      src: "/videos/ensemble-2026.mp4",
-      title: "«Жылыой сазы» фольклорлық ансамблі",
-      description: "Ансамбльдің «Кең Жылыой» мәдениет үйіндегі концерттік бейнежазбасы",
-      venueLine: "«Кең Жылыой» мәдениет үйі, 2026 жыл",
-    },
-    {
-      src: "/videos/concert-2026.mp4",
-      title: "Концерттік бейнежазба",
-      description: "Ансамбльдің сахнадағы өнер көрсетуі",
-      venueLine: "«Кең Жылыой» мәдениет үйі, 2026 жыл",
-    },
-  ],
-  ru: [
-    {
-      src: "/videos/ensemble-2026.mp4",
-      title: "Фольклорный ансамбль «Жылыой сазы»",
-      description: "Концертная видеозапись ансамбля в доме культуры «Кен Жылыой»",
-      venueLine: "Дом культуры «Кен Жылыой», 2026 год",
-    },
-    {
-      src: "/videos/concert-2026.mp4",
-      title: "Концертная видеозапись",
-      description: "Выступление ансамбля на сцене",
-      venueLine: "Дом культуры «Кен Жылыой», 2026 год",
-    },
-  ],
-};
 
 export default async function VideoPage() {
   const locale = (await getLocale()) as Locale;
   const text = await getSiteText(locale);
+  const videos = await listPublicCultureVideos();
   const badge = text("videoPage.badge");
 
   return (
@@ -53,9 +20,19 @@ export default async function VideoPage() {
         </FadeIn>
 
         <div className="space-y-8 sm:space-y-10">
-          {videos[locale].map((video, index) => (
-            <FadeIn key={video.src} delay={index * 150}>
-              <VideoCard video={video} badge={badge} />
+          {videos.map((video, index) => (
+            <FadeIn key={video.id} delay={index * 150}>
+              <VideoCard
+                video={{
+                  kind: video.kind,
+                  youtubeId: video.youtubeId,
+                  filePath: video.filePath,
+                  title: localizedVideo(video, locale, "title") ?? "",
+                  description: localizedVideo(video, locale, "description") ?? "",
+                  venueLine: localizedVideo(video, locale, "venue") ?? "",
+                  badge,
+                }}
+              />
             </FadeIn>
           ))}
         </div>

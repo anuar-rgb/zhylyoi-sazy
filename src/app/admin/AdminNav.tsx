@@ -11,6 +11,7 @@ const items = [
   { href: "/admin/culture-staff", label: "Сотрудники" },
   { href: "/admin/culture-members", label: "Состав ансамбля" },
   { href: "/admin/culture-repertoire", label: "Репертуар" },
+  { href: "/admin/culture-videos", label: "Видео" },
   { href: "/admin/applications", label: "Заявки" },
   { href: "/admin/content", label: "Тексты сайта" },
   { href: "/admin/settings", label: "Настройки" },
