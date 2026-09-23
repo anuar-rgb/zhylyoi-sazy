@@ -2,7 +2,7 @@ import "server-only";
 
 export type TranslateLang = "kk" | "ru";
 
-const ENDPOINT = "https://translation.googleapis.com/language/translate2";
+const ENDPOINT = "https://translation.googleapis.com/language/translate/v2";
 
 /**
  * The earlier approach called the public endpoint translate.google.com itself
