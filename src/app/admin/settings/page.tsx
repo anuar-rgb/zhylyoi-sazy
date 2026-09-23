@@ -1,7 +1,9 @@
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganization } from "@/lib/organization";
+import { getTelegramSettings } from "@/lib/orgTelegram";
 import SettingsForm from "./SettingsForm";
-import { updateOrganization } from "./actions";
+import TelegramForm from "./TelegramForm";
+import { updateOrganization, updateTelegram } from "./actions";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -38,5 +40,15 @@ export default async function SettingsPage() {
     );
   }
 
-  return <SettingsForm organization={organization} action={updateOrganization} />;
+  // Its own form, not another card inside the organisation one: the bot is saved and
+  // tested on its own, and a shared submit button would make replacing a token also
+  // rewrite the institution's name and address.
+  const telegram = await getTelegramSettings(organization.id);
+
+  return (
+    <div className="space-y-5">
+      <SettingsForm organization={organization} action={updateOrganization} />
+      <TelegramForm settings={telegram} action={updateTelegram} />
+    </div>
+  );
 }
