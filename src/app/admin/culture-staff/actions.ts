@@ -7,6 +7,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureStaffById, type StaffImage } from "@/lib/cultureStaff";
 import { MEDIA_BUCKET } from "@/lib/storage";
+import { translateFieldPair } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null };
 
@@ -66,6 +67,26 @@ function payload(form: FormData) {
   };
 }
 
+/**
+ * The kk/ru pairs this form carries. Reused to fill in whichever side the admin
+ * left blank — the form itself shows only the Kazakh input, with the Russian one
+ * folded under a collapsed "перевод" section that starts empty on a new record.
+ */
+const FIELD_PAIRS = [
+  ["name_kk", "name_ru"],
+  ["role_kk", "role_ru"],
+  ["description_kk", "description_ru"],
+] as const;
+
+async function fillTranslations(data: ReturnType<typeof payload>): Promise<ReturnType<typeof payload>> {
+  let filled = data;
+  for (const [kk, ru] of FIELD_PAIRS) {
+    const [result] = await translateFieldPair([filled], kk, ru);
+    filled = result;
+  }
+  return filled;
+}
+
 /** The public page reads the table directly, so a change has to reach it too. */
 function revalidateStaff() {
   revalidatePath("/admin/culture-staff");
@@ -76,7 +97,7 @@ export async function createStaff(_prev: FormState, form: FormData): Promise<For
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите имя хотя бы на одном языке." };
 
   // A platform admin belongs to no institution, so fall back to the site's own.
@@ -100,7 +121,7 @@ export async function updateStaff(_prev: FormState, form: FormData): Promise<For
   const id = field(form, "id");
   if (!id) return { error: "Сотрудник не найден." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите имя хотя бы на одном языке." };
 
   const supabase = await createClient();

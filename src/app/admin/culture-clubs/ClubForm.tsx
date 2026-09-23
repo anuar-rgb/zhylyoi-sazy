@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureClubImage, CultureClubRecord } from "@/lib/cultureClubs";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -131,20 +132,38 @@ export default function ClubForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Название и направление</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="name_kk" label="Название (kk)" defaultValue={club?.nameKk} />
-          <Field name="name_ru" label="Название (ru)" defaultValue={club?.nameRu} />
-          <Field name="direction_kk" label="Направление (kk)" defaultValue={club?.directionKk} />
-          <Field name="direction_ru" label="Направление (ru)" defaultValue={club?.directionRu} />
+          <BilingualField kkName="name_kk" ruName="name_ru" label="Название" defaultKk={club?.nameKk} defaultRu={club?.nameRu} />
+          <BilingualField
+            kkName="direction_kk"
+            ruName="direction_ru"
+            label="Направление"
+            defaultKk={club?.directionKk}
+            defaultRu={club?.directionRu}
+          />
         </div>
       </div>
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Описание</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="description_kk" label="Краткое описание (kk)" defaultValue={club?.descriptionKk} textarea rows={3} />
-          <Field name="description_ru" label="Краткое описание (ru)" defaultValue={club?.descriptionRu} textarea rows={3} />
-          <Field name="full_text_kk" label="Полное описание (kk)" defaultValue={club?.fullTextKk} textarea rows={7} />
-          <Field name="full_text_ru" label="Полное описание (ru)" defaultValue={club?.fullTextRu} textarea rows={7} />
+          <BilingualField
+            kkName="description_kk"
+            ruName="description_ru"
+            label="Краткое описание"
+            defaultKk={club?.descriptionKk}
+            defaultRu={club?.descriptionRu}
+            textarea
+            rows={3}
+          />
+          <BilingualField
+            kkName="full_text_kk"
+            ruName="full_text_ru"
+            label="Полное описание"
+            defaultKk={club?.fullTextKk}
+            defaultRu={club?.fullTextRu}
+            textarea
+            rows={7}
+          />
         </div>
         <p className="text-xs text-ocean/40 mt-2">Абзацы разделяйте пустой строкой.</p>
       </div>
@@ -152,8 +171,7 @@ export default function ClubForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Занятия</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="schedule_kk" label="Расписание (kk)" defaultValue={club?.scheduleKk} />
-          <Field name="schedule_ru" label="Расписание (ru)" defaultValue={club?.scheduleRu} />
+          <BilingualField kkName="schedule_kk" ruName="schedule_ru" label="Расписание" defaultKk={club?.scheduleKk} defaultRu={club?.scheduleRu} />
           <Field name="age_range" label="Возраст" defaultValue={club?.ageRange} placeholder="например: 7–14 лет" />
           <Field name="capacity" label="Мест" defaultValue={club?.capacity?.toString()} type="number" min={1} />
           <Field name="manager_name" label="Руководитель" defaultValue={club?.managerName} />

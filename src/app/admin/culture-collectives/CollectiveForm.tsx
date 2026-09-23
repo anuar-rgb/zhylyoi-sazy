@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureClubImage, CultureClubRecord } from "@/lib/cultureClubs";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -132,19 +133,15 @@ export default function CollectiveForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Название</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="name_kk" label="Название (kk)" defaultValue={collective?.nameKk} />
-          <Field name="name_ru" label="Название (ru)" defaultValue={collective?.nameRu} />
-          <Field
-            name="direction_kk"
-            label="Вид коллектива (kk)"
-            defaultValue={collective?.directionKk}
-            placeholder="Халықтық театр"
-          />
-          <Field
-            name="direction_ru"
-            label="Вид коллектива (ru)"
-            defaultValue={collective?.directionRu}
-            placeholder="Народный театр"
+          <BilingualField kkName="name_kk" ruName="name_ru" label="Название" defaultKk={collective?.nameKk} defaultRu={collective?.nameRu} />
+          <BilingualField
+            kkName="direction_kk"
+            ruName="direction_ru"
+            label="Вид коллектива"
+            defaultKk={collective?.directionKk}
+            defaultRu={collective?.directionRu}
+            placeholderKk="Халықтық театр"
+            placeholderRu="Народный театр"
           />
         </div>
       </div>
@@ -152,31 +149,21 @@ export default function CollectiveForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Описание</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field
-            name="description_kk"
-            label="Краткое описание (kk)"
-            defaultValue={collective?.descriptionKk}
+          <BilingualField
+            kkName="description_kk"
+            ruName="description_ru"
+            label="Краткое описание"
+            defaultKk={collective?.descriptionKk}
+            defaultRu={collective?.descriptionRu}
             textarea
             rows={3}
           />
-          <Field
-            name="description_ru"
-            label="Краткое описание (ru)"
-            defaultValue={collective?.descriptionRu}
-            textarea
-            rows={3}
-          />
-          <Field
-            name="full_text_kk"
-            label="Полное описание (kk)"
-            defaultValue={collective?.fullTextKk}
-            textarea
-            rows={8}
-          />
-          <Field
-            name="full_text_ru"
-            label="Полное описание (ru)"
-            defaultValue={collective?.fullTextRu}
+          <BilingualField
+            kkName="full_text_kk"
+            ruName="full_text_ru"
+            label="Полное описание"
+            defaultKk={collective?.fullTextKk}
+            defaultRu={collective?.fullTextRu}
             textarea
             rows={8}
           />

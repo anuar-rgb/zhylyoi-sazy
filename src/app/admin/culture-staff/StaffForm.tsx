@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureStaffRecord, StaffImage } from "@/lib/cultureStaff";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -125,15 +126,17 @@ export default function StaffForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Имя и должность</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="name_kk" label="ФИО (kk)" defaultValue={person?.nameKk} />
-          <Field name="name_ru" label="ФИО (ru)" defaultValue={person?.nameRu} />
-          <Field name="role_kk" label="Должность (kk)" defaultValue={person?.roleKk} placeholder="Басшысы" />
-          <Field name="role_ru" label="Должность (ru)" defaultValue={person?.roleRu} placeholder="Директор" />
+          <BilingualField kkName="name_kk" ruName="name_ru" label="ФИО" defaultKk={person?.nameKk} defaultRu={person?.nameRu} />
+          <BilingualField
+            kkName="role_kk"
+            ruName="role_ru"
+            label="Должность"
+            defaultKk={person?.roleKk}
+            defaultRu={person?.roleRu}
+            placeholderKk="Басшысы"
+            placeholderRu="Директор"
+          />
         </div>
-        <p className="text-xs text-ocean/40 mt-2">
-          ФИО достаточно ввести на одном языке — второй подставится. Должность стоит заполнить на обоих: она
-          переводится.
-        </p>
       </div>
 
       <div className={CARD}>
@@ -178,8 +181,15 @@ export default function StaffForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Дополнительно</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="description_kk" label="Описание (kk)" defaultValue={person?.descriptionKk} textarea rows={3} />
-          <Field name="description_ru" label="Описание (ru)" defaultValue={person?.descriptionRu} textarea rows={3} />
+          <BilingualField
+            kkName="description_kk"
+            ruName="description_ru"
+            label="Описание"
+            defaultKk={person?.descriptionKk}
+            defaultRu={person?.descriptionRu}
+            textarea
+            rows={3}
+          />
           <Field name="phone" label="Телефон" defaultValue={person?.phone} placeholder="+7 778 927 63 87" />
           <Field name="email" label="Электронная почта" defaultValue={person?.email} type="email" />
         </div>

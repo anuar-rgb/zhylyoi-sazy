@@ -8,6 +8,7 @@ import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureClubById, type CultureClubImage } from "@/lib/cultureClubs";
 import { MEDIA_BUCKET } from "@/lib/storage";
 import { slugify } from "@/lib/slug";
+import { translateFieldPair } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null };
 
@@ -78,6 +79,27 @@ function payload(form: FormData) {
 }
 
 /**
+ * The kk/ru pairs this form carries. Reused to fill in whichever side the admin
+ * left blank — the form itself shows only the Kazakh input, with the Russian one
+ * folded under a collapsed "перевод" section that starts empty on a new record.
+ */
+const FIELD_PAIRS = [
+  ["name_kk", "name_ru"],
+  ["direction_kk", "direction_ru"],
+  ["description_kk", "description_ru"],
+  ["full_text_kk", "full_text_ru"],
+] as const;
+
+async function fillTranslations(data: ReturnType<typeof payload>): Promise<ReturnType<typeof payload>> {
+  let filled = data;
+  for (const [kk, ru] of FIELD_PAIRS) {
+    const [result] = await translateFieldPair([filled], kk, ru);
+    filled = result;
+  }
+  return filled;
+}
+
+/**
  * Four public pages read collectives, not one.
  *
  * The listing, the collective's own page, the rosters grouped by collective, and
@@ -96,7 +118,7 @@ export async function createCollective(_prev: FormState, form: FormData): Promis
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите название хотя бы на одном языке." };
 
   const typed = field(form, "slug");
@@ -137,7 +159,7 @@ export async function updateCollective(_prev: FormState, form: FormData): Promis
   const id = field(form, "id");
   if (!id) return { error: "Коллектив не найден." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите название хотя бы на одном языке." };
 
   const typed = field(form, "slug");

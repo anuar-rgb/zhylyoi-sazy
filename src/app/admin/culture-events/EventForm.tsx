@@ -14,6 +14,7 @@ import {
 } from "@/lib/eventFields";
 import type { CultureEventRecord, EventImage } from "@/lib/cultureEvents";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -132,11 +133,7 @@ export default function EventForm({
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Название</p>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="title_kk" label="Название (kk)" defaultValue={event?.titleKk} />
-          <Field name="title_ru" label="Название (ru)" defaultValue={event?.titleRu} />
-        </div>
-        <p className="text-xs text-ocean/40 mt-2">Достаточно одного языка — второй подставится автоматически.</p>
+        <BilingualField kkName="title_kk" ruName="title_ru" label="Название" defaultKk={event?.titleKk} defaultRu={event?.titleRu} />
       </div>
 
       <div className={CARD}>
@@ -155,10 +152,14 @@ export default function EventForm({
             type="datetime-local"
             defaultValue={isoToDateTimeInput(event?.endDate ?? null)}
           />
-          <Field name="location_kk" label="Место (kk)" defaultValue={event?.locationKk} />
-          <Field name="location_ru" label="Место (ru)" defaultValue={event?.locationRu} />
-          <Field name="organizer_kk" label="Организатор (kk)" defaultValue={event?.organizerKk} />
-          <Field name="organizer_ru" label="Организатор (ru)" defaultValue={event?.organizerRu} />
+          <BilingualField kkName="location_kk" ruName="location_ru" label="Место" defaultKk={event?.locationKk} defaultRu={event?.locationRu} />
+          <BilingualField
+            kkName="organizer_kk"
+            ruName="organizer_ru"
+            label="Организатор"
+            defaultKk={event?.organizerKk}
+            defaultRu={event?.organizerRu}
+          />
           <Field name="age_limit" label="Возрастное ограничение" defaultValue={event?.ageLimit} placeholder="например: 6+" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">Время указывается по Атырау (UTC+5).</p>
@@ -189,10 +190,24 @@ export default function EventForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Описание</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="description_kk" label="Краткое описание (kk)" defaultValue={event?.descriptionKk} textarea rows={3} />
-          <Field name="description_ru" label="Краткое описание (ru)" defaultValue={event?.descriptionRu} textarea rows={3} />
-          <Field name="full_text_kk" label="Полное описание (kk)" defaultValue={event?.fullTextKk} textarea rows={7} />
-          <Field name="full_text_ru" label="Полное описание (ru)" defaultValue={event?.fullTextRu} textarea rows={7} />
+          <BilingualField
+            kkName="description_kk"
+            ruName="description_ru"
+            label="Краткое описание"
+            defaultKk={event?.descriptionKk}
+            defaultRu={event?.descriptionRu}
+            textarea
+            rows={3}
+          />
+          <BilingualField
+            kkName="full_text_kk"
+            ruName="full_text_ru"
+            label="Полное описание"
+            defaultKk={event?.fullTextKk}
+            defaultRu={event?.fullTextRu}
+            textarea
+            rows={7}
+          />
         </div>
         <p className="text-xs text-ocean/40 mt-2">Абзацы разделяйте пустой строкой.</p>
       </div>

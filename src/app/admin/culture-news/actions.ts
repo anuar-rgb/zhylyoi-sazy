@@ -10,6 +10,7 @@ import { toPublishStatus } from "@/lib/publishStatus";
 import { dateTimeInputToIso } from "@/lib/eventFields";
 import { MEDIA_BUCKET } from "@/lib/storage";
 import { slugify } from "@/lib/slug";
+import { translateFieldPair } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null };
 
@@ -69,6 +70,27 @@ function payload(form: FormData) {
   };
 }
 
+/**
+ * The kk/ru pairs this form carries. Reused to fill in whichever side the admin
+ * left blank — the form itself shows only the Kazakh input, with the Russian one
+ * folded under a collapsed "перевод" section that starts empty on a new record.
+ */
+const FIELD_PAIRS = [
+  ["title_kk", "title_ru"],
+  ["tag_kk", "tag_ru"],
+  ["excerpt_kk", "excerpt_ru"],
+  ["content_kk", "content_ru"],
+] as const;
+
+async function fillTranslations(data: ReturnType<typeof payload>): Promise<ReturnType<typeof payload>> {
+  let filled = data;
+  for (const [kk, ru] of FIELD_PAIRS) {
+    const [result] = await translateFieldPair([filled], kk, ru);
+    filled = result;
+  }
+  return filled;
+}
+
 /** The news pages read the table directly, so a change has to reach them. */
 function revalidateNews(slug: string | null) {
   revalidatePath("/admin/culture-news");
@@ -78,8 +100,8 @@ function revalidateNews(slug: string | null) {
 }
 
 /** Shared checks; returns the prepared row or the message to show. */
-function validate(form: FormData): { data: ReturnType<typeof payload>; slug: string } | { error: string } {
-  const data = payload(form);
+async function validate(form: FormData): Promise<{ data: ReturnType<typeof payload>; slug: string } | { error: string }> {
+  const data = await fillTranslations(payload(form));
   if (!data.title) return { error: "Укажите заголовок хотя бы на одном языке." };
   if (!data.content_kk && !data.content_ru) return { error: "Напишите текст новости хотя бы на одном языке." };
 
@@ -100,7 +122,7 @@ export async function createNews(_prev: FormState, form: FormData): Promise<Form
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
-  const checked = validate(form);
+  const checked = await validate(form);
   if ("error" in checked) return { error: checked.error };
 
   // A platform admin belongs to no institution, so fall back to the site's own.
@@ -136,7 +158,7 @@ export async function updateNews(_prev: FormState, form: FormData): Promise<Form
   const id = field(form, "id");
   if (!id) return { error: "Не указано, какую новость сохранять." };
 
-  const checked = validate(form);
+  const checked = await validate(form);
   if ("error" in checked) return { error: checked.error };
 
   const supabase = await createClient();

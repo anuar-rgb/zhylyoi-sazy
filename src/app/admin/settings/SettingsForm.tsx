@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import type { OrganizationRecord } from "@/lib/organization";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -60,18 +61,21 @@ export default function SettingsForm({
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Название</p>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="name_kk" label="Название (kk)" defaultValue={organization.nameKk} />
-          <Field name="name_ru" label="Название (ru)" defaultValue={organization.nameRu} />
-        </div>
+        <BilingualField kkName="name_kk" ruName="name_ru" label="Название" defaultKk={organization.nameKk} defaultRu={organization.nameRu} />
         <p className="text-xs text-ocean/40 mt-2">Показывается в подвале сайта и на странице «Контакты».</p>
       </div>
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Контакты</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="address_kk" label="Адрес (kk)" defaultValue={organization.addressKk} textarea />
-          <Field name="address_ru" label="Адрес (ru)" defaultValue={organization.addressRu} textarea />
+          <BilingualField
+            kkName="address_kk"
+            ruName="address_ru"
+            label="Адрес"
+            defaultKk={organization.addressKk}
+            defaultRu={organization.addressRu}
+            textarea
+          />
           <Field name="phone" label="Телефон" defaultValue={organization.phone} placeholder="+7 778 927 63 87" />
           <Field name="email" label="Электронная почта" defaultValue={organization.email} type="email" />
         </div>

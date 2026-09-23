@@ -38,8 +38,11 @@ async function safeTranslate(text: string, from: TranslateLang, to: TranslateLan
  * side is translated; a pair already filled on both sides, or empty on both, is
  * returned unchanged and never reaches the translator.
  *
- * Nothing here is written back to the database: the institution's own text is
- * never silently replaced, only decorated for the visitor reading this render.
+ * Used two ways: the public read functions below call it to decorate a render
+ * without touching the database, and the admin create/update actions call it on
+ * the form's own payload just before the insert/update — that is the one place
+ * its result IS written down, which is what lets an admin form show only the
+ * Kazakh field and have the Russian one filled in by saving.
  */
 export async function translateFieldPair<T extends Record<string, unknown>>(
   records: T[],

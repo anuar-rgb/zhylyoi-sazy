@@ -5,6 +5,7 @@ import Link from "next/link";
 import { youtubeId, youtubeThumbnailUrl, youtubeWatchUrl } from "@/lib/youtube";
 import type { CultureVideoRecord } from "@/lib/cultureVideos";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -144,21 +145,23 @@ export default function VideoForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Подписи</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="title_kk" label="Название (kk)" defaultValue={video?.titleKk} />
-          <Field name="title_ru" label="Название (ru)" defaultValue={video?.titleRu} />
-          <Field name="description_kk" label="Описание (kk)" defaultValue={video?.descriptionKk} textarea />
-          <Field name="description_ru" label="Описание (ru)" defaultValue={video?.descriptionRu} textarea />
-          <Field
-            name="venue_kk"
-            label="Место и год (kk)"
-            defaultValue={video?.venueKk}
-            placeholder="«Кең Жылыой» мәдениет үйі, 2026 жыл"
+          <BilingualField kkName="title_kk" ruName="title_ru" label="Название" defaultKk={video?.titleKk} defaultRu={video?.titleRu} />
+          <BilingualField
+            kkName="description_kk"
+            ruName="description_ru"
+            label="Описание"
+            defaultKk={video?.descriptionKk}
+            defaultRu={video?.descriptionRu}
+            textarea
           />
-          <Field
-            name="venue_ru"
-            label="Место и год (ru)"
-            defaultValue={video?.venueRu}
-            placeholder="Дом культуры «Кен Жылыой», 2026 год"
+          <BilingualField
+            kkName="venue_kk"
+            ruName="venue_ru"
+            label="Место и год"
+            defaultKk={video?.venueKk}
+            defaultRu={video?.venueRu}
+            placeholderKk="«Кең Жылыой» мәдениет үйі, 2026 жыл"
+            placeholderRu="Дом культуры «Кен Жылыой», 2026 год"
           />
         </div>
         <p className="text-xs text-ocean/40 mt-2">

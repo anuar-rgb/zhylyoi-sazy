@@ -9,6 +9,7 @@ import { PUBLISH_STATUSES, PUBLISH_STATUS_LABELS } from "@/lib/publishStatus";
 import { isoToDateTimeInput } from "@/lib/eventFields";
 import type { CultureNewsRecord, NewsImage } from "@/lib/cultureNews";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -134,24 +135,41 @@ export default function NewsForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Заголовок и метка</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="title_kk" label="Заголовок (kk)" defaultValue={item?.titleKk} />
-          <Field name="title_ru" label="Заголовок (ru)" defaultValue={item?.titleRu} />
-          <Field name="tag_kk" label="Метка (kk)" defaultValue={item?.tagKk} placeholder="например: Байқау" />
-          <Field name="tag_ru" label="Метка (ru)" defaultValue={item?.tagRu} placeholder="например: Конкурс" />
+          <BilingualField kkName="title_kk" ruName="title_ru" label="Заголовок" defaultKk={item?.titleKk} defaultRu={item?.titleRu} />
+          <BilingualField
+            kkName="tag_kk"
+            ruName="tag_ru"
+            label="Метка"
+            defaultKk={item?.tagKk}
+            defaultRu={item?.tagRu}
+            placeholderKk="например: Байқау"
+            placeholderRu="например: Конкурс"
+          />
         </div>
-        <p className="text-xs text-ocean/40 mt-2">
-          Метка — короткое слово на карточке: Конкурс, Кружок, Мероприятие. Заголовок достаточно ввести на одном
-          языке, второй подставится.
-        </p>
+        <p className="text-xs text-ocean/40 mt-2">Метка — короткое слово на карточке: Конкурс, Кружок, Мероприятие.</p>
       </div>
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Текст</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="excerpt_kk" label="Анонс (kk)" defaultValue={item?.excerptKk} textarea rows={3} />
-          <Field name="excerpt_ru" label="Анонс (ru)" defaultValue={item?.excerptRu} textarea rows={3} />
-          <Field name="content_kk" label="Полный текст (kk)" defaultValue={item?.contentKk} textarea rows={9} />
-          <Field name="content_ru" label="Полный текст (ru)" defaultValue={item?.contentRu} textarea rows={9} />
+          <BilingualField
+            kkName="excerpt_kk"
+            ruName="excerpt_ru"
+            label="Анонс"
+            defaultKk={item?.excerptKk}
+            defaultRu={item?.excerptRu}
+            textarea
+            rows={3}
+          />
+          <BilingualField
+            kkName="content_kk"
+            ruName="content_ru"
+            label="Полный текст"
+            defaultKk={item?.contentKk}
+            defaultRu={item?.contentRu}
+            textarea
+            rows={9}
+          />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           Анонс показывается на карточке, полный текст — на странице новости. Абзацы разделяйте пустой строкой.

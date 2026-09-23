@@ -15,6 +15,7 @@ import {
 } from "@/lib/eventFields";
 import { MEDIA_BUCKET } from "@/lib/storage";
 import { slugify } from "@/lib/slug";
+import { translateFieldPair } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null };
 
@@ -92,6 +93,28 @@ function payload(form: FormData) {
   };
 }
 
+/**
+ * The kk/ru pairs this form carries. Reused to fill in whichever side the admin
+ * left blank — the form itself shows only the Kazakh input, with the Russian one
+ * folded under a collapsed "перевод" section that starts empty on a new record.
+ */
+const FIELD_PAIRS = [
+  ["title_kk", "title_ru"],
+  ["description_kk", "description_ru"],
+  ["full_text_kk", "full_text_ru"],
+  ["location_kk", "location_ru"],
+  ["organizer_kk", "organizer_ru"],
+] as const;
+
+async function fillTranslations(data: ReturnType<typeof payload>): Promise<ReturnType<typeof payload>> {
+  let filled = data;
+  for (const [kk, ru] of FIELD_PAIRS) {
+    const [result] = await translateFieldPair([filled], kk, ru);
+    filled = result;
+  }
+  return filled;
+}
+
 /** The poster and the front page read events directly, so a change has to reach them. */
 function revalidateEvent(slug: string | null) {
   revalidatePath("/admin/culture-events");
@@ -104,7 +127,7 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.title) return { error: "Укажите название хотя бы на одном языке." };
   if (!data.event_date) return { error: "Укажите дату и время начала." };
 
@@ -148,7 +171,7 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   const id = field(form, "id");
   if (!id) return { error: "Не указано, какое мероприятие сохранять." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.title) return { error: "Укажите название хотя бы на одном языке." };
   if (!data.event_date) return { error: "Укажите дату и время начала." };
 

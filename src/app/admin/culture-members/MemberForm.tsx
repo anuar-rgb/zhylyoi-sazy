@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureMemberRecord, MemberImage } from "@/lib/cultureMembers";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -154,15 +155,17 @@ export default function MemberForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Имя и должность</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="name_kk" label="ФИО (kk)" defaultValue={member?.nameKk} />
-          <Field name="name_ru" label="ФИО (ru)" defaultValue={member?.nameRu} />
-          <Field name="role_kk" label="Должность (kk)" defaultValue={member?.roleKk} placeholder="Домбыра әртісі" />
-          <Field name="role_ru" label="Должность (ru)" defaultValue={member?.roleRu} placeholder="Артист домбры" />
+          <BilingualField kkName="name_kk" ruName="name_ru" label="ФИО" defaultKk={member?.nameKk} defaultRu={member?.nameRu} />
+          <BilingualField
+            kkName="role_kk"
+            ruName="role_ru"
+            label="Должность"
+            defaultKk={member?.roleKk}
+            defaultRu={member?.roleRu}
+            placeholderKk="Домбыра әртісі"
+            placeholderRu="Артист домбры"
+          />
         </div>
-        <p className="text-xs text-ocean/40 mt-2">
-          ФИО достаточно ввести на одном языке — второй подставится. Должность стоит заполнить на обоих: она
-          переводится.
-        </p>
       </div>
 
       <div className={CARD}>
@@ -207,23 +210,39 @@ export default function MemberForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Образование</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="education_kk" label="Учебное заведение (kk)" defaultValue={member?.educationKk} textarea />
-          <Field name="education_ru" label="Учебное заведение (ru)" defaultValue={member?.educationRu} textarea />
-          <Field name="specialty_kk" label="Специальность (kk)" defaultValue={member?.specialtyKk} textarea />
-          <Field name="specialty_ru" label="Специальность (ru)" defaultValue={member?.specialtyRu} textarea />
-          <Field name="level_kk" label="Уровень (kk)" defaultValue={member?.levelKk} placeholder="жоғары" />
-          <Field name="level_ru" label="Уровень (ru)" defaultValue={member?.levelRu} placeholder="высшее" />
-          <Field
-            name="note_kk"
-            label="Звания и регалии (kk)"
-            defaultValue={member?.noteKk}
-            placeholder="Мәдениет саласының үздігі"
+          <BilingualField
+            kkName="education_kk"
+            ruName="education_ru"
+            label="Учебное заведение"
+            defaultKk={member?.educationKk}
+            defaultRu={member?.educationRu}
+            textarea
           />
-          <Field
-            name="note_ru"
-            label="Звания и регалии (ru)"
-            defaultValue={member?.noteRu}
-            placeholder="Отличник сферы культуры"
+          <BilingualField
+            kkName="specialty_kk"
+            ruName="specialty_ru"
+            label="Специальность"
+            defaultKk={member?.specialtyKk}
+            defaultRu={member?.specialtyRu}
+            textarea
+          />
+          <BilingualField
+            kkName="level_kk"
+            ruName="level_ru"
+            label="Уровень"
+            defaultKk={member?.levelKk}
+            defaultRu={member?.levelRu}
+            placeholderKk="жоғары"
+            placeholderRu="высшее"
+          />
+          <BilingualField
+            kkName="note_kk"
+            ruName="note_ru"
+            label="Звания и регалии"
+            defaultKk={member?.noteKk}
+            defaultRu={member?.noteRu}
+            placeholderKk="Мәдениет саласының үздігі"
+            placeholderRu="Отличник сферы культуры"
           />
         </div>
 

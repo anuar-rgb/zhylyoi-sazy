@@ -5,6 +5,7 @@ import Link from "next/link";
 import { REPERTOIRE_CATEGORIES, REPERTOIRE_CATEGORY_ADMIN_LABELS } from "@/lib/repertoireFields";
 import type { CultureRepertoireRecord } from "@/lib/cultureRepertoire";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
 const TRANSLATE_PAIRS = [
@@ -73,12 +74,25 @@ export default function PieceForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Произведение</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="title_kk" label="Название (kk)" defaultValue={piece?.titleKk} />
-          <Field name="title_ru" label="Название (ru)" defaultValue={piece?.titleRu} />
-          <Field name="author_kk" label="Автор (kk)" defaultValue={piece?.authorKk} placeholder="Халық әні" />
-          <Field name="author_ru" label="Автор (ru)" defaultValue={piece?.authorRu} placeholder="Народная песня" />
-          <Field name="note_kk" label="Примечание (kk)" defaultValue={piece?.noteKk} placeholder="Өңдеген: ..." />
-          <Field name="note_ru" label="Примечание (ru)" defaultValue={piece?.noteRu} placeholder="Обработка: ..." />
+          <BilingualField kkName="title_kk" ruName="title_ru" label="Название" defaultKk={piece?.titleKk} defaultRu={piece?.titleRu} />
+          <BilingualField
+            kkName="author_kk"
+            ruName="author_ru"
+            label="Автор"
+            defaultKk={piece?.authorKk}
+            defaultRu={piece?.authorRu}
+            placeholderKk="Халық әні"
+            placeholderRu="Народная песня"
+          />
+          <BilingualField
+            kkName="note_kk"
+            ruName="note_ru"
+            label="Примечание"
+            defaultKk={piece?.noteKk}
+            defaultRu={piece?.noteRu}
+            placeholderKk="Өңдеген: ..."
+            placeholderRu="Обработка: ..."
+          />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           Название на карточке берётся в кавычки. Примечание — маленькая подпись под автором: кто обработал, чьи

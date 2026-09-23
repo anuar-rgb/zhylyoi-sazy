@@ -7,6 +7,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureVideoById } from "@/lib/cultureVideos";
 import { youtubeId } from "@/lib/youtube";
+import { translateFieldPair } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null };
 
@@ -39,6 +40,26 @@ function payload(form: FormData) {
   };
 }
 
+/**
+ * The kk/ru pairs this form carries. Reused to fill in whichever side the admin
+ * left blank — the form itself shows only the Kazakh input, with the Russian one
+ * folded under a collapsed "перевод" section that starts empty on a new record.
+ */
+const FIELD_PAIRS = [
+  ["title_kk", "title_ru"],
+  ["description_kk", "description_ru"],
+  ["venue_kk", "venue_ru"],
+] as const;
+
+async function fillTranslations(data: ReturnType<typeof payload>): Promise<ReturnType<typeof payload>> {
+  let filled = data;
+  for (const [kk, ru] of FIELD_PAIRS) {
+    const [result] = await translateFieldPair([filled], kk, ru);
+    filled = result;
+  }
+  return filled;
+}
+
 /** The public page reads the table directly, so a change has to reach it too. */
 function revalidateVideos() {
   revalidatePath("/admin/culture-videos");
@@ -49,7 +70,7 @@ export async function createVideo(_prev: FormState, form: FormData): Promise<For
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.title) return { error: "Укажите название хотя бы на одном языке." };
 
   // Resolved here, once, rather than on every render. A link that yields nothing is
@@ -84,7 +105,7 @@ export async function updateVideo(_prev: FormState, form: FormData): Promise<For
   const existing = await getCultureVideoById(id);
   if (!existing) return { error: "Видео не найдено." };
 
-  const data = payload(form);
+  const data = await fillTranslations(payload(form));
   if (!data.title) return { error: "Укажите название хотя бы на одном языке." };
 
   // A file-backed recording keeps its file: the form does not offer to change it,
