@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, Metadata> = {
@@ -81,12 +82,13 @@ const tagColors: Record<string, string> = {
 export default async function RepertoirePage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
+  const text = await getSiteText(locale);
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <SectionTitle title={t.title} subtitle={t.subtitle} />
+          <SectionTitle title={text("repertoirePage.title")} subtitle={text("repertoirePage.subtitle")} />
         </FadeIn>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -153,14 +155,14 @@ export default async function RepertoirePage() {
             ))}
             <div className="px-4 border-l-2 border-gold/30">
               <div className="text-2xl font-bold text-gold-dark">{t.items.length}</div>
-              <div className="text-sm text-ocean/50">{t.total}</div>
+              <div className="text-sm text-ocean/50">{text("repertoirePage.total")}</div>
             </div>
           </div>
         </div>
 
         </FadeIn>
         <div className="mt-4 sm:mt-6 text-center text-ocean/50 text-sm">
-          {t.footer}
+          {text("repertoirePage.footer")}
         </div>
       </div>
     </section>

@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
+// Metadata stays in the file on purpose: generateMetadata runs before the page and
+// would need its own database read, and a search engine seeing last week's wording
+// for a day costs nothing. The visible page is what an administrator edits.
 const meta: Record<Locale, Metadata> = {
   kk: {
     title: "Ансамбль туралы",
@@ -22,136 +26,85 @@ export async function generateMetadata(): Promise<Metadata> {
   return meta[locale];
 }
 
-const content = {
-  kk: {
-    title: "Ансамбль туралы",
-    subtitle: "«Жылыой сазы» — Жылыой ауданының мақтанышы",
-    sections: [
-      {
-        h: "Құрылу тарихы",
-        p: "«Жылыой сазы» фольклорлық ансамблі 2026 жылдың қаңтар айында «Кең Жылыой» мәдениет үйі жанынан құрылды.",
-      },
-      {
-        h: "Негізгі мақсаты",
-        p: "Ансамбльдің негізгі мақсаты — қазақ халқының дәстүрлі музыкалық мұрасын насихаттау, ұлттық аспаптардың үнін кеңінен дәріптеу, халық әндері мен күйлерін жаңғырту және жас буынның ұлттық өнерге деген қызығушылығын арттыру.",
-      },
-      {
-        h: "Құрамы",
-        p: "Қазіргі таңда ансамбль құрамында 18 кәсіби өнерпаз қызмет етеді. Ұжым мүшелерінің басым бөлігі Құрманғазы атындағы Алматы мемлекеттік консерваториясы, Қазақ ұлттық өнер университеті, Х.Досмұхамедов атындағы Атырау университеті, Дина Нұрпейісова атындағы Халық музыкасы академиясы жанындағы музыкалық колледж және басқа да өнер оқу орындарының түлектері.",
-      },
-      {
-        h: "Репертуары",
-        p: "Ансамбль репертуарында халық әндері мен күйлері, дәстүрлі музыкалық шығармалар, авторлық туындылар және әлемдік классика үлгілері қамтылған.",
-      },
-    ],
-    directionsTitle: "Қызмет бағыттары",
-    directions: [
-      "Халық әндері мен күйлерін орындау",
-      "Дәстүрлі қазақ аспаптарында ойнау (домбыра, қобыз, жетіген, шертер, баян, бас-гитара, ұрмалы аспаптар)",
-      "Аудандық, облыстық және республикалық іс-шараларға қатысу",
-      "Авторлық шығармаларды сахналау",
-      "Ұлттық музыкалық мұраны дәріптеу",
-    ],
-    stats: [
-      { value: "2026", label: "Құрылған жылы" },
-      { value: "18", label: "Кәсіби өнерпаз" },
-      { value: "10+", label: "Шығарма" },
-    ],
-    quote:
-      "«Жылыой сазы» фольклорлық ансамблі аз уақыт ішінде кәсіби орындаушылардан құралған шығармашылық ұжым ретінде қалыптасып, ұлттық өнерді дамыту жолында жүйелі жұмыс жүргізуде. Ұжымның шығармашылық әлеуеті жоғары, репертуары мазмұнды және алдағы уақытта өңір мәдениетінің дамуына елеулі үлес қосуға дайын.",
-  },
-  ru: {
-    title: "Об ансамбле",
-    subtitle: "«Жылыой сазы» — гордость Жылыойского района",
-    sections: [
-      {
-        h: "История создания",
-        p: "Фольклорный ансамбль «Жылыой сазы» был создан в январе 2026 года при доме культуры «Кен Жылыой».",
-      },
-      {
-        h: "Основная цель",
-        p: "Основная цель ансамбля — популяризация традиционного музыкального наследия казахского народа, широкое продвижение звучания национальных инструментов, возрождение народных песен и кюев, а также повышение интереса молодого поколения к национальному искусству.",
-      },
-      {
-        h: "Состав",
-        p: "На сегодняшний день в составе ансамбля работают 18 профессиональных артистов. Большинство участников коллектива — выпускники Алматинской государственной консерватории имени Курмангазы, Казахского национального университета искусств, Атырауского университета имени Х. Досмухамедова, музыкального колледжа при Академии народной музыки имени Дины Нурпеисовой и других учебных заведений искусств.",
-      },
-      {
-        h: "Репертуар",
-        p: "В репертуар ансамбля входят народные песни и кюи, традиционные музыкальные произведения, авторские сочинения, а также образцы мировой классики.",
-      },
-    ],
-    directionsTitle: "Направления деятельности",
-    directions: [
-      "Исполнение народных песен и кюев",
-      "Игра на традиционных казахских инструментах (домбра, кобыз, жетыген, шертер, баян, бас-гитара, ударные инструменты)",
-      "Участие в районных, областных и республиканских мероприятиях",
-      "Постановка авторских произведений",
-      "Популяризация национального музыкального наследия",
-    ],
-    stats: [
-      { value: "2026", label: "Год основания" },
-      { value: "18", label: "Профессиональных артистов" },
-      { value: "10+", label: "Произведений" },
-    ],
-    quote:
-      "Фольклорный ансамбль «Жылыой сазы» за короткое время сформировался как творческий коллектив из профессиональных исполнителей и ведёт системную работу по развитию национального искусства. Творческий потенциал коллектива высок, репертуар содержателен, и в дальнейшем ансамбль готов внести значительный вклад в развитие культуры региона.",
-  },
-} satisfies Record<Locale, unknown>;
-
 export default async function AboutPage() {
   const locale = (await getLocale()) as Locale;
-  const t = content[locale];
+  const text = await getSiteText(locale);
+
+  // Built from numbered keys rather than a list, because the editable texts are a
+  // flat key/value store: a fixed number of slots is what that buys. Empty ones are
+  // dropped so a slot left blank renders nothing instead of an empty card.
+  const sections = [1, 2, 3, 4]
+    .map((n) => ({ heading: text(`aboutPage.section${n}Heading`), body: text(`aboutPage.section${n}Text`) }))
+    .filter((s) => s.heading || s.body);
+
+  const directions = [1, 2, 3, 4, 5].map((n) => text(`aboutPage.direction${n}`)).filter(Boolean);
+
+  const stats = [1, 2, 3]
+    .map((n) => ({ value: text(`aboutPage.stat${n}Value`), label: text(`aboutPage.stat${n}Label`) }))
+    .filter((s) => s.value || s.label);
+
+  const quote = text("aboutPage.quote");
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <SectionTitle title={t.title} subtitle={t.subtitle} />
+          <SectionTitle title={text("aboutPage.title")} subtitle={text("aboutPage.subtitle")} />
         </FadeIn>
 
         <div className="space-y-5 sm:space-y-6 text-ocean/80">
-          {t.sections.map((s) => (
-            <FadeIn key={s.h}>
+          {sections.map((s, index) => (
+            <FadeIn key={index}>
               <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
-                <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">{s.h}</h3>
-                <p className="leading-relaxed text-sm sm:text-base">{s.p}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">{s.heading}</h3>
+                <p className="leading-relaxed text-sm sm:text-base">{s.body}</p>
               </div>
             </FadeIn>
           ))}
 
-          <FadeIn>
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
-              <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">{t.directionsTitle}</h3>
-              <ul className="space-y-3 text-sm sm:text-base">
-                {t.directions.map((d) => (
-                  <li key={d} className="flex items-start gap-3">
-                    <span className="w-2 h-2 bg-gold rounded-full mt-2 shrink-0" />
-                    <span>{d}</span>
-                  </li>
+          {directions.length > 0 && (
+            <FadeIn>
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
+                <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">
+                  {text("aboutPage.directionsTitle")}
+                </h3>
+                <ul className="space-y-3 text-sm sm:text-base">
+                  {directions.map((d, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <span className="w-2 h-2 bg-gold rounded-full mt-2 shrink-0" />
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </FadeIn>
+          )}
+
+          {stats.length > 0 && (
+            <FadeIn>
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                {stats.map((s, index) => (
+                  <div
+                    key={index}
+                    className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-cream-dark text-center"
+                  >
+                    <div className="text-2xl sm:text-3xl font-bold text-ocean">{s.value}</div>
+                    <div className="text-xs sm:text-sm text-ocean/60 mt-1">{s.label}</div>
+                  </div>
                 ))}
-              </ul>
-            </div>
-          </FadeIn>
+              </div>
+            </FadeIn>
+          )}
 
-          <FadeIn>
-            <div className="grid grid-cols-3 gap-3 sm:gap-4">
-              {t.stats.map((s) => (
-                <div key={s.label} className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-cream-dark text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-ocean">{s.value}</div>
-                  <div className="text-xs sm:text-sm text-ocean/60 mt-1">{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </FadeIn>
-
-          <FadeIn>
-            <div className="bg-ocean/5 rounded-3xl p-6 sm:p-8">
-              <blockquote className="text-center italic text-ocean text-base sm:text-lg leading-relaxed">
-                {t.quote}
-              </blockquote>
-            </div>
-          </FadeIn>
+          {quote && (
+            <FadeIn>
+              <div className="bg-ocean/5 rounded-3xl p-6 sm:p-8">
+                <blockquote className="text-center italic text-ocean text-base sm:text-lg leading-relaxed">
+                  {quote}
+                </blockquote>
+              </div>
+            </FadeIn>
+          )}
         </div>
       </div>
     </section>
