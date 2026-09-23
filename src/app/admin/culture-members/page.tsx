@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { listCultureMembers } from "@/lib/cultureMembers";
+import { listCultureClubs } from "@/lib/cultureClubs";
 import DeleteMemberButton from "./DeleteMemberButton";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
@@ -26,7 +27,14 @@ export default async function MembersPage() {
   }
 
   // RLS scopes this to the viewer's institution; a platform admin sees all of them.
-  const members = await listCultureMembers();
+  const [members, collectives] = await Promise.all([
+    listCultureMembers(),
+    listCultureClubs("creative_collective"),
+  ]);
+
+  // Names by id, so each card can say which collective it belongs to without a
+  // lookup per row.
+  const collectiveName = new Map(collectives.map((c) => [c.id, c.nameRu ?? c.nameKk ?? "Коллектив"]));
 
   return (
     <div>
@@ -100,7 +108,15 @@ export default async function MembersPage() {
                     </div>
 
                     <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mt-3">
-                      <div className="sm:col-span-2">
+                      <div>
+                        <dt className="text-ocean/40">Коллектив</dt>
+                        <dd
+                          className={`font-medium truncate ${member.clubId ? "text-ocean/70" : "text-amber-700"}`}
+                        >
+                          {member.clubId ? (collectiveName.get(member.clubId) ?? "—") : "без коллектива"}
+                        </dd>
+                      </div>
+                      <div>
                         <dt className="text-ocean/40">Учебное заведение</dt>
                         <dd className="text-ocean/70 font-medium truncate">{member.educationRu ?? "—"}</dd>
                       </div>

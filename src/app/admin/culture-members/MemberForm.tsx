@@ -48,11 +48,14 @@ function Field({
 export default function MemberForm({
   member,
   organizationId,
+  collectives,
   action,
   heading,
 }: {
   member?: CultureMemberRecord;
   organizationId: string;
+  /** The institution's collectives, for the picker. Passed in so the form stays client-side. */
+  collectives: { id: string; name: string }[];
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -112,6 +115,22 @@ export default function MemberForm({
       {state.error && (
         <p className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl px-4 py-3">{state.error}</p>
       )}
+
+      <div className={CARD}>
+        <p className="text-sm font-semibold text-ocean mb-4">Коллектив</p>
+        <select id="club_id" name="club_id" defaultValue={member?.clubId ?? ""} className={INPUT}>
+          <option value="">Без коллектива</option>
+          {collectives.map((collective) => (
+            <option key={collective.id} value={collective.id}>
+              {collective.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-ocean/40 mt-2">
+          В каком коллективе состоит артист. От этого зависит, в чьём составе он покажется на сайте. «Без
+          коллектива» — останется в общем списке учреждения.
+        </p>
+      </div>
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Имя и должность</p>
@@ -179,6 +198,19 @@ export default function MemberForm({
           <TranslateRow kk="specialty_kk" ru="specialty_ru" className="sm:col-span-2 -mt-1" />
           <Field name="level_kk" label="Уровень (kk)" defaultValue={member?.levelKk} placeholder="жоғары" />
           <Field name="level_ru" label="Уровень (ru)" defaultValue={member?.levelRu} placeholder="высшее" />
+          <Field
+            name="note_kk"
+            label="Звания и регалии (kk)"
+            defaultValue={member?.noteKk}
+            placeholder="Мәдениет саласының үздігі"
+          />
+          <Field
+            name="note_ru"
+            label="Звания и регалии (ru)"
+            defaultValue={member?.noteRu}
+            placeholder="Отличник сферы культуры"
+          />
+          <TranslateRow kk="note_kk" ru="note_ru" className="sm:col-span-2 -mt-1" />
         </div>
 
         <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer mt-4">

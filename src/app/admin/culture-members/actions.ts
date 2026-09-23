@@ -62,6 +62,11 @@ function payload(form: FormData) {
     specialty_ru: field(form, "specialty_ru"),
     level_kk: field(form, "level_kk"),
     level_ru: field(form, "level_ru"),
+    note_kk: field(form, "note_kk"),
+    note_ru: field(form, "note_ru"),
+    // Empty means "no collective": an artist may sit in the list unassigned rather
+    // than being forced into one.
+    club_id: field(form, "club_id"),
     has_higher_education: form.get("has_higher_education") === "on",
     sort_order: order !== null && Number.isFinite(order) ? order : 0,
     is_active: form.get("is_active") === "on",

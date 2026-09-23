@@ -10,6 +10,8 @@ export type CultureMemberRecord = {
   id: string;
   organizationId: string;
   isActive: boolean;
+  /** The collective this artist belongs to; null while unassigned. */
+  clubId: string | null;
   nameKk: string | null;
   nameRu: string | null;
   roleKk: string | null;
@@ -20,6 +22,9 @@ export type CultureMemberRecord = {
   specialtyRu: string | null;
   levelKk: string | null;
   levelRu: string | null;
+  /** Honours and titles on one line; empty for most people. */
+  noteKk: string | null;
+  noteRu: string | null;
   /**
    * Decides the colour of the badge on the card.
    *
@@ -35,7 +40,7 @@ export type CultureMemberRecord = {
 const COLUMNS =
   "id, organization_id, is_active, name, name_kk, name_ru, role_kk, role_ru, " +
   "education_kk, education_ru, specialty_kk, specialty_ru, level_kk, level_ru, " +
-  "has_higher_education, sort_order, images";
+  "has_higher_education, note_kk, note_ru, club_id, sort_order, images";
 
 type Row = Record<string, unknown>;
 
@@ -60,6 +65,7 @@ function toRecord(row: Row): CultureMemberRecord {
     id: String(row.id),
     organizationId: String(row.organization_id),
     isActive: row.is_active === true,
+    clubId: str(row.club_id),
     // name is the non-null service column; it backs the localized ones so a person
     // entered in one language still has a name in the other.
     nameKk: str(row.name_kk) ?? str(row.name),
@@ -72,6 +78,8 @@ function toRecord(row: Row): CultureMemberRecord {
     specialtyRu: str(row.specialty_ru),
     levelKk: str(row.level_kk),
     levelRu: str(row.level_ru),
+    noteKk: str(row.note_kk),
+    noteRu: str(row.note_ru),
     hasHigherEducation: row.has_higher_education === true,
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
     images: toImages(row.images),
@@ -82,7 +90,7 @@ function toRecord(row: Row): CultureMemberRecord {
 export function localizedMember(
   record: CultureMemberRecord,
   locale: Locale,
-  field: "name" | "role" | "education" | "specialty" | "level"
+  field: "name" | "role" | "education" | "specialty" | "level" | "note"
 ): string | null {
   const kk = record[`${field}Kk` as keyof CultureMemberRecord] as string | null;
   const ru = record[`${field}Ru` as keyof CultureMemberRecord] as string | null;
@@ -149,3 +157,15 @@ export const listPublicCultureMembers = cache(async (): Promise<CultureMemberRec
   if (error || !data) return [];
   return (data as unknown as Row[]).map(toRecord);
 });
+
+/**
+ * The roster of one collective.
+ *
+ * Built by filtering the institution's list rather than asking the database again:
+ * the list is memoized for the render pass, so a page showing two collectives asks
+ * once instead of three times.
+ */
+export async function listPublicMembersOfClub(clubId: string): Promise<CultureMemberRecord[]> {
+  const members = await listPublicCultureMembers();
+  return members.filter((member) => member.clubId === clubId);
+}

@@ -5,6 +5,7 @@ import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import { getSiteText } from "@/lib/orgContent";
 import { listPublicCultureMembers, localizedMember } from "@/lib/cultureMembers";
+import { listPublicCultureClubs, localized } from "@/lib/cultureClubs";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, Metadata> = {
@@ -28,7 +29,24 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MembersPage() {
   const locale = (await getLocale()) as Locale;
   const text = await getSiteText(locale);
-  const members = await listPublicCultureMembers();
+  const [members, collectives] = await Promise.all([
+    listPublicCultureMembers(),
+    listPublicCultureClubs("creative_collective"),
+  ]);
+
+  // One group per collective, in the order the collectives themselves come, plus a
+  // final group for anybody not yet assigned. Grouping in the page rather than
+  // asking per collective keeps it to the two queries above.
+  const groups = collectives
+    .map((collective) => ({
+      key: collective.id,
+      heading: localized(collective, locale, "name") ?? "",
+      people: members.filter((member) => member.clubId === collective.id),
+    }))
+    .filter((group) => group.people.length > 0);
+
+  const unassigned = members.filter((member) => member.clubId === null);
+  if (unassigned.length > 0) groups.push({ key: "none", heading: "", people: unassigned });
   const educationLabel = text("membersPage.educationLabel");
 
   return (
@@ -38,13 +56,25 @@ export default async function MembersPage() {
           <SectionTitle title={text("membersPage.title")} subtitle={text("membersPage.subtitle")} />
         </FadeIn>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {members.map((member, index) => {
+        {groups.map((group) => (
+          <div key={group.key} className="mb-10 sm:mb-14 last:mb-0">
+            {group.heading && (
+              <FadeIn>
+                <h2 className="text-xl sm:text-2xl font-bold text-ocean mb-4 sm:mb-6">
+                  {group.heading}{" "}
+                  <span className="text-ocean/40 font-normal text-base">({group.people.length})</span>
+                </h2>
+              </FadeIn>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {group.people.map((member, index) => {
             const name = localizedMember(member, locale, "name");
             const role = localizedMember(member, locale, "role");
             const education = localizedMember(member, locale, "education");
             const specialty = localizedMember(member, locale, "specialty");
             const level = localizedMember(member, locale, "level");
+            const note = localizedMember(member, locale, "note");
             const photo = member.images[0];
 
             return (
@@ -70,7 +100,12 @@ export default async function MembersPage() {
                   </div>
                   <div className="p-4 sm:p-5">
                     <h3 className="font-bold text-ocean text-base sm:text-lg leading-tight mb-1">{name}</h3>
-                    {role && <p className="text-gold-dark font-semibold text-xs sm:text-sm mb-2 sm:mb-3">{role}</p>}
+                    {role && <p className="text-gold-dark font-semibold text-xs sm:text-sm mb-2">{role}</p>}
+                    {note && (
+                      <p className="text-xs text-ocean/70 bg-gold/10 inline-block px-2.5 py-1 rounded-full mb-2 sm:mb-3">
+                        {note}
+                      </p>
+                    )}
                     <div className="space-y-1.5 text-xs sm:text-sm text-ocean/60">
                       {education && (
                         <p className="flex items-start gap-2">
@@ -130,7 +165,9 @@ export default async function MembersPage() {
               </FadeIn>
             );
           })}
-        </div>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

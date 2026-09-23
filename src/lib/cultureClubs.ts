@@ -33,6 +33,12 @@ export type CultureClubRecord = {
   managerName: string | null;
   contactPhone: string | null;
   capacity: number | null;
+  /** Year the collective was founded; usually empty for a club. */
+  foundedYear: number | null;
+  /** Holds the «Народный» title. The /honored page is built from this flag. */
+  isHonored: boolean;
+  /** Year the title was awarded; may be empty while the title itself stands. */
+  honoredSince: number | null;
   images: CultureClubImage[];
 };
 
@@ -40,7 +46,8 @@ const COLUMNS =
   "id, organization_id, kind, slug, is_active, name, name_kk, name_ru, " +
   "direction_kk, direction_ru, description_kk, description_ru, " +
   "full_text_kk, full_text_ru, schedule_kk, schedule_ru, " +
-  "age_range, manager_name, contact_phone, capacity, images";
+  "age_range, manager_name, contact_phone, capacity, images, " +
+  "founded_year, is_honored, honored_since";
 
 type Row = Record<string, unknown>;
 
@@ -83,6 +90,9 @@ function toRecord(row: Row): CultureClubRecord {
     managerName: str(row.manager_name),
     contactPhone: str(row.contact_phone),
     capacity: typeof row.capacity === "number" ? row.capacity : null,
+    foundedYear: typeof row.founded_year === "number" ? row.founded_year : null,
+    isHonored: row.is_honored === true,
+    honoredSince: typeof row.honored_since === "number" ? row.honored_since : null,
     images: toImages(row.images),
   };
 }
@@ -182,3 +192,17 @@ export const listPublicCultureClubs = cache(async (kind: CultureClubKind = "club
   if (error || !data) return [];
   return (data as unknown as Row[]).map(toRecord);
 });
+
+/**
+ * Collectives holding the «Народный» title.
+ *
+ * Filtered from the memoized list rather than queried again: the /collectives page
+ * shows all of them and marks the honoured ones, so one query serves both.
+ *
+ * Selected by the flag, never by searching the description for the word. A title
+ * lost to a typo is exactly the kind of failure nobody notices.
+ */
+export async function listHonoredCollectives(): Promise<CultureClubRecord[]> {
+  const collectives = await listPublicCultureClubs("creative_collective");
+  return collectives.filter((collective) => collective.isHonored);
+}
