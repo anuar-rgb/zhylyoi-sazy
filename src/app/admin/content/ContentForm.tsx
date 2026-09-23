@@ -3,13 +3,9 @@
 import { useActionState } from "react";
 import { CONTENT_GROUPS } from "@/lib/siteContent";
 import type { ContentOverrides } from "@/lib/orgContent";
-import TranslateRow from "@/components/admin/TranslateRow";
+import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
-const INPUT =
-  "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
-  "focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent";
-const LABEL = "block text-sm font-medium text-ocean/70 mb-1.5";
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
 export default function ContentForm({
@@ -37,8 +33,9 @@ export default function ContentForm({
       </div>
 
       <p className="text-sm text-ocean/60">
-        Надписи на главной странице и на странице «Контакты». Поля заполнены текущим текстом — меняйте те, что
-        нужно. Очистите поле и сохраните, чтобы вернуть исходную надпись.
+        Надписи на главной странице и на странице «Контакты». Поля заполнены текущим текстом на казахском — меняйте
+        те, что нужно, перевод на русский подставится сам. Верните поле к исходному тексту и сохраните, чтобы убрать
+        замену.
         {changedCount > 0 && <> Сейчас изменено: {changedCount}.</>}
       </p>
 
@@ -65,34 +62,15 @@ export default function ContentForm({
                 const ru = override?.ru ?? field.ru;
 
                 return (
-                  <div key={field.key}>
-                    <p className={LABEL}>{field.label}</p>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {(["kk", "ru"] as const).map((lang) => {
-                        const name = `${field.key}__${lang}`;
-                        const current = lang === "kk" ? kk : ru;
-                        return field.long ? (
-                          <textarea
-                            key={name}
-                            name={name}
-                            rows={3}
-                            defaultValue={current}
-                            aria-label={`${field.label} (${lang})`}
-                            className={`${INPUT} resize-y`}
-                          />
-                        ) : (
-                          <input
-                            key={name}
-                            name={name}
-                            defaultValue={current}
-                            aria-label={`${field.label} (${lang})`}
-                            className={INPUT}
-                          />
-                        );
-                      })}
-                    </div>
-                    <TranslateRow kk={`${field.key}__kk`} ru={`${field.key}__ru`} className="mt-1" />
-                  </div>
+                  <BilingualField
+                    key={field.key}
+                    kkName={`${field.key}__kk`}
+                    ruName={`${field.key}__ru`}
+                    label={field.label}
+                    defaultKk={kk}
+                    defaultRu={ru}
+                    textarea={field.long}
+                  />
                 );
               })}
             </div>

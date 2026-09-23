@@ -23,7 +23,7 @@ const cachedTranslate = unstable_cache(
   { revalidate: 60 * 60 * 24 * 30 }
 );
 
-async function safeTranslate(text: string, from: TranslateLang, to: TranslateLang): Promise<string | null> {
+export async function safeTranslate(text: string, from: TranslateLang, to: TranslateLang): Promise<string | null> {
   try {
     const result = await cachedTranslate(text, from, to);
     return result.trim().length > 0 ? result : null;

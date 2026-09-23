@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { CONTENT_DEFAULTS } from "@/lib/siteContent";
+import { safeTranslate } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null; saved: number | null };
 
@@ -34,8 +35,15 @@ export async function updateContent(_prev: FormState, form: FormData): Promise<F
   const reverted: string[] = [];
 
   for (const [key, fallback] of Object.entries(CONTENT_DEFAULTS)) {
-    const kk = value(form, `${key}__kk`);
-    const ru = value(form, `${key}__ru`);
+    let kk = value(form, `${key}__kk`);
+    let ru = value(form, `${key}__ru`);
+
+    // The admin form shows only the Kazakh box; the Russian one is folded away
+    // and left blank unless staff open it to type a translation by hand. Left
+    // blank here means "translate it", not "clear it" — the site never shows a
+    // gap on either language just because only one side was typed.
+    if (kk && !ru) ru = await safeTranslate(kk, "kk", "ru");
+    if (ru && !kk) kk = await safeTranslate(ru, "ru", "kk");
 
     if (kk === fallback.kk && ru === fallback.ru) {
       reverted.push(key);
