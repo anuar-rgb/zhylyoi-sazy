@@ -3,6 +3,7 @@ import { telHref } from "@/lib/contactLinks";
 import DeleteButton from "../DeleteButton";
 import MarkProcessedButton from "./MarkProcessedButton";
 import MarkSeenOnView from "./MarkSeenOnView";
+import BackToDashboard from "../BackToDashboard";
 
 type ClubSummary = {
   key: string;
@@ -80,6 +81,7 @@ export default async function ApplicationsPage() {
   return (
     <div>
       <MarkSeenOnView hasUnseen={hasUnseen} />
+      <BackToDashboard />
       <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-6">
         Заявки в кружки{" "}
         <span className="text-ocean/40 font-normal">

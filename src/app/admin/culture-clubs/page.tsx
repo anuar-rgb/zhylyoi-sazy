@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { listCultureClubs } from "@/lib/cultureClubs";
 import DeleteClubButton from "./DeleteClubButton";
+import BackToDashboard from "../BackToDashboard";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -14,6 +15,7 @@ export default async function ClubsPage() {
   if (!identity?.hasProfile) {
     return (
       <div>
+        <BackToDashboard />
         <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-6">Кружки</h1>
         <div className={`${CARD} p-8`}>
           <p className="font-semibold text-ocean mb-2">Профиль сотрудника не настроен</p>
@@ -30,6 +32,7 @@ export default async function ClubsPage() {
 
   return (
     <div>
+      <BackToDashboard />
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">
           Кружки <span className="text-ocean/40 font-normal">({clubs.length})</span>
