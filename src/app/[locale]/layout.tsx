@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import QuickContactButton from "@/components/QuickContactButton";
 import "../globals.css";
 
 const montserrat = Montserrat({
@@ -87,7 +86,6 @@ export default async function RootLayout({
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
-          <QuickContactButton />
         </NextIntlClientProvider>
       </body>
     </html>
