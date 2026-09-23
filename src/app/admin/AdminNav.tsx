@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+/**
+ * Мероприятия, Новости, Кружки and Заявки are deliberately absent: the dashboard
+ * carries a tile for each, and having both was the same word twice on one screen.
+ * Everything without a tile stays here, or it would be unreachable.
+ */
 const items = [
   { href: "/admin", label: "Дашборд" },
-  { href: "/admin/culture-events", label: "Мероприятия" },
-  { href: "/admin/culture-news", label: "Новости" },
-  { href: "/admin/culture-clubs", label: "Кружки" },
   { href: "/admin/culture-staff", label: "Сотрудники" },
   { href: "/admin/culture-members", label: "Состав ансамбля" },
   { href: "/admin/culture-repertoire", label: "Репертуар" },
   { href: "/admin/culture-videos", label: "Видео" },
-  { href: "/admin/applications", label: "Заявки" },
   { href: "/admin/content", label: "Тексты сайта" },
   { href: "/admin/settings", label: "Настройки" },
 ];
@@ -24,7 +25,10 @@ export default function AdminNav({ newApplications = 0 }: { newApplications?: nu
     <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0">
       {items.map((item) => {
         const active = pathname === item.href;
-        const badge = item.href === "/admin/applications" ? newApplications : 0;
+        // The count moved onto Дашборд with the Заявки item it used to sit on.
+        // The point of it is to be seen while working on something else, and the
+        // dashboard is now the only way through to the applications.
+        const badge = item.href === "/admin" ? newApplications : 0;
 
         return (
           <Link
