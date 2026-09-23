@@ -50,10 +50,19 @@ function Field({
 
 export default function VideoForm({
   video,
+  collectives,
+  defaultClubId,
+  returnTo,
   action,
   heading,
 }: {
   video?: CultureVideoRecord;
+  /** The institution's collectives, for the picker. Passed in so the form stays client-side. */
+  collectives: { id: string; name: string }[];
+  /** Preselected when adding from inside a collective. */
+  defaultClubId?: string;
+  /** Where to go after saving, when the form was opened from a collective. */
+  returnTo?: string;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -70,12 +79,13 @@ export default function VideoForm({
   return (
     <form action={formAction} className="space-y-5">
       {video && <input type="hidden" name="id" value={video.id} />}
+      {returnTo && <input type="hidden" name="return_to" value={returnTo} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
         <div className="flex items-center gap-4">
           <TranslateAllButton pairs={TRANSLATE_PAIRS} />
-          <Link href="/admin/culture-videos" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+          <Link href={returnTo ?? "/admin/culture-videos"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
             Отмена
           </Link>
         </div>
@@ -84,6 +94,21 @@ export default function VideoForm({
       {state.error && (
         <p className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl px-4 py-3">{state.error}</p>
       )}
+
+      <div className={CARD}>
+        <p className="text-sm font-semibold text-ocean mb-4">Коллектив</p>
+        <select id="club_id" name="club_id" defaultValue={video?.clubId ?? defaultClubId ?? ""} className={INPUT}>
+          <option value="">Без коллектива</option>
+          {collectives.map((collective) => (
+            <option key={collective.id} value={collective.id}>
+              {collective.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-ocean/40 mt-2">
+          Чья это запись. «Без коллектива» — видео останется в общем списке учреждения.
+        </p>
+      </div>
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Ссылка на видео</p>
@@ -199,7 +224,7 @@ export default function VideoForm({
         >
           {pending ? "Сохранение…" : "Сохранить"}
         </button>
-        <Link href="/admin/culture-videos" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href={returnTo ?? "/admin/culture-videos"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>

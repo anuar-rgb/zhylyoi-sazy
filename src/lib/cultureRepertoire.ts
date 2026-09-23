@@ -9,6 +9,8 @@ export type CultureRepertoireRecord = {
   id: string;
   organizationId: string;
   isActive: boolean;
+  /** The collective this piece belongs to; null while unassigned. */
+  clubId: string | null;
   titleKk: string | null;
   titleRu: string | null;
   authorKk: string | null;
@@ -21,7 +23,7 @@ export type CultureRepertoireRecord = {
 };
 
 const COLUMNS =
-  "id, organization_id, is_active, title, title_kk, title_ru, author_kk, author_ru, " +
+  "id, organization_id, is_active, club_id, title, title_kk, title_ru, author_kk, author_ru, " +
   "note_kk, note_ru, category, sort_order";
 
 type Row = Record<string, unknown>;
@@ -35,6 +37,7 @@ function toRecord(row: Row): CultureRepertoireRecord {
     id: String(row.id),
     organizationId: String(row.organization_id),
     isActive: row.is_active === true,
+    clubId: str(row.club_id),
     // Not backed by the service `title` column here: that would make a title typed
     // in only one language look, to translateFieldPair below, as if both were
     // already filled — masking a gap instead of letting it be translated.
@@ -128,3 +131,15 @@ export const listPublicCultureRepertoire = cache(async (): Promise<CultureRepert
   if (error || !data) return [];
   return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
 });
+
+/**
+ * The repertoire of one collective.
+ *
+ * Built by filtering the institution's list rather than asking the database
+ * again: the list is memoized for the render pass, so a page showing several
+ * collectives asks once instead of many times.
+ */
+export async function listPublicRepertoireOfClub(clubId: string): Promise<CultureRepertoireRecord[]> {
+  const pieces = await listPublicCultureRepertoire();
+  return pieces.filter((piece) => piece.clubId === clubId);
+}

@@ -19,6 +19,8 @@ export type CultureVideoRecord = {
   id: string;
   organizationId: string;
   isActive: boolean;
+  /** The collective this recording belongs to; null while unassigned. */
+  clubId: string | null;
   titleKk: string | null;
   titleRu: string | null;
   descriptionKk: string | null;
@@ -33,7 +35,7 @@ export type CultureVideoRecord = {
 };
 
 const COLUMNS =
-  "id, organization_id, is_active, title, title_kk, title_ru, description_kk, description_ru, " +
+  "id, organization_id, is_active, club_id, title, title_kk, title_ru, description_kk, description_ru, " +
   "venue_kk, venue_ru, kind, youtube_id, file_path, sort_order";
 
 type Row = Record<string, unknown>;
@@ -47,6 +49,7 @@ function toRecord(row: Row): CultureVideoRecord {
     id: String(row.id),
     organizationId: String(row.organization_id),
     isActive: row.is_active === true,
+    clubId: str(row.club_id),
     // Not backed by the service `title` column here: that would make a title typed
     // in only one language look, to translateFieldPair below, as if both were
     // already filled — masking a gap instead of letting it be translated.
@@ -146,3 +149,15 @@ export const listPublicCultureVideos = cache(async (): Promise<CultureVideoRecor
   if (error || !data) return [];
   return fillPublicTranslations((data as unknown as Row[]).map(toRecord).filter(isPlayable));
 });
+
+/**
+ * The recordings of one collective.
+ *
+ * Built by filtering the institution's list rather than asking the database
+ * again: the list is memoized for the render pass, so a page showing several
+ * collectives asks once instead of many times.
+ */
+export async function listPublicVideosOfClub(clubId: string): Promise<CultureVideoRecord[]> {
+  const videos = await listPublicCultureVideos();
+  return videos.filter((video) => video.clubId === clubId);
+}

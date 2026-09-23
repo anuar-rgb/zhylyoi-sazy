@@ -45,7 +45,28 @@ function payload(form: FormData) {
     category: asRepertoireCategory(field(form, "category")),
     sort_order: order !== null && Number.isFinite(order) ? order : 0,
     is_active: form.get("is_active") === "on",
+    // Empty means "no collective": a piece may sit in the general list rather
+    // than being forced into one.
+    club_id: field(form, "club_id"),
   };
+}
+
+/**
+ * Where to go after saving.
+ *
+ * The form carries it when it was opened from inside a collective, so adding a
+ * piece there does not dump it into the general list.
+ *
+ * Only paths inside the panel are honoured. The value arrives from the browser
+ * with the rest of the form, and a server action is a public endpoint: without
+ * this check it would be a redirect to anywhere somebody cared to name.
+ */
+const REPERTOIRE = "/admin/culture-repertoire";
+
+function destination(form: FormData): string {
+  const raw = form.get("return_to");
+  if (typeof raw !== "string") return REPERTOIRE;
+  return /^\/admin(\/[\w/-]*)?$/.test(raw) ? raw : REPERTOIRE;
 }
 
 /**
@@ -68,10 +89,15 @@ async function fillTranslations(data: ReturnType<typeof payload>): Promise<Retur
   return filled;
 }
 
-/** The public page reads the table directly, so a change has to reach it too. */
+/**
+ * The public page and a collective's own admin and public pages all read
+ * repertoire directly, so a change has to reach all of them.
+ */
 function revalidateRepertoire() {
   revalidatePath("/admin/culture-repertoire");
+  revalidatePath("/admin/culture-collectives/[id]", "page");
   revalidatePath("/[locale]/repertoire", "page");
+  revalidatePath("/[locale]/collectives/[slug]", "page");
 }
 
 export async function createPiece(_prev: FormState, form: FormData): Promise<FormState> {
@@ -90,7 +116,7 @@ export async function createPiece(_prev: FormState, form: FormData): Promise<For
   if (error) return { error: "Не удалось сохранить произведение." };
 
   revalidateRepertoire();
-  redirect("/admin/culture-repertoire");
+  redirect(destination(form));
 }
 
 export async function updatePiece(_prev: FormState, form: FormData): Promise<FormState> {
@@ -116,7 +142,7 @@ export async function updatePiece(_prev: FormState, form: FormData): Promise<For
   if (count === 0) return { error: "Недостаточно прав для редактирования." };
 
   revalidateRepertoire();
-  redirect("/admin/culture-repertoire");
+  redirect(destination(form));
 }
 
 export async function deletePiece(id: string): Promise<{ ok: boolean; error?: string }> {

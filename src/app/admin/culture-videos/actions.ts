@@ -37,7 +37,28 @@ function payload(form: FormData) {
     venue_ru: field(form, "venue_ru"),
     sort_order: order !== null && Number.isFinite(order) ? order : 0,
     is_active: form.get("is_active") === "on",
+    // Empty means "no collective": a recording may sit in the general list
+    // rather than being forced into one.
+    club_id: field(form, "club_id"),
   };
+}
+
+/**
+ * Where to go after saving.
+ *
+ * The form carries it when it was opened from inside a collective, so adding a
+ * recording there does not dump it into the general list.
+ *
+ * Only paths inside the panel are honoured. The value arrives from the browser
+ * with the rest of the form, and a server action is a public endpoint: without
+ * this check it would be a redirect to anywhere somebody cared to name.
+ */
+const VIDEOS = "/admin/culture-videos";
+
+function destination(form: FormData): string {
+  const raw = form.get("return_to");
+  if (typeof raw !== "string") return VIDEOS;
+  return /^\/admin(\/[\w/-]*)?$/.test(raw) ? raw : VIDEOS;
 }
 
 /**
@@ -60,10 +81,15 @@ async function fillTranslations(data: ReturnType<typeof payload>): Promise<Retur
   return filled;
 }
 
-/** The public page reads the table directly, so a change has to reach it too. */
+/**
+ * The public page and a collective's own admin and public pages all read
+ * videos directly, so a change has to reach all of them.
+ */
 function revalidateVideos() {
   revalidatePath("/admin/culture-videos");
+  revalidatePath("/admin/culture-collectives/[id]", "page");
   revalidatePath("/[locale]/video", "page");
+  revalidatePath("/[locale]/collectives/[slug]", "page");
 }
 
 export async function createVideo(_prev: FormState, form: FormData): Promise<FormState> {
@@ -92,7 +118,7 @@ export async function createVideo(_prev: FormState, form: FormData): Promise<For
   if (error) return { error: "Не удалось сохранить видео." };
 
   revalidateVideos();
-  redirect("/admin/culture-videos");
+  redirect(destination(form));
 }
 
 export async function updateVideo(_prev: FormState, form: FormData): Promise<FormState> {
@@ -134,7 +160,7 @@ export async function updateVideo(_prev: FormState, form: FormData): Promise<For
   if (count === 0) return { error: "Недостаточно прав для редактирования." };
 
   revalidateVideos();
-  redirect("/admin/culture-videos");
+  redirect(destination(form));
 }
 
 export async function deleteVideo(id: string): Promise<{ ok: boolean; error?: string }> {

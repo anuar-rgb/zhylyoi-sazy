@@ -6,15 +6,16 @@ import { usePathname } from "next/navigation";
 /**
  * Мероприятия, Новости, Кружки and Заявки are deliberately absent: the dashboard
  * carries a tile for each, and having both was the same word twice on one screen.
- * Everything without a tile stays here, or it would be unreachable.
+ *
+ * Состав ансамбля, Репертуар and Видео are absent too, for a different reason:
+ * they belong to a specific collective, and are edited from that collective's own
+ * page (/admin/culture-collectives/[id]), the way the roster already is. Nothing
+ * here would tell you which collective you were editing.
  */
 const items = [
   { href: "/admin", label: "Дашборд" },
   { href: "/admin/culture-collectives", label: "Коллективы" },
   { href: "/admin/culture-staff", label: "Сотрудники" },
-  { href: "/admin/culture-members", label: "Состав ансамбля" },
-  { href: "/admin/culture-repertoire", label: "Репертуар" },
-  { href: "/admin/culture-videos", label: "Видео" },
   { href: "/admin/content", label: "Тексты сайта" },
   { href: "/admin/settings", label: "Настройки" },
 ];
