@@ -5,8 +5,10 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import MemberCard from "@/components/MemberCard";
+import { getSiteText } from "@/lib/orgContent";
 import { getPublicCultureClubBySlug, localized, paragraphs } from "@/lib/cultureClubs";
-import { listPublicMembersOfClub, localizedMember } from "@/lib/cultureMembers";
+import { listPublicMembersOfClub } from "@/lib/cultureMembers";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -66,7 +68,8 @@ export default async function CollectivePage({ params }: { params: Promise<{ slu
   const collective = await getPublicCultureClubBySlug(slug, "creative_collective");
   if (!collective) notFound();
 
-  const members = await listPublicMembersOfClub(collective.id);
+  const [members, text] = await Promise.all([listPublicMembersOfClub(collective.id), getSiteText(locale)]);
+  const educationLabel = text("membersPage.educationLabel");
 
   const title = localized(collective, locale, "name") ?? "";
   const description = localized(collective, locale, "description");
@@ -141,38 +144,12 @@ export default async function CollectivePage({ params }: { params: Promise<{ slu
               </h2>
             </FadeIn>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {members.map((member, index) => {
-                const name = localizedMember(member, locale, "name");
-                const role = localizedMember(member, locale, "role");
-                const photo = member.images[0];
-
-                return (
-                  <FadeIn key={member.id} delay={(index % 4) * 80}>
-                    <div className="bg-white rounded-3xl border border-cream-dark shadow-sm overflow-hidden h-full">
-                      <div className="aspect-[3/4] relative bg-ocean/5">
-                        {photo ? (
-                          <Image
-                            src={photo.url}
-                            alt={name ?? ""}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 640px) 50vw, 240px"
-                          />
-                        ) : (
-                          <div className="w-full h-full grid place-items-center">
-                            <span className="text-4xl font-bold text-ocean/25">{name?.charAt(0) ?? "?"}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3 sm:p-4">
-                        <h3 className="font-bold text-ocean text-sm leading-tight">{name}</h3>
-                        {role && <p className="text-gold-dark text-xs mt-1">{role}</p>}
-                      </div>
-                    </div>
-                  </FadeIn>
-                );
-              })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {members.map((member, index) => (
+                <FadeIn key={member.id} delay={(index % 4) * 80}>
+                  <MemberCard member={member} locale={locale} educationLabel={educationLabel} />
+                </FadeIn>
+              ))}
             </div>
           </>
         )}
