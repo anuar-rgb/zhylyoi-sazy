@@ -11,8 +11,13 @@
  */
 export const MEDIA_BUCKET = "org-media";
 
-/** Folder per admin section, named after the table the section edits. */
-export type MediaSection = "culture-clubs" | "culture-events" | "culture-news";
+/**
+ * Folder per admin section, named after the table the section edits.
+ *
+ * Adding one needs no Storage policy change: the policies check the institution
+ * segment ahead of it, and this name only keeps the listing readable.
+ */
+export type MediaSection = "culture-clubs" | "culture-events" | "culture-news" | "culture-staff";
 
 /** Builds the upload path for a new file. The name is random so two uploads never collide. */
 export function mediaPath(organizationId: string, section: MediaSection, fileName: string): string {

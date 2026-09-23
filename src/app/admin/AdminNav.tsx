@@ -8,6 +8,7 @@ const items = [
   { href: "/admin/culture-events", label: "Мероприятия" },
   { href: "/admin/culture-news", label: "Новости" },
   { href: "/admin/culture-clubs", label: "Кружки" },
+  { href: "/admin/culture-staff", label: "Сотрудники" },
   { href: "/admin/applications", label: "Заявки" },
   { href: "/admin/content", label: "Тексты сайта" },
   { href: "/admin/settings", label: "Настройки" },
