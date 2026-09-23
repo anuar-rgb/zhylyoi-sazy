@@ -13,8 +13,16 @@ import {
   isoToDateTimeInput,
 } from "@/lib/eventFields";
 import type { CultureEventRecord, EventImage } from "@/lib/cultureEvents";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "title_kk", ru: "title_ru" },
+  { kk: "description_kk", ru: "description_ru" },
+  { kk: "full_text_kk", ru: "full_text_ru" },
+  { kk: "location_kk", ru: "location_ru" },
+  { kk: "organizer_kk", ru: "organizer_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -110,9 +118,12 @@ export default function EventForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-events" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href="/admin/culture-events" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -125,7 +136,6 @@ export default function EventForm({
           <Field name="title_kk" label="Название (kk)" defaultValue={event?.titleKk} />
           <Field name="title_ru" label="Название (ru)" defaultValue={event?.titleRu} />
         </div>
-          <TranslateRow kk="title_kk" ru="title_ru" className="sm:col-span-2 -mt-1" />
         <p className="text-xs text-ocean/40 mt-2">Достаточно одного языка — второй подставится автоматически.</p>
       </div>
 
@@ -181,11 +191,9 @@ export default function EventForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="description_kk" label="Краткое описание (kk)" defaultValue={event?.descriptionKk} textarea rows={3} />
           <Field name="description_ru" label="Краткое описание (ru)" defaultValue={event?.descriptionRu} textarea rows={3} />
-          <TranslateRow kk="description_kk" ru="description_ru" className="sm:col-span-2 -mt-1" />
           <Field name="full_text_kk" label="Полное описание (kk)" defaultValue={event?.fullTextKk} textarea rows={7} />
           <Field name="full_text_ru" label="Полное описание (ru)" defaultValue={event?.fullTextRu} textarea rows={7} />
         </div>
-        <TranslateRow kk="full_text_kk" ru="full_text_ru" className="mt-2" />
         <p className="text-xs text-ocean/40 mt-2">Абзацы разделяйте пустой строкой.</p>
       </div>
 

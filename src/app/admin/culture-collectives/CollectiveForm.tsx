@@ -6,8 +6,15 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureClubImage, CultureClubRecord } from "@/lib/cultureClubs";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "name_kk", ru: "name_ru" },
+  { kk: "direction_kk", ru: "direction_ru" },
+  { kk: "description_kk", ru: "description_ru" },
+  { kk: "full_text_kk", ru: "full_text_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -110,9 +117,12 @@ export default function CollectiveForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-collectives" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href="/admin/culture-collectives" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -124,7 +134,6 @@ export default function CollectiveForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="name_kk" label="Название (kk)" defaultValue={collective?.nameKk} />
           <Field name="name_ru" label="Название (ru)" defaultValue={collective?.nameRu} />
-          <TranslateRow kk="name_kk" ru="name_ru" className="sm:col-span-2 -mt-1" />
           <Field
             name="direction_kk"
             label="Вид коллектива (kk)"
@@ -137,7 +146,6 @@ export default function CollectiveForm({
             defaultValue={collective?.directionRu}
             placeholder="Народный театр"
           />
-          <TranslateRow kk="direction_kk" ru="direction_ru" className="sm:col-span-2 -mt-1" />
         </div>
       </div>
 
@@ -158,7 +166,6 @@ export default function CollectiveForm({
             textarea
             rows={3}
           />
-          <TranslateRow kk="description_kk" ru="description_ru" className="sm:col-span-2 -mt-1" />
           <Field
             name="full_text_kk"
             label="Полное описание (kk)"
@@ -174,7 +181,6 @@ export default function CollectiveForm({
             rows={8}
           />
         </div>
-        <TranslateRow kk="full_text_kk" ru="full_text_ru" className="mt-2" />
         <p className="text-xs text-ocean/40 mt-2">
           Краткое описание показывается карточкой в списке коллективов, полное — на странице коллектива. Абзацы
           разделяйте пустой строкой.

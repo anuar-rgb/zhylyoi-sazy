@@ -4,8 +4,14 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { youtubeId, youtubeThumbnailUrl, youtubeWatchUrl } from "@/lib/youtube";
 import type { CultureVideoRecord } from "@/lib/cultureVideos";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "title_kk", ru: "title_ru" },
+  { kk: "description_kk", ru: "description_ru" },
+  { kk: "venue_kk", ru: "venue_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -66,9 +72,12 @@ export default function VideoForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-videos" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href="/admin/culture-videos" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -137,10 +146,8 @@ export default function VideoForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="title_kk" label="Название (kk)" defaultValue={video?.titleKk} />
           <Field name="title_ru" label="Название (ru)" defaultValue={video?.titleRu} />
-          <TranslateRow kk="title_kk" ru="title_ru" className="sm:col-span-2 -mt-1" />
           <Field name="description_kk" label="Описание (kk)" defaultValue={video?.descriptionKk} textarea />
           <Field name="description_ru" label="Описание (ru)" defaultValue={video?.descriptionRu} textarea />
-          <TranslateRow kk="description_kk" ru="description_ru" className="sm:col-span-2 -mt-1" />
           <Field
             name="venue_kk"
             label="Место и год (kk)"
@@ -153,7 +160,6 @@ export default function VideoForm({
             defaultValue={video?.venueRu}
             placeholder="Дом культуры «Кен Жылыой», 2026 год"
           />
-          <TranslateRow kk="venue_kk" ru="venue_ru" className="sm:col-span-2 -mt-1" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           Название и место показываются поверх видео до нажатия, описание — под ним.

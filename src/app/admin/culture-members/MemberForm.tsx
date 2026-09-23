@@ -6,8 +6,17 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureMemberRecord, MemberImage } from "@/lib/cultureMembers";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "name_kk", ru: "name_ru" },
+  { kk: "role_kk", ru: "role_ru" },
+  { kk: "education_kk", ru: "education_ru" },
+  { kk: "specialty_kk", ru: "specialty_ru" },
+  { kk: "level_kk", ru: "level_ru" },
+  { kk: "note_kk", ru: "note_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -114,9 +123,12 @@ export default function MemberForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href={returnTo ?? "/admin/culture-members"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href={returnTo ?? "/admin/culture-members"} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -144,10 +156,8 @@ export default function MemberForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="name_kk" label="ФИО (kk)" defaultValue={member?.nameKk} />
           <Field name="name_ru" label="ФИО (ru)" defaultValue={member?.nameRu} />
-          <TranslateRow kk="name_kk" ru="name_ru" className="sm:col-span-2 -mt-1" />
           <Field name="role_kk" label="Должность (kk)" defaultValue={member?.roleKk} placeholder="Домбыра әртісі" />
           <Field name="role_ru" label="Должность (ru)" defaultValue={member?.roleRu} placeholder="Артист домбры" />
-          <TranslateRow kk="role_kk" ru="role_ru" className="sm:col-span-2 -mt-1" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           ФИО достаточно ввести на одном языке — второй подставится. Должность стоит заполнить на обоих: она
@@ -199,10 +209,8 @@ export default function MemberForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="education_kk" label="Учебное заведение (kk)" defaultValue={member?.educationKk} textarea />
           <Field name="education_ru" label="Учебное заведение (ru)" defaultValue={member?.educationRu} textarea />
-          <TranslateRow kk="education_kk" ru="education_ru" className="sm:col-span-2 -mt-1" />
           <Field name="specialty_kk" label="Специальность (kk)" defaultValue={member?.specialtyKk} textarea />
           <Field name="specialty_ru" label="Специальность (ru)" defaultValue={member?.specialtyRu} textarea />
-          <TranslateRow kk="specialty_kk" ru="specialty_ru" className="sm:col-span-2 -mt-1" />
           <Field name="level_kk" label="Уровень (kk)" defaultValue={member?.levelKk} placeholder="жоғары" />
           <Field name="level_ru" label="Уровень (ru)" defaultValue={member?.levelRu} placeholder="высшее" />
           <Field
@@ -217,7 +225,6 @@ export default function MemberForm({
             defaultValue={member?.noteRu}
             placeholder="Отличник сферы культуры"
           />
-          <TranslateRow kk="note_kk" ru="note_ru" className="sm:col-span-2 -mt-1" />
         </div>
 
         <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer mt-4">

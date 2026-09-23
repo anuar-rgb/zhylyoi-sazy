@@ -6,8 +6,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureClubImage, CultureClubRecord } from "@/lib/cultureClubs";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "name_kk", ru: "name_ru" },
+  { kk: "direction_kk", ru: "direction_ru" },
+  { kk: "description_kk", ru: "description_ru" },
+  { kk: "full_text_kk", ru: "full_text_ru" },
+  { kk: "schedule_kk", ru: "schedule_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -108,9 +116,12 @@ export default function ClubForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-clubs" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href="/admin/culture-clubs" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -132,11 +143,9 @@ export default function ClubForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="description_kk" label="Краткое описание (kk)" defaultValue={club?.descriptionKk} textarea rows={3} />
           <Field name="description_ru" label="Краткое описание (ru)" defaultValue={club?.descriptionRu} textarea rows={3} />
-          <TranslateRow kk="description_kk" ru="description_ru" className="sm:col-span-2 -mt-1" />
           <Field name="full_text_kk" label="Полное описание (kk)" defaultValue={club?.fullTextKk} textarea rows={7} />
           <Field name="full_text_ru" label="Полное описание (ru)" defaultValue={club?.fullTextRu} textarea rows={7} />
         </div>
-        <TranslateRow kk="full_text_kk" ru="full_text_ru" className="mt-2" />
         <p className="text-xs text-ocean/40 mt-2">Абзацы разделяйте пустой строкой.</p>
       </div>
 

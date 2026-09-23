@@ -8,8 +8,15 @@ import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import { PUBLISH_STATUSES, PUBLISH_STATUS_LABELS } from "@/lib/publishStatus";
 import { isoToDateTimeInput } from "@/lib/eventFields";
 import type { CultureNewsRecord, NewsImage } from "@/lib/cultureNews";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "title_kk", ru: "title_ru" },
+  { kk: "excerpt_kk", ru: "excerpt_ru" },
+  { kk: "content_kk", ru: "content_ru" },
+  { kk: "tag_kk", ru: "tag_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -112,9 +119,12 @@ export default function NewsForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-news" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href="/admin/culture-news" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -126,7 +136,6 @@ export default function NewsForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="title_kk" label="Заголовок (kk)" defaultValue={item?.titleKk} />
           <Field name="title_ru" label="Заголовок (ru)" defaultValue={item?.titleRu} />
-          <TranslateRow kk="title_kk" ru="title_ru" className="sm:col-span-2 -mt-1" />
           <Field name="tag_kk" label="Метка (kk)" defaultValue={item?.tagKk} placeholder="например: Байқау" />
           <Field name="tag_ru" label="Метка (ru)" defaultValue={item?.tagRu} placeholder="например: Конкурс" />
         </div>
@@ -141,11 +150,9 @@ export default function NewsForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="excerpt_kk" label="Анонс (kk)" defaultValue={item?.excerptKk} textarea rows={3} />
           <Field name="excerpt_ru" label="Анонс (ru)" defaultValue={item?.excerptRu} textarea rows={3} />
-          <TranslateRow kk="excerpt_kk" ru="excerpt_ru" className="sm:col-span-2 -mt-1" />
           <Field name="content_kk" label="Полный текст (kk)" defaultValue={item?.contentKk} textarea rows={9} />
           <Field name="content_ru" label="Полный текст (ru)" defaultValue={item?.contentRu} textarea rows={9} />
         </div>
-        <TranslateRow kk="content_kk" ru="content_ru" className="mt-2" />
         <p className="text-xs text-ocean/40 mt-2">
           Анонс показывается на карточке, полный текст — на странице новости. Абзацы разделяйте пустой строкой.
         </p>

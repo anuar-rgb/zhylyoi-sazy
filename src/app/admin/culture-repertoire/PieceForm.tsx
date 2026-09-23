@@ -4,8 +4,14 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { REPERTOIRE_CATEGORIES, REPERTOIRE_CATEGORY_ADMIN_LABELS } from "@/lib/repertoireFields";
 import type { CultureRepertoireRecord } from "@/lib/cultureRepertoire";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "title_kk", ru: "title_ru" },
+  { kk: "author_kk", ru: "author_ru" },
+  { kk: "note_kk", ru: "note_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -52,9 +58,12 @@ export default function PieceForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-repertoire" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href="/admin/culture-repertoire" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -66,13 +75,10 @@ export default function PieceForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="title_kk" label="Название (kk)" defaultValue={piece?.titleKk} />
           <Field name="title_ru" label="Название (ru)" defaultValue={piece?.titleRu} />
-          <TranslateRow kk="title_kk" ru="title_ru" className="sm:col-span-2 -mt-1" />
           <Field name="author_kk" label="Автор (kk)" defaultValue={piece?.authorKk} placeholder="Халық әні" />
           <Field name="author_ru" label="Автор (ru)" defaultValue={piece?.authorRu} placeholder="Народная песня" />
-          <TranslateRow kk="author_kk" ru="author_ru" className="sm:col-span-2 -mt-1" />
           <Field name="note_kk" label="Примечание (kk)" defaultValue={piece?.noteKk} placeholder="Өңдеген: ..." />
           <Field name="note_ru" label="Примечание (ru)" defaultValue={piece?.noteRu} placeholder="Обработка: ..." />
-          <TranslateRow kk="note_kk" ru="note_ru" className="sm:col-span-2 -mt-1" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           Название на карточке берётся в кавычки. Примечание — маленькая подпись под автором: кто обработал, чьи

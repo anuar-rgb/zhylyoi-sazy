@@ -6,8 +6,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureStaffRecord, StaffImage } from "@/lib/cultureStaff";
-import TranslateRow from "@/components/admin/TranslateRow";
+import TranslateAllButton from "@/components/admin/TranslateAllButton";
 import type { FormState } from "./actions";
+
+const TRANSLATE_PAIRS = [
+  { kk: "name_kk", ru: "name_ru" },
+  { kk: "role_kk", ru: "role_ru" },
+  { kk: "description_kk", ru: "description_ru" },
+];
 
 const INPUT =
   "w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-sm text-ocean " +
@@ -104,9 +110,12 @@ export default function StaffForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-staff" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+        <div className="flex items-center gap-4">
+          <TranslateAllButton pairs={TRANSLATE_PAIRS} />
+          <Link href="/admin/culture-staff" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
       </div>
 
       {state.error && (
@@ -118,10 +127,8 @@ export default function StaffForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="name_kk" label="ФИО (kk)" defaultValue={person?.nameKk} />
           <Field name="name_ru" label="ФИО (ru)" defaultValue={person?.nameRu} />
-          <TranslateRow kk="name_kk" ru="name_ru" className="sm:col-span-2 -mt-1" />
           <Field name="role_kk" label="Должность (kk)" defaultValue={person?.roleKk} placeholder="Басшысы" />
           <Field name="role_ru" label="Должность (ru)" defaultValue={person?.roleRu} placeholder="Директор" />
-          <TranslateRow kk="role_kk" ru="role_ru" className="sm:col-span-2 -mt-1" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           ФИО достаточно ввести на одном языке — второй подставится. Должность стоит заполнить на обоих: она
@@ -173,7 +180,6 @@ export default function StaffForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="description_kk" label="Описание (kk)" defaultValue={person?.descriptionKk} textarea rows={3} />
           <Field name="description_ru" label="Описание (ru)" defaultValue={person?.descriptionRu} textarea rows={3} />
-          <TranslateRow kk="description_kk" ru="description_ru" className="sm:col-span-2 -mt-1" />
           <Field name="phone" label="Телефон" defaultValue={person?.phone} placeholder="+7 778 927 63 87" />
           <Field name="email" label="Электронная почта" defaultValue={person?.email} type="email" />
         </div>
