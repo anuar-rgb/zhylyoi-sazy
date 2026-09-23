@@ -12,16 +12,13 @@ export default async function AchievementsSection() {
 
   // The first figure is the one visitors can actually check against the site
   // itself — the roster pages — so it counts real artists instead of carrying a
-  // number someone typed once and never updated when new people joined. The other
-  // two stay free text: repertoire size and founding year are not derived from any
-  // single table here. Цифра вводится как она выглядит — «10+» — а счётчику нужны
-  // отдельно число и приписка.
+  // number someone typed once and never updated when new people joined. The second
+  // stays free text: repertoire size is not derived from any single table here.
+  // Цифра вводится как она выглядит — «10+» — а счётчику нужны отдельно число и
+  // приписка.
   const stats = [
     { end: members.length, suffix: "", label: text("about.stat1Label") },
-    ...[2, 3].map((n) => ({
-      ...splitStat(text(`about.stat${n}Value`)),
-      label: text(`about.stat${n}Label`),
-    })),
+    { ...splitStat(text("about.stat2Value")), label: text("about.stat2Label") },
   ];
 
   return (
@@ -40,7 +37,7 @@ export default async function AchievementsSection() {
                 {text("about.description")}
               </p>
 
-              <div className="grid grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6">
                 {stats.map((stat) => (
                   <div key={stat.label}>
                     <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gold">
@@ -56,7 +53,7 @@ export default async function AchievementsSection() {
           <FadeIn delay={150}>
             <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-gold/20">
               <Image
-                src="/images/gallery/ensemble-photo.jpeg"
+                src="/images/hero-building-illustration.jpg"
                 alt={text("about.title")}
                 fill
                 className="object-cover"

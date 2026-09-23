@@ -157,13 +157,6 @@ export const CONTENT_GROUPS: ContentGroup[] = [
         kk: "репертуардағы туынды",
         ru: "произведений в репертуаре",
       },
-      { key: "about.stat3Value", label: "Цифра 3", kk: "2026", ru: "2026" },
-      {
-        key: "about.stat3Label",
-        label: "Подпись к цифре 3",
-        kk: "ансамбль құрылған жыл",
-        ru: "год основания ансамбля",
-      },
     ],
   },
   {
