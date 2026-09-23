@@ -22,7 +22,7 @@ export default async function CultureEventsPage() {
   if (!identity?.hasProfile) {
     return (
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-6">Мероприятия</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-6">Афиша</h1>
         <div className={`${CARD} p-8`}>
           <p className="font-semibold text-ocean mb-2">Профиль сотрудника не настроен</p>
           <p className="text-sm text-ocean/60">
@@ -40,7 +40,7 @@ export default async function CultureEventsPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">
-          Мероприятия <span className="text-ocean/40 font-normal">({events.length})</span>
+          Афиша <span className="text-ocean/40 font-normal">({events.length})</span>
         </h1>
         <Link href="/admin/culture-events/new" className="btn-primary px-5 py-2.5 text-sm font-semibold">
           Добавить мероприятие
