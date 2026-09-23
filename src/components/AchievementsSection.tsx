@@ -3,17 +3,26 @@ import { getLocale } from "next-intl/server";
 import FadeIn from "@/components/FadeIn";
 import CountUp from "@/components/CountUp";
 import { getSiteText, splitStat } from "@/lib/orgContent";
+import { listPublicCultureMembers } from "@/lib/cultureMembers";
 import type { Locale } from "@/i18n/routing";
 
 export default async function AchievementsSection() {
   const locale = (await getLocale()) as Locale;
-  const text = await getSiteText(locale);
-  // Цифра вводится как она выглядит — «10+», «2026», — а счётчику нужны
+  const [text, members] = await Promise.all([getSiteText(locale), listPublicCultureMembers()]);
+
+  // The first figure is the one visitors can actually check against the site
+  // itself — the roster pages — so it counts real artists instead of carrying a
+  // number someone typed once and never updated when new people joined. The other
+  // two stay free text: repertoire size and founding year are not derived from any
+  // single table here. Цифра вводится как она выглядит — «10+» — а счётчику нужны
   // отдельно число и приписка.
-  const stats = [1, 2, 3].map((n) => ({
-    ...splitStat(text(`about.stat${n}Value`)),
-    label: text(`about.stat${n}Label`),
-  }));
+  const stats = [
+    { end: members.length, suffix: "", label: text("about.stat1Label") },
+    ...[2, 3].map((n) => ({
+      ...splitStat(text(`about.stat${n}Value`)),
+      label: text(`about.stat${n}Label`),
+    })),
+  ];
 
   return (
     <section id="about-us" className="py-12 sm:py-16 lg:py-20 bg-ocean text-cream overflow-hidden">
