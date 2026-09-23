@@ -98,7 +98,7 @@ export default async function GalleryPreviewSection() {
           {/* Photo gallery */}
           <FadeIn delay={150} className="lg:col-span-3">
             <div className="h-full flex flex-col">
-              <div className="grid grid-cols-3 gap-3 sm:gap-4 flex-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 flex-1">
                 {galleryPhotos.map((photo, index) => (
                   <div
                     key={photo}
@@ -109,7 +109,7 @@ export default async function GalleryPreviewSection() {
                       alt={t.photoLabel}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 15vw"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
                       priority={index === 0}
                     />
                   </div>
