@@ -126,6 +126,10 @@ export default function CollectiveForm({
     <form action={formAction} className="space-y-5">
       {collective && <input type="hidden" name="id" value={collective.id} />}
       <input type="hidden" name="images" value={JSON.stringify(images)} />
+      {/* Sections 2–4 only exist once there is a collective to attach photos, a
+          phone and a publish flag to. A brand-new one is created active by
+          default, the same as the checkbox below defaults to when it is shown. */}
+      {!collective && <input type="hidden" name="is_active" value="on" />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
@@ -226,100 +230,111 @@ export default function CollectiveForm({
           Краткое описание показывается карточкой в списке коллективов, полное — на странице коллектива. Абзацы
           разделяйте пустой строкой.
         </p>
-      </div>
 
-      <div className={CARD}>
-        <SectionHeading index={2} title="Медиа" hint="Фотографии для карточки и страницы коллектива" />
-
-        {images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            {images.map((image, index) => (
-              <div
-                key={image.url}
-                className="relative aspect-video rounded-2xl overflow-hidden border border-cream-dark"
-              >
-                <Image src={image.url} alt="" fill className="object-cover" sizes="180px" unoptimized />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-1.5 right-1.5 bg-white/90 text-red-600 text-xs font-semibold rounded-full px-2 py-1 hover:bg-white"
-                >
-                  Убрать
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
-          multiple
-          onChange={handleUpload}
-          disabled={uploading}
-          className="text-sm text-ocean/70 file:mr-3 file:px-4 file:py-2 file:rounded-full file:border-0 file:bg-cream file:text-ocean file:text-sm file:font-semibold"
-        />
-        {uploading && <p className="text-xs text-ocean/50 mt-2">Загрузка…</p>}
-        {uploadError && <p className="text-xs text-red-600 mt-2">{uploadError}</p>}
-        <p className="text-xs text-ocean/40 mt-2">
-          JPEG, PNG, WebP или AVIF, до 5 МБ. Первая фотография — главная, она идёт на карточку и на страницу
-          коллектива.
-        </p>
-      </div>
-
-      <div className={CARD}>
-        <SectionHeading index={3} title="Контакты" hint="Как связаться с коллективом" />
-        <div className="sm:w-1/2 sm:pr-2">
-          <Field
-            name="contact_phone"
-            label="Телефон"
-            defaultValue={collective?.contactPhone}
-            placeholder="+7 778 927 63 87"
-          />
-        </div>
-      </div>
-
-      <div className={CARD}>
-        <SectionHeading index={4} title="Публикация" hint="Виден ли коллектив на сайте и по какому адресу" />
-
-        <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">
-          <input
-            type="checkbox"
-            name="is_active"
-            defaultChecked={collective?.isActive ?? true}
-            className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
-          />
-          <span>Показывать на сайте</span>
-        </label>
-
-        {memberCount !== undefined && memberCount > 0 && (
-          <p className="text-xs text-ocean/40 mt-3">
-            В коллективе {memberCount}{" "}
-            {memberCount === 1 ? "артист" : memberCount < 5 ? "артиста" : "артистов"} — состав редактируется в
-            разделе «Состав ансамбля». Если снять галочку, коллектив исчезнет с сайта вместе со своим составом.
+        {!collective && (
+          <p className="text-xs text-ocean/40 mt-4 border-t border-cream-dark pt-4">
+            Фото, телефон и адрес страницы можно добавить сразу после создания — коллектив появится на сайте, а
+            дальше откроется его собственная страница со всем остальным.
           </p>
         )}
+      </div>
 
-        {/* The address is derived from the name, so it is out of the way by default.
-            A native <details> keeps it in the form and submitted either way. */}
-        <details className="mt-4 border-t border-cream-dark pt-4">
-          <summary className="text-sm font-medium text-ocean/70 cursor-pointer select-none hover:text-ocean">
-            Дополнительно
-          </summary>
-          <div className="mt-3">
-            <Field
-              name="slug"
-              label="Адрес страницы"
-              defaultValue={collective?.slug}
-              placeholder="составится из названия"
+      {collective && (
+        <>
+          <div className={CARD}>
+            <SectionHeading index={2} title="Медиа" hint="Фотографии для карточки и страницы коллектива" />
+
+            {images.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                {images.map((image, index) => (
+                  <div
+                    key={image.url}
+                    className="relative aspect-video rounded-2xl overflow-hidden border border-cream-dark"
+                  >
+                    <Image src={image.url} alt="" fill className="object-cover" sizes="180px" unoptimized />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1.5 right-1.5 bg-white/90 text-red-600 text-xs font-semibold rounded-full px-2 py-1 hover:bg-white"
+                    >
+                      Убрать
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              multiple
+              onChange={handleUpload}
+              disabled={uploading}
+              className="text-sm text-ocean/70 file:mr-3 file:px-4 file:py-2 file:rounded-full file:border-0 file:bg-cream file:text-ocean file:text-sm file:font-semibold"
             />
-            <p className="text-xs text-ocean/40 mt-1.5">
-              Часть ссылки: /collectives/&lt;адрес&gt;. Менять уже опубликованный адрес не стоит — разосланные
-              ссылки и напечатанные QR-коды перестанут открываться.
+            {uploading && <p className="text-xs text-ocean/50 mt-2">Загрузка…</p>}
+            {uploadError && <p className="text-xs text-red-600 mt-2">{uploadError}</p>}
+            <p className="text-xs text-ocean/40 mt-2">
+              JPEG, PNG, WebP или AVIF, до 5 МБ. Первая фотография — главная, она идёт на карточку и на страницу
+              коллектива.
             </p>
           </div>
-        </details>
-      </div>
+
+          <div className={CARD}>
+            <SectionHeading index={3} title="Контакты" hint="Как связаться с коллективом" />
+            <div className="sm:w-1/2 sm:pr-2">
+              <Field
+                name="contact_phone"
+                label="Телефон"
+                defaultValue={collective?.contactPhone}
+                placeholder="+7 778 927 63 87"
+              />
+            </div>
+          </div>
+
+          <div className={CARD}>
+            <SectionHeading index={4} title="Публикация" hint="Виден ли коллектив на сайте и по какому адресу" />
+
+            <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_active"
+                defaultChecked={collective?.isActive ?? true}
+                className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
+              />
+              <span>Показывать на сайте</span>
+            </label>
+
+            {memberCount !== undefined && memberCount > 0 && (
+              <p className="text-xs text-ocean/40 mt-3">
+                В коллективе {memberCount}{" "}
+                {memberCount === 1 ? "артист" : memberCount < 5 ? "артиста" : "артистов"} — состав редактируется в
+                разделе «Состав ансамбля». Если снять галочку, коллектив исчезнет с сайта вместе со своим составом.
+              </p>
+            )}
+
+            {/* The address is derived from the name, so it is out of the way by default.
+                A native <details> keeps it in the form and submitted either way. */}
+            <details className="mt-4 border-t border-cream-dark pt-4">
+              <summary className="text-sm font-medium text-ocean/70 cursor-pointer select-none hover:text-ocean">
+                Дополнительно
+              </summary>
+              <div className="mt-3">
+                <Field
+                  name="slug"
+                  label="Адрес страницы"
+                  defaultValue={collective?.slug}
+                  placeholder="составится из названия"
+                />
+                <p className="text-xs text-ocean/40 mt-1.5">
+                  Часть ссылки: /collectives/&lt;адрес&gt;. Менять уже опубликованный адрес не стоит — разосланные
+                  ссылки и напечатанные QR-коды перестанут открываться.
+                </p>
+              </div>
+            </details>
+          </div>
+        </>
+      )}
 
       {/* Sticky rather than a plain row at the end: on a form this long, Save should
           never be more than a scroll-glance away. */}
