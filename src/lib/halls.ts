@@ -103,6 +103,27 @@ export async function listHallSeats(hallId: string): Promise<HallSeatRecord[]> {
 }
 
 /**
+ * A hall's seats for the public seat map: active only. RLS's hall_seats_public_read
+ * only checks the hall's own is_active flag, not the seat's — a hidden individual
+ * seat (broken chair, aisle) would otherwise still show up to a visitor. Filtered
+ * here the same way listPublicCultureMembers filters is_active on top of a broader
+ * RLS read policy.
+ */
+export async function listPublicHallSeats(hallId: string): Promise<HallSeatRecord[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("hall_seats")
+    .select(SEAT_COLUMNS)
+    .eq("hall_id", hallId)
+    .eq("is_active", true)
+    .order("row_label")
+    .order("seat_number");
+
+  if (error || !data) return [];
+  return (data as unknown as Row[]).map(toSeat);
+}
+
+/**
  * The distinct seat categories actually present in a hall, sorted.
  *
  * Used by the ticket-type form on an event so staff can only price categories

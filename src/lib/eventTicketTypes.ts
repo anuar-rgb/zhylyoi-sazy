@@ -58,3 +58,21 @@ export async function listEventTicketTypes(eventId: string): Promise<EventTicket
   if (error || !data) return [];
   return (data as unknown as Row[]).map(toRecord);
 }
+
+/**
+ * An event's ticket types for the public ticket page: active only, matching what
+ * event_ticket_types_public_read already restricts anon to — filtered here too so
+ * an admin previewing their own event does not see a hidden type as buyable.
+ */
+export async function listPublicEventTicketTypes(eventId: string): Promise<EventTicketTypeRecord[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("event_ticket_types")
+    .select(COLUMNS)
+    .eq("event_id", eventId)
+    .eq("is_active", true)
+    .order("category");
+
+  if (error || !data) return [];
+  return (data as unknown as Row[]).map(toRecord);
+}

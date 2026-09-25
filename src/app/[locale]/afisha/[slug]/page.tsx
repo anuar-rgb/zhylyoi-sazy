@@ -19,6 +19,7 @@ const content: Record<
     addToCalendar: string;
     register: string;
     waIntro: string;
+    buyTickets: string;
   }
 > = {
   kk: {
@@ -28,6 +29,7 @@ const content: Record<
     addToCalendar: "Күнтізбеге қосу",
     register: "Тіркелу",
     waIntro: "Сәлеметсіз бе! Мына іс-шараға тіркелгім келеді",
+    buyTickets: "Билет брондау",
   },
   ru: {
     back: "Назад к афише",
@@ -36,6 +38,7 @@ const content: Record<
     addToCalendar: "Добавить в календарь",
     register: "Записаться",
     waIntro: "Здравствуйте! Хочу записаться на мероприятие",
+    buyTickets: "Забронировать билет",
   },
 };
 
@@ -147,11 +150,23 @@ export default async function EventDetailPage({
               </div>
 
               <div className="flex flex-wrap gap-3 mt-8">
+                {record.hallId && (
+                  <Link
+                    href={`/afisha/${record.slug}/tickets`}
+                    className="btn-primary inline-flex items-center justify-center px-6 py-3 text-sm font-semibold"
+                  >
+                    {t.buyTickets}
+                  </Link>
+                )}
                 <a
                   href={waHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-primary inline-flex items-center justify-center px-6 py-3 text-sm font-semibold"
+                  className={
+                    record.hallId
+                      ? "inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-[20px] border-2 border-ocean/20 text-ocean hover:border-ocean/40 hover:bg-cream/50 transition-colors"
+                      : "btn-primary inline-flex items-center justify-center px-6 py-3 text-sm font-semibold"
+                  }
                 >
                   {t.register}
                 </a>
