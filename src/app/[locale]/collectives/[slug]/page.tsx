@@ -6,9 +6,13 @@ import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import MemberCard from "@/components/MemberCard";
+import VideoCard from "@/components/VideoCard";
 import { getSiteText } from "@/lib/orgContent";
 import { getPublicCultureClubBySlug, localized, paragraphs } from "@/lib/cultureClubs";
 import { listPublicMembersOfClub } from "@/lib/cultureMembers";
+import { listPublicRepertoireOfClub, localizedPiece } from "@/lib/cultureRepertoire";
+import { REPERTOIRE_CATEGORY_COLORS, REPERTOIRE_CATEGORY_LABELS } from "@/lib/repertoireFields";
+import { listPublicVideosOfClub, localizedVideo } from "@/lib/cultureVideos";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -68,8 +72,14 @@ export default async function CollectivePage({ params }: { params: Promise<{ slu
   const collective = await getPublicCultureClubBySlug(slug, "creative_collective");
   if (!collective) notFound();
 
-  const [members, text] = await Promise.all([listPublicMembersOfClub(collective.id), getSiteText(locale)]);
+  const [members, repertoire, videos, text] = await Promise.all([
+    listPublicMembersOfClub(collective.id),
+    listPublicRepertoireOfClub(collective.id),
+    listPublicVideosOfClub(collective.id),
+    getSiteText(locale),
+  ]);
   const educationLabel = text("membersPage.educationLabel");
+  const videoBadge = text("videoPage.badge");
 
   const title = localized(collective, locale, "name") ?? "";
   const description = localized(collective, locale, "description");
@@ -144,10 +154,84 @@ export default async function CollectivePage({ params }: { params: Promise<{ slu
               </h2>
             </FadeIn>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
               {members.map((member, index) => (
                 <FadeIn key={member.id} delay={(index % 4) * 80}>
                   <MemberCard member={member} locale={locale} educationLabel={educationLabel} />
+                </FadeIn>
+              ))}
+            </div>
+          </>
+        )}
+
+        {repertoire.length > 0 && (
+          <>
+            <FadeIn>
+              <h2 className="text-xl sm:text-2xl font-bold text-ocean mb-5">
+                {text("repertoirePage.title")}{" "}
+                <span className="text-ocean/40 font-normal text-base">({repertoire.length})</span>
+              </h2>
+            </FadeIn>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-10">
+              {repertoire.map((piece, index) => {
+                const pieceTitle = localizedPiece(piece, locale, "title");
+                const author = localizedPiece(piece, locale, "author");
+                const note = localizedPiece(piece, locale, "note");
+
+                return (
+                  <FadeIn key={piece.id} delay={(index % 3) * 100}>
+                    <div className="bg-white rounded-3xl shadow-sm border border-cream-dark hover:shadow-md transition-all hover:-translate-y-0.5 group h-full">
+                      <div className="p-5 sm:p-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="w-8 h-8 bg-ocean rounded-full flex items-center justify-center text-cream font-bold text-xs">
+                            {index + 1}
+                          </span>
+                          <span
+                            className={`text-xs font-medium px-2.5 py-1 rounded-full border ${REPERTOIRE_CATEGORY_COLORS[piece.category]}`}
+                          >
+                            {REPERTOIRE_CATEGORY_LABELS[piece.category][locale]}
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-ocean mb-1 leading-tight">«{pieceTitle}»</h3>
+                        {author && <p className="text-ocean/60 text-sm">{author}</p>}
+                        {note && (
+                          <p className="mt-2 text-xs text-gold-dark bg-gold/10 inline-block px-2.5 py-1 rounded-full">
+                            {note}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </FadeIn>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {videos.length > 0 && (
+          <>
+            <FadeIn>
+              <h2 className="text-xl sm:text-2xl font-bold text-ocean mb-5">
+                {text("videoPage.title")} <span className="text-ocean/40 font-normal text-base">({videos.length})</span>
+              </h2>
+            </FadeIn>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+              {videos.map((video, index) => (
+                <FadeIn key={video.id} delay={index * 100}>
+                  <VideoCard
+                    video={{
+                      kind: video.kind,
+                      youtubeId: video.youtubeId,
+                      filePath: video.filePath,
+                      title: localizedVideo(video, locale, "title") ?? "",
+                      description: localizedVideo(video, locale, "description") ?? "",
+                      venueLine: localizedVideo(video, locale, "venue") ?? "",
+                      badge: videoBadge,
+                    }}
+                  />
                 </FadeIn>
               ))}
             </div>
