@@ -84,8 +84,12 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale}>
           <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          {/* overflow-x-hidden lives here, not on html/body: that combination breaks
+              position: sticky on Header (see globals.css). */}
+          <div className="flex-1 flex flex-col overflow-x-hidden">
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </NextIntlClientProvider>
       </body>
     </html>
