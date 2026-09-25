@@ -77,12 +77,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
                       <span className="text-xs font-semibold text-ocean/70 w-6 text-center shrink-0">
                         {seat.seatNumber}
                       </span>
-                      <SeatControls
-                        id={seat.id}
-                        category={seat.category}
-                        isActive={seat.isActive}
-                        label={`Ряд ${row.label}, место ${seat.seatNumber}`}
-                      />
+                      <SeatControls id={seat.id} category={seat.category} isActive={seat.isActive} />
                     </div>
                   ))}
                 </div>

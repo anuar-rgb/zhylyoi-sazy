@@ -201,15 +201,6 @@ export async function setSeatActive(id: string, isActive: boolean): Promise<{ ok
   return { ok: !error && count === 1 };
 }
 
-export async function deleteSeat(id: string): Promise<{ ok: boolean }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
-
-  const { error, count } = await supabase.from("hall_seats").delete({ count: "exact" }).eq("id", id);
-
-  if (!error && count === 1) revalidatePath("/admin/settings/halls", "layout");
-  return { ok: !error && count === 1 };
-}
+// No deleteSeat: Phase 3's booking_items will reference hall_seats.id, and a hard
+// delete would cascade into whatever booked it. setSeatActive(id, false) is the
+// only removal a seat gets — see SeatControls.tsx.

@@ -2,25 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { deleteSeat, setSeatActive, updateSeatCategory } from "./actions";
+import { setSeatActive, updateSeatCategory } from "./actions";
 
 /**
- * The point-edit controls for one seat: change its category, hide it without
- * deleting it, or remove the row outright. Each fires its own server action and
- * refreshes the page rather than sharing one form — a seat's edits are independent
- * of its neighbours, and there can be hundreds of these on one page.
+ * The point-edit controls for one seat: change its category, or hide it without
+ * deleting the row. No hard-delete control on purpose — Phase 3's booking_items
+ * will reference hall_seats.id, and removing the row later would cascade into
+ * whatever booked it. "Скрыто" is the only removal a seat ever gets.
+ *
+ * Each control fires its own server action and refreshes the page rather than
+ * sharing one form — a seat's edits are independent of its neighbours, and there
+ * can be hundreds of these on one page.
  */
 export default function SeatControls({
   id,
   category,
   isActive,
-  label,
 }: {
   id: string;
   category: string;
   isActive: boolean;
-  /** "Ряд A, место 4" — for the delete confirmation. */
-  label: string;
 }) {
   const router = useRouter();
   const [value, setValue] = useState(category);
@@ -46,14 +47,6 @@ export default function SeatControls({
     if (result.ok) router.refresh();
   }
 
-  async function handleDelete() {
-    if (!confirm(`Удалить место? ${label}`)) return;
-    setBusy(true);
-    const result = await deleteSeat(id);
-    setBusy(false);
-    if (result.ok) router.refresh();
-  }
-
   return (
     <div className="flex items-center gap-1.5">
       <input
@@ -73,15 +66,6 @@ export default function SeatControls({
         }`}
       >
         {isActive ? "Активно" : "Скрыто"}
-      </button>
-      <button
-        type="button"
-        onClick={handleDelete}
-        disabled={busy}
-        title="Удалить место"
-        className="text-ocean/30 hover:text-red-600 transition-colors disabled:opacity-50 px-1"
-      >
-        ×
       </button>
     </div>
   );
