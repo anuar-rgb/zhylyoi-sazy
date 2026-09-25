@@ -76,7 +76,9 @@ export default function Header() {
   const t = content[locale];
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -111,8 +113,33 @@ export default function Header() {
     };
   }, [moreOpen]);
 
+  // Hides the header on the way down, brings it straight back on the way up — never
+  // while a menu is open, since the mobile overlay hangs directly under it and would
+  // be left floating with nothing above it. Always shown near the very top, so the
+  // page never opens with the header already gone.
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    function onScroll() {
+      const currentY = window.scrollY;
+      if (menuOpen || moreOpen || currentY < 80) {
+        setHidden(false);
+      } else {
+        setHidden(currentY > lastScrollY.current);
+      }
+      lastScrollY.current = currentY;
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [menuOpen, moreOpen]);
+
   return (
-    <header className="bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10">
+    <header
+      className={`bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10 transition-transform duration-300 ease-in-out ${
+        hidden ? "-translate-y-full" : "translate-y-0"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
