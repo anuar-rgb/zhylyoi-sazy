@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import { getPublicCultureClubBySlug } from "@/lib/cultureClubs";
 import type { Locale } from "@/i18n/routing";
 import {
   achievements,
@@ -39,6 +40,14 @@ export default async function ZhastarPage() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
 
+  // Everything else on this page is still hardcoded (achievements, repertoire, the
+  // members packet), but the lead photo is the one thing staff actually expect to
+  // change from the admin editor — the same "Медиа" field that drives the photo on
+  // the collectives listing. Falls back to the packet's own poster if nothing has
+  // been uploaded there yet.
+  const collective = await getPublicCultureClubBySlug("zhastar", "creative_collective");
+  const heroPhoto = collective?.images[0]?.url ?? posters[3].src;
+
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,7 +60,7 @@ export default async function ZhastarPage() {
           <div className={`${CARD} overflow-hidden mb-8`}>
             <div className="relative aspect-[16/9]">
               <Image
-                src={posters[3].src}
+                src={heroPhoto}
                 alt={t.title}
                 fill
                 priority
