@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import FloatingBackLink from "@/components/FloatingBackLink";
 import { getPublicCultureClubBySlug } from "@/lib/cultureClubs";
 import type { Locale } from "@/i18n/routing";
 import {
@@ -50,6 +51,7 @@ export default async function ZhastarPage() {
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
+      <FloatingBackLink href="/collectives" label={t.backLink} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={t.title} subtitle={t.subtitle} />
