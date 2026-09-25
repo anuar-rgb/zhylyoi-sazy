@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import FloatingBackLink from "@/components/FloatingBackLink";
 import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
+
+const homeLabel: Record<Locale, string> = { kk: "Басты бет", ru: "Главная" };
 
 // Metadata stays in the file on purpose: generateMetadata runs before the page and
 // would need its own database read, and a search engine seeing last week's wording
@@ -47,6 +50,7 @@ export default async function AboutPage() {
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
+      <FloatingBackLink href="/" label={homeLabel[locale]} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={text("aboutPage.title")} subtitle={text("aboutPage.subtitle")} />

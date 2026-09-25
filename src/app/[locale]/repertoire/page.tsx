@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import FloatingBackLink from "@/components/FloatingBackLink";
 import { getSiteText } from "@/lib/orgContent";
 import { listPublicCultureRepertoire, localizedPiece } from "@/lib/cultureRepertoire";
 import {
@@ -10,6 +11,8 @@ import {
   type RepertoireCategory,
 } from "@/lib/repertoireFields";
 import type { Locale } from "@/i18n/routing";
+
+const homeLabel: Record<Locale, string> = { kk: "Басты бет", ru: "Главная" };
 
 const meta: Record<Locale, Metadata> = {
   kk: {
@@ -43,6 +46,7 @@ export default async function RepertoirePage() {
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
+      <FloatingBackLink href="/" label={homeLabel[locale]} />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={text("repertoirePage.title")} subtitle={text("repertoirePage.subtitle")} />

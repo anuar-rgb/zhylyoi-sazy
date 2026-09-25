@@ -2,9 +2,12 @@ import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import VideoCard from "@/components/VideoCard";
+import FloatingBackLink from "@/components/FloatingBackLink";
 import { getSiteText } from "@/lib/orgContent";
 import { listPublicCultureVideos, localizedVideo } from "@/lib/cultureVideos";
 import type { Locale } from "@/i18n/routing";
+
+const homeLabel: Record<Locale, string> = { kk: "Басты бет", ru: "Главная" };
 
 export default async function VideoPage() {
   const locale = (await getLocale()) as Locale;
@@ -14,6 +17,7 @@ export default async function VideoPage() {
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
+      <FloatingBackLink href="/" label={homeLabel[locale]} />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={text("videoPage.title")} subtitle={text("videoPage.subtitle")} />
