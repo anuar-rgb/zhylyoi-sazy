@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureEventById } from "@/lib/cultureEvents";
+import { listHalls } from "@/lib/halls";
 import EventForm from "../EventForm";
 import { updateEvent } from "../actions";
 
@@ -20,13 +21,17 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   const organizationId = identity.organizationId ?? event.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
+  const halls = (await listHalls())
+    .filter((hall) => hall.isActive)
+    .map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }));
+
   return (
     <EventForm
       event={event}
       organizationId={organizationId}
+      halls={halls}
       action={updateEvent}
       heading={event.titleRu ?? event.titleKk ?? "Мероприятие"}
-     
     />
   );
 }

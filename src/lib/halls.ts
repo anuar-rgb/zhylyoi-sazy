@@ -101,3 +101,24 @@ export async function listHallSeats(hallId: string): Promise<HallSeatRecord[]> {
   if (error || !data) return [];
   return (data as unknown as Row[]).map(toSeat);
 }
+
+/**
+ * The distinct seat categories actually present in a hall, sorted.
+ *
+ * Used by the ticket-type form on an event so staff can only price categories
+ * that exist in the hall the event is in — category is free text in hall_seats,
+ * nothing in the database stops a typo from creating a category the seat map
+ * never had.
+ */
+export async function listHallSeatCategories(hallId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("hall_seats")
+    .select("category")
+    .eq("hall_id", hallId)
+    .eq("is_active", true);
+
+  if (error || !data) return [];
+  const categories = new Set((data as unknown as { category: string }[]).map((row) => row.category));
+  return [...categories].sort();
+}

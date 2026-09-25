@@ -55,11 +55,13 @@ function Field({
 export default function EventForm({
   event,
   organizationId,
+  halls,
   action,
   heading,
 }: {
   event?: CultureEventRecord;
   organizationId: string;
+  halls: { id: string; name: string }[];
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -149,8 +151,24 @@ export default function EventForm({
             defaultRu={event?.organizerRu}
           />
           <Field name="age_limit" label="Возрастное ограничение" defaultValue={event?.ageLimit} placeholder="например: 6+" />
+          <div>
+            <label className={LABEL} htmlFor="hall_id">
+              Зал
+            </label>
+            <select id="hall_id" name="hall_id" defaultValue={event?.hallId ?? ""} className={INPUT}>
+              <option value="">Без зала</option>
+              {halls.map((hall) => (
+                <option key={hall.id} value={hall.id}>
+                  {hall.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <p className="text-xs text-ocean/40 mt-2">Время указывается по Атырау (UTC+5).</p>
+        <p className="text-xs text-ocean/40 mt-2">
+          Время указывается по Атырау (UTC+5). Зал нужен только для продажи билетов — без него у мероприятия просто
+          не будет мест и цен.
+        </p>
       </div>
 
       <div className={CARD}>

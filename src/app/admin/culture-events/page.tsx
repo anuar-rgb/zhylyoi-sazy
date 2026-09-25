@@ -82,6 +82,12 @@ export default async function CultureEventsPage() {
                         {EVENT_STATUS_LABELS[event.status]}
                       </span>
                       <Link
+                        href={`/admin/culture-events/${event.id}/tickets`}
+                        className="text-xs font-semibold text-ocean hover:text-gold-dark"
+                      >
+                        Билеты
+                      </Link>
+                      <Link
                         href={`/admin/culture-events/${event.id}`}
                         className="text-xs font-semibold text-ocean hover:text-gold-dark"
                       >

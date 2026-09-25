@@ -90,6 +90,7 @@ function payload(form: FormData) {
     age_limit: field(form, "age_limit"),
     status: parseStatus(form),
     images: parseImages(form),
+    hall_id: field(form, "hall_id"),
   };
 }
 

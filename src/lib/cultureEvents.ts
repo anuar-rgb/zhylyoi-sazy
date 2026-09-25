@@ -30,13 +30,15 @@ export type CultureEventRecord = {
   organizerRu: string | null;
   ageLimit: string | null;
   images: EventImage[];
+  /** The hall this event takes place in; null for one with no hall (no seats, no tickets). */
+  hallId: string | null;
 };
 
 const COLUMNS =
   "id, organization_id, slug, status, title, title_kk, title_ru, " +
   "description_kk, description_ru, full_text_kk, full_text_ru, " +
   "location_kk, location_ru, event_date, end_date, categories, " +
-  "organizer_kk, organizer_ru, age_limit, images";
+  "organizer_kk, organizer_ru, age_limit, images, hall_id";
 
 type Row = Record<string, unknown>;
 
@@ -89,6 +91,7 @@ function toRecord(row: Row): CultureEventRecord {
     organizerRu: str(row.organizer_ru),
     ageLimit: str(row.age_limit),
     images: toImages(row.images),
+    hallId: str(row.hall_id),
   };
 }
 

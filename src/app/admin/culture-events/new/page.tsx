@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
+import { listHalls } from "@/lib/halls";
 import EventForm from "../EventForm";
 import { createEvent } from "../actions";
 
@@ -14,5 +15,9 @@ export default async function NewEventPage() {
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
-  return <EventForm organizationId={organizationId} action={createEvent} heading="Новое мероприятие" />;
+  const halls = (await listHalls())
+    .filter((hall) => hall.isActive)
+    .map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }));
+
+  return <EventForm organizationId={organizationId} halls={halls} action={createEvent} heading="Новое мероприятие" />;
 }
