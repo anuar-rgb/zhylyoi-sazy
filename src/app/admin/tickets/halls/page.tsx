@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { listHalls } from "@/lib/halls";
 import DeleteHallButton from "./DeleteHallButton";
-import BackToSettings from "./BackToSettings";
+import BackToTickets from "./BackToTickets";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -12,7 +12,7 @@ export default async function HallsPage() {
   if (!identity?.hasProfile) {
     return (
       <div>
-        <BackToSettings />
+        <BackToTickets />
         <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-6">Залы</h1>
         <div className={`${CARD} p-8`}>
           <p className="font-semibold text-ocean mb-2">Профиль сотрудника не настроен</p>
@@ -28,12 +28,12 @@ export default async function HallsPage() {
 
   return (
     <div>
-      <BackToSettings />
+      <BackToTickets />
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">
           Залы <span className="text-ocean/40 font-normal">({halls.length})</span>
         </h1>
-        <Link href="/admin/settings/halls/new" className="btn-primary px-5 py-2.5 text-sm font-semibold">
+        <Link href="/admin/tickets/halls/new" className="btn-primary px-5 py-2.5 text-sm font-semibold">
           Добавить зал
         </Link>
       </div>
@@ -62,7 +62,7 @@ export default async function HallsPage() {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <Link
-                    href={`/admin/settings/halls/${hall.id}`}
+                    href={`/admin/tickets/halls/${hall.id}`}
                     className="text-xs font-semibold text-ocean border border-cream-dark rounded-full px-3 py-1.5 hover:bg-cream hover:text-gold-dark transition-colors"
                   >
                     Изменить

@@ -13,7 +13,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
 
   const identity = await getStaffIdentity();
-  if (!identity?.hasProfile) redirect("/admin/settings/halls");
+  if (!identity?.hasProfile) redirect("/admin/tickets/halls");
 
   // RLS decides visibility, so a hall belonging to another institution simply is
   // not found rather than being refused — the two are indistinguishable here.
@@ -34,7 +34,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   return (
     <div>
       <Link
-        href="/admin/settings/halls"
+        href="/admin/tickets/halls"
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-ocean/50 hover:text-ocean mb-3"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

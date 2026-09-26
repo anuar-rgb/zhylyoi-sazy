@@ -17,6 +17,7 @@ const items = [
   { href: "/admin/culture-collectives", label: "Коллективы" },
   { href: "/admin/culture-staff", label: "Сотрудники" },
   { href: "/admin/content", label: "Тексты сайта" },
+  { href: "/admin/tickets", label: "Билеты" },
   { href: "/admin/settings", label: "Настройки" },
 ];
 

@@ -25,8 +25,8 @@ function intField(form: FormData, name: string): number | null {
 }
 
 function revalidateHalls(id?: string) {
-  revalidatePath("/admin/settings/halls");
-  if (id) revalidatePath(`/admin/settings/halls/${id}`);
+  revalidatePath("/admin/tickets/halls");
+  if (id) revalidatePath(`/admin/tickets/halls/${id}`);
 }
 
 // ---------------------------------------------------------------------
@@ -69,7 +69,7 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
   if (error || !created) return { error: "Не удалось создать зал." };
 
   revalidateHalls();
-  redirect(`/admin/settings/halls/${created.id}`);
+  redirect(`/admin/tickets/halls/${created.id}`);
 }
 
 export async function updateHall(_prev: FormState, form: FormData): Promise<FormState> {
@@ -181,7 +181,7 @@ export async function updateSeatCategory(id: string, category: string): Promise<
     .update({ category: trimmed }, { count: "exact" })
     .eq("id", id);
 
-  if (!error && count === 1) revalidatePath("/admin/settings/halls", "layout");
+  if (!error && count === 1) revalidatePath("/admin/tickets/halls", "layout");
   return { ok: !error && count === 1 };
 }
 
@@ -197,7 +197,7 @@ export async function setSeatActive(id: string, isActive: boolean): Promise<{ ok
     .update({ is_active: isActive }, { count: "exact" })
     .eq("id", id);
 
-  if (!error && count === 1) revalidatePath("/admin/settings/halls", "layout");
+  if (!error && count === 1) revalidatePath("/admin/tickets/halls", "layout");
   return { ok: !error && count === 1 };
 }
 

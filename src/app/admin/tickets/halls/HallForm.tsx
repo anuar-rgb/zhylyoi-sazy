@@ -25,7 +25,7 @@ export default function HallForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/settings/halls" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href="/admin/tickets/halls" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
@@ -64,7 +64,7 @@ export default function HallForm({
         >
           {pending ? "Сохранение…" : "Сохранить"}
         </button>
-        <Link href="/admin/settings/halls" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href="/admin/tickets/halls" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
