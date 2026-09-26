@@ -1,8 +1,10 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import { getBookingByToken } from "@/lib/bookings";
+import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import Countdown from "./Countdown";
 import type { Locale } from "@/i18n/routing";
 
@@ -28,6 +30,8 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
   if (!booking) notFound();
 
   const isConfirmedFree = booking.status === "confirmed" && booking.totalAmount === 0;
+  const needsPayment = booking.status === "pending" && booking.totalAmount > 0;
+  const paymentMethods = needsPayment ? await listPublicPaymentMethods(booking.organizationId) : [];
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -86,7 +90,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
               </span>
             </div>
 
-            {booking.status === "pending" && (
+            {booking.status === "pending" && !needsPayment && (
               <p className="text-xs text-ocean/40 mt-4">
                 {locale === "kk"
                   ? "Бұл броньдау үшін төлем келесі кезеңде қосылады."
@@ -95,6 +99,57 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
             )}
           </div>
         </FadeIn>
+
+        {needsPayment && (
+          <FadeIn>
+            <div className="mt-6 bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8">
+              <h2 className="text-lg font-bold text-ocean mb-1">{locale === "kk" ? "Төлем" : "Оплата"}</h2>
+              <p className="text-sm text-ocean/60 mb-5">
+                {locale === "kk"
+                  ? `Төлеңіз (${booking.totalAmount} ₸) және әкімшінің растауын күтіңіз. Бет автоматты жаңармайды —
+                     кейінірек осы сілтеме арқылы кіріп тексеріңіз.`
+                  : `Оплатите (${booking.totalAmount} ₸) и дождитесь подтверждения администратором. Страница не
+                     обновляется автоматически — зайдите по этой же ссылке позже, чтобы проверить статус.`}
+              </p>
+
+              {paymentMethods.length === 0 ? (
+                <p className="text-sm text-ocean/50 bg-cream/30 rounded-2xl p-4">
+                  {locale === "kk"
+                    ? "Ұйым төлем тәсілін әлі қоспаған. Байланысу үшін ұйыммен хабарласыңыз."
+                    : "Организация ещё не подключила способ оплаты. Свяжитесь с организацией напрямую."}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {paymentMethods.map((method) => {
+                    const name = method.displayNameRu ?? method.displayNameKk ?? method.providerName;
+                    return (
+                      <div
+                        key={method.id}
+                        className="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-cream/30 rounded-2xl p-4"
+                      >
+                        {method.staticQrImageUrl && (
+                          <div className="relative w-36 h-36 shrink-0 rounded-2xl overflow-hidden border border-cream-dark bg-white">
+                            <Image src={method.staticQrImageUrl} alt={name} fill className="object-contain" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-ocean">
+                            {name}
+                            {method.isDefault && (
+                              <span className="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gold/15 text-ocean-dark">
+                                {locale === "kk" ? "Ұсынылады" : "Рекомендуется"}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </FadeIn>
+        )}
 
         <FadeIn>
           <div className="mt-6 text-center">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-/** Залы is a sub-page of Билеты, which is in the sidebar — this goes to that
- * parent page, not all the way to the dashboard. */
+/** Sub-pages of Билеты (Залы, Способы оплаты, Ожидают оплаты) link back here,
+ * not all the way to the dashboard — Билеты is the item in the sidebar. */
 export default function BackToTickets() {
   return (
     <Link

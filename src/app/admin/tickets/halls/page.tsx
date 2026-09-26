@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { listHalls } from "@/lib/halls";
 import DeleteHallButton from "./DeleteHallButton";
-import BackToTickets from "./BackToTickets";
+import BackToTickets from "../BackToTickets";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 

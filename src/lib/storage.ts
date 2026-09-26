@@ -22,7 +22,8 @@ export type MediaSection =
   | "culture-events"
   | "culture-news"
   | "culture-staff"
-  | "culture-members";
+  | "culture-members"
+  | "payments";
 
 /** Builds the upload path for a new file. The name is random so two uploads never collide. */
 export function mediaPath(organizationId: string, section: MediaSection, fileName: string): string {
