@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 /**
  * Pure presentation: one row of seats in, one row of circles out. The
  * component never fetches or interprets data — status is whatever string the
@@ -107,10 +105,6 @@ export default function SeatMap({
   seatTooltip,
   className,
 }: SeatMapProps) {
-  // Hover tracks the whole map, not per row — only one seat is ever hovered at
-  // a time, so one piece of state is simpler than one per row.
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
   return (
     <div className={`overflow-x-auto ${className ?? ""}`}>
       <div className="w-max mx-auto px-2 py-1">
@@ -147,7 +141,6 @@ export default function SeatMap({
                     const dist = center > 0 ? Math.abs(slot.x + SEAT_SIZE / 2 - center) / center : 0;
                     const lift = MAX_LIFT * curvature * dist * dist;
                     const variant = seatVariant(seat);
-                    const showNumber = seat.status === "selected" || hoveredId === seat.id;
 
                     return (
                       <div key={slot.key} style={{ transform: `translateY(-${lift}px)` }}>
@@ -156,16 +149,12 @@ export default function SeatMap({
                           disabled={variant.disabled}
                           title={seatTooltip?.(seat)}
                           onClick={() => onSeatClick?.(seat)}
-                          onMouseEnter={() => setHoveredId(seat.id)}
-                          onMouseLeave={() => setHoveredId((id) => (id === seat.id ? null : id))}
-                          onFocus={() => setHoveredId(seat.id)}
-                          onBlur={() => setHoveredId((id) => (id === seat.id ? null : id))}
                           style={{ width: SEAT_SIZE, height: SEAT_SIZE }}
                           className={`rounded-full flex items-center justify-center text-[10px] font-bold leading-none transition-colors ${
                             variant.className
                           } ${variant.disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                         >
-                          {showNumber ? seat.seatNumber : null}
+                          {seat.seatNumber}
                         </button>
                       </div>
                     );
