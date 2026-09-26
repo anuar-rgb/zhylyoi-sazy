@@ -55,9 +55,15 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
   const editingSeat = seats.find((seat) => seat.id === editingId) ?? null;
 
   function seatVariant(mapSeat: SeatMapSeat) {
-    if (mapSeat.status === "selected") return { className: "bg-gold text-ocean-dark" };
     const color = categoryColors.get(mapSeat.category) ?? "bg-ocean text-cream";
-    return { className: mapSeat.status === "inactive" ? `${color} opacity-30 grayscale` : color };
+    const muted = mapSeat.status === "inactive" ? `${color} opacity-30 grayscale` : color;
+    // A ring instead of swapping the fill to gold — gold is already a category
+    // colour in this palette, so overriding the fill made an edited vip seat
+    // indistinguishable from an untouched one. The ring sits on top of
+    // whatever colour the seat already has, so its category stays readable
+    // while it's open for editing.
+    const ring = mapSeat.status === "selected" ? " ring-2 ring-offset-2 ring-ocean-dark" : "";
+    return { className: muted + ring };
   }
 
   return (
