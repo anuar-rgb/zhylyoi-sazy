@@ -52,6 +52,12 @@ export default async function TicketsPage() {
           <p className="text-xs text-ocean/40 mb-4">Платные брони, где место держится, но оплату ещё не подтвердили.</p>
           <CardLink href="/admin/tickets/bookings" label="Ожидают оплаты" />
         </div>
+
+        <div className={CARD}>
+          <p className="text-sm font-semibold text-ocean mb-1">Сканер билетов</p>
+          <p className="text-xs text-ocean/40 mb-4">Подтверждение билета на входе — камера или код вручную.</p>
+          <CardLink href="/admin/tickets/scan" label="Сканер" />
+        </div>
       </div>
     </div>
   );

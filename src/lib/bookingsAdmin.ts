@@ -10,6 +10,23 @@ export type PendingPaidBooking = {
   eventTitle: string;
 };
 
+export type ConfirmedBookingItem = {
+  id: string;
+  rowLabel: string;
+  seatNumber: number;
+  checkedInAt: string | null;
+};
+
+export type ConfirmedBooking = {
+  id: string;
+  buyerName: string;
+  buyerPhone: string;
+  totalAmount: number;
+  createdAt: string;
+  eventTitle: string;
+  items: ConfirmedBookingItem[];
+};
+
 type Row = Record<string, unknown>;
 
 /**
@@ -42,6 +59,52 @@ export async function listPendingPaidBookings(organizationId: string): Promise<P
       expiresAt: (row.expires_at as string | null) ?? null,
       createdAt: String(row.created_at),
       eventTitle,
+    };
+  });
+}
+
+/**
+ * Confirmed bookings with their still-active seats, for manual check-in
+ * verification when the scanner isn't used (or a code won't read) — the
+ * per-seat checked_in_at that /admin/tickets/scan sets via check_in_ticket.
+ */
+export async function listConfirmedBookings(organizationId: string): Promise<ConfirmedBooking[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(
+      "id, buyer_name, buyer_phone, total_amount, created_at, culture_events(title_kk, title_ru), " +
+        "booking_items(id, checked_in_at, released_at, hall_seats(row_label, seat_number))"
+    )
+    .eq("organization_id", organizationId)
+    .eq("status", "confirmed")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return (data as unknown as Row[]).map((row) => {
+    const event = row.culture_events as Row | null;
+    const eventTitle = event ? String(event.title_ru ?? event.title_kk ?? "") : "";
+    const items = ((row.booking_items as Row[]) ?? [])
+      .filter((item) => item.released_at === null)
+      .map((item) => {
+        const seat = item.hall_seats as Row | null;
+        return {
+          id: String(item.id),
+          rowLabel: seat ? String(seat.row_label) : "",
+          seatNumber: seat ? Number(seat.seat_number) : 0,
+          checkedInAt: (item.checked_in_at as string | null) ?? null,
+        };
+      });
+
+    return {
+      id: String(row.id),
+      buyerName: String(row.buyer_name),
+      buyerPhone: String(row.buyer_phone),
+      totalAmount: Number(row.total_amount) || 0,
+      createdAt: String(row.created_at),
+      eventTitle,
+      items,
     };
   });
 }

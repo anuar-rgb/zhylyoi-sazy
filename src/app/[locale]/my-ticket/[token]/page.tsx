@@ -6,6 +6,7 @@ import FadeIn from "@/components/FadeIn";
 import { getBookingByToken } from "@/lib/bookings";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import Countdown from "./Countdown";
+import TicketQr from "./TicketQr";
 import type { Locale } from "@/i18n/routing";
 
 const STATUS_LABEL: Record<string, Record<Locale, string>> = {
@@ -29,7 +30,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
   const booking = await getBookingByToken(token);
   if (!booking) notFound();
 
-  const isConfirmedFree = booking.status === "confirmed" && booking.totalAmount === 0;
+  const isConfirmed = booking.status === "confirmed";
   const needsPayment = booking.status === "pending" && booking.totalAmount > 0;
   const paymentMethods = needsPayment ? await listPublicPaymentMethods(booking.organizationId) : [];
 
@@ -61,19 +62,17 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                 return (
                   <div
                     key={item.itemId}
-                    className="flex flex-wrap items-center justify-between gap-2 bg-cream/30 rounded-2xl px-4 py-3"
+                    className="flex flex-wrap items-center justify-between gap-3 bg-cream/30 rounded-2xl px-4 py-3"
                   >
-                    <div>
-                      <p className="text-sm font-semibold text-ocean">
-                        {locale === "kk" ? "Қатар" : "Ряд"} {item.rowLabel}, {locale === "kk" ? "орын" : "место"}{" "}
-                        {item.seatNumber}
-                      </p>
-                      <p className="text-xs text-ocean/50">{name}</p>
-                      {isConfirmedFree && (
-                        <p className="text-[11px] text-ocean/40 font-mono mt-1">
-                          {locale === "kk" ? "Билет коды" : "Код билета"}: {item.ticketCode}
+                    <div className="flex items-center gap-3 min-w-0">
+                      {isConfirmed && <TicketQr value={item.ticketCode} />}
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-ocean">
+                          {locale === "kk" ? "Қатар" : "Ряд"} {item.rowLabel}, {locale === "kk" ? "орын" : "место"}{" "}
+                          {item.seatNumber}
                         </p>
-                      )}
+                        <p className="text-xs text-ocean/50">{name}</p>
+                      </div>
                     </div>
                     <span className="text-sm font-semibold text-ocean shrink-0">
                       {item.priceAtBooking > 0 ? `${item.priceAtBooking} ₸` : locale === "kk" ? "тегін" : "бесплатно"}
