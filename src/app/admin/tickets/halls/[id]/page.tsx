@@ -4,7 +4,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getHallById, listHallSeats } from "@/lib/halls";
 import HallForm from "../HallForm";
 import GenerateGridForm from "../GenerateGridForm";
-import SeatControls from "../SeatControls";
+import SeatMapEditor from "../SeatMapEditor";
 import { updateHall } from "../actions";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
@@ -21,15 +21,6 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   if (!hall) notFound();
 
   const seats = await listHallSeats(id);
-
-  // Grouped for display only — the list itself already comes ordered by row then
-  // seat number, so building the groups is just a fold, not a resort.
-  const rows: { label: string; seats: typeof seats }[] = [];
-  for (const seat of seats) {
-    const current = rows[rows.length - 1];
-    if (current && current.label === seat.rowLabel) current.seats.push(seat);
-    else rows.push({ label: seat.rowLabel, seats: [seat] });
-  }
 
   return (
     <div>
@@ -59,30 +50,8 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
             <GenerateGridForm hallId={hall.id} />
           </div>
         ) : (
-          <div className="space-y-3">
-            {rows.map((row) => (
-              <div key={row.label} className={CARD}>
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className="shrink-0 text-sm font-bold text-ocean bg-cream/60 rounded-full px-3 py-1">
-                    Ряд {row.label}
-                  </span>
-                  <span className="text-xs text-ocean/40">{row.seats.length} мест</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {row.seats.map((seat) => (
-                    <div
-                      key={seat.id}
-                      className="flex items-center gap-2 bg-cream/30 border border-cream-dark rounded-2xl px-2.5 py-1.5"
-                    >
-                      <span className="text-xs font-semibold text-ocean/70 w-6 text-center shrink-0">
-                        {seat.seatNumber}
-                      </span>
-                      <SeatControls id={seat.id} category={seat.category} isActive={seat.isActive} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className={CARD}>
+            <SeatMapEditor seats={seats} />
           </div>
         )}
       </section>

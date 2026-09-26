@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createBooking, type CreateBookingResult } from "@/app/actions/bookings";
+import SeatMap, { type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 
 export type SeatOption = {
   id: string;
@@ -45,6 +46,11 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
   const selectedSeats = allSeats.filter((s) => selected.has(s.id));
   const total = selectedSeats.reduce((sum, s) => sum + (s.price ?? 0), 0);
 
+  // SeatMap only ever hands back the reduced {id, rowLabel, seatNumber,
+  // category, status} shape — this is how its callbacks recover price/taken/
+  // ticketName to decide what a click or a tooltip means.
+  const seatsById = useMemo(() => new Map(allSeats.map((seat) => [seat.id, seat])), [allSeats]);
+
   function toggleSeat(seat: SeatOption) {
     if (seat.taken || seat.price === null) return;
     setSelected((current) => {
@@ -53,6 +59,36 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
       else next.add(seat.id);
       return next;
     });
+  }
+
+  const seatMapRows: SeatMapRow[] = rows.map((row) => ({
+    label: row.label,
+    seats: row.seats.map((seat) => ({
+      id: seat.id,
+      rowLabel: seat.rowLabel,
+      seatNumber: seat.seatNumber,
+      category: seat.category,
+      status: seat.taken || seat.price === null ? "taken" : selected.has(seat.id) ? "selected" : "available",
+    })),
+  }));
+
+  function seatVariant(mapSeat: SeatMapSeat) {
+    if (mapSeat.status === "selected") return { className: "bg-gold text-ocean-dark" };
+    if (mapSeat.status === "taken") return { className: "bg-ocean/10 text-ocean/25", disabled: true };
+    return { className: "bg-ocean/20 text-ocean hover:bg-ocean/30" };
+  }
+
+  function seatTooltip(mapSeat: SeatMapSeat): string | undefined {
+    const seat = seatsById.get(mapSeat.id);
+    if (!seat) return undefined;
+    if (seat.taken) return "Место занято";
+    if (seat.price === null) return "Цена для этой категории ещё не задана";
+    return `${seat.ticketName} — ${seat.isFree ? "бесплатно" : `${seat.price} ₸`}`;
+  }
+
+  function handleSeatMapClick(mapSeat: SeatMapSeat) {
+    const seat = seatsById.get(mapSeat.id);
+    if (seat) toggleSeat(seat);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -83,48 +119,18 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
 
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start">
-      <div className="space-y-3">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="bg-white rounded-3xl border border-cream-dark shadow-sm p-4 sm:p-5"
-          >
-            <p className="text-xs font-semibold text-ocean/40 mb-3">Ряд {row.label}</p>
-            <div className="flex flex-wrap gap-2">
-              {row.seats.map((seat) => {
-                const isSelected = selected.has(seat.id);
-                const unavailable = seat.taken || seat.price === null;
-
-                return (
-                  <button
-                    key={seat.id}
-                    type="button"
-                    disabled={unavailable}
-                    onClick={() => toggleSeat(seat)}
-                    title={
-                      seat.taken
-                        ? "Место занято"
-                        : seat.price === null
-                          ? "Цена для этой категории ещё не задана"
-                          : `${seat.ticketName} — ${seat.isFree ? "бесплатно" : `${seat.price} ₸`}`
-                    }
-                    className={`w-10 h-10 rounded-xl text-xs font-semibold flex items-center justify-center transition-colors ${
-                      seat.taken
-                        ? "bg-ocean/10 text-ocean/30 cursor-not-allowed"
-                        : seat.price === null
-                          ? "bg-cream text-ocean/20 cursor-not-allowed"
-                          : isSelected
-                            ? "bg-gold text-ocean-dark"
-                            : "bg-cream/60 text-ocean hover:bg-gold/30"
-                    }`}
-                  >
-                    {seat.seatNumber}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-4 sm:p-5">
+        <SeatMap
+          rows={seatMapRows}
+          seatVariant={seatVariant}
+          seatTooltip={seatTooltip}
+          onSeatClick={handleSeatMapClick}
+          legend={[
+            { swatchClassName: "bg-ocean/20", label: "Свободно" },
+            { swatchClassName: "bg-gold", label: "Выбрано" },
+            { swatchClassName: "bg-ocean/10", label: "Занято / недоступно" },
+          ]}
+        />
       </div>
 
       <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6 lg:sticky lg:top-24">
