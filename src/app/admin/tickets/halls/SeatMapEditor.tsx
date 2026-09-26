@@ -82,7 +82,12 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
             Ряд {editingSeat.rowLabel}, место {editingSeat.seatNumber}
           </p>
           <div className="flex items-center gap-3">
-            <SeatControls id={editingSeat.id} category={editingSeat.category} isActive={editingSeat.isActive} />
+            <SeatControls
+              id={editingSeat.id}
+              category={editingSeat.category}
+              isActive={editingSeat.isActive}
+              existingCategories={Array.from(categoryColors.keys())}
+            />
             <button
               type="button"
               onClick={() => setEditingId(null)}

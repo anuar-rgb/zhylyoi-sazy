@@ -81,25 +81,23 @@ export async function getHallById(id: string): Promise<HallRecord | null> {
 }
 
 /**
- * A hall's seats, ordered by row then seat number.
- *
- * row_label is text, so this is a lexical sort, not a numeric one — a hall with
- * rows "2" and "10" would sort "10" before "2". Good enough for phase 1, where a
- * few dozen rows are grouped by heading rather than sorted end to end; the numeric
- * spelling with a lexical sort issue only shows up once a hall has ten or more
- * numbered rows, which the seed data in this phase never does.
+ * Sorts seats by row then seat number, treating row_label's digit runs as
+ * numbers rather than text — Postgres's own ORDER BY on the text column would
+ * put row "10" before row "2". Rows spelled as letters (A, B, ... Z, AA, AB, …)
+ * still compare alphabetically, since localeCompare's numeric mode only changes
+ * how embedded digits compare, not letters.
  */
+function byRowThenSeat(a: HallSeatRecord, b: HallSeatRecord): number {
+  return a.rowLabel.localeCompare(b.rowLabel, undefined, { numeric: true }) || a.seatNumber - b.seatNumber;
+}
+
+/** A hall's seats, ordered by row then seat number. */
 export async function listHallSeats(hallId: string): Promise<HallSeatRecord[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("hall_seats")
-    .select(SEAT_COLUMNS)
-    .eq("hall_id", hallId)
-    .order("row_label")
-    .order("seat_number");
+  const { data, error } = await supabase.from("hall_seats").select(SEAT_COLUMNS).eq("hall_id", hallId);
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toSeat);
+  return (data as unknown as Row[]).map(toSeat).sort(byRowThenSeat);
 }
 
 /**
@@ -115,12 +113,10 @@ export async function listPublicHallSeats(hallId: string): Promise<HallSeatRecor
     .from("hall_seats")
     .select(SEAT_COLUMNS)
     .eq("hall_id", hallId)
-    .eq("is_active", true)
-    .order("row_label")
-    .order("seat_number");
+    .eq("is_active", true);
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toSeat);
+  return (data as unknown as Row[]).map(toSeat).sort(byRowThenSeat);
 }
 
 /**
