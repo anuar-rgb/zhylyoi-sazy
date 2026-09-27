@@ -204,14 +204,14 @@ export default function Header() {
               </button>
 
               {moreOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-3xl border border-cream-dark shadow-lg py-2 z-50">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-3xl border border-cream-dark shadow-lg p-2 z-50">
                   {t.more.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`block px-5 py-2.5 text-sm font-medium transition-colors ${
+                      className={`block px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
                         pathname === link.href
-                          ? "text-gold-dark font-semibold"
+                          ? "bg-gold text-ocean"
                           : "text-ocean hover:bg-cream/60"
                       }`}
                     >
