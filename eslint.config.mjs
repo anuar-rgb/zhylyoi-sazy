@@ -34,6 +34,30 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // A focused <input>/<textarea> below 16px makes iOS/Android auto-zoom the
+    // page on focus (see the SeatPicker mobile-menu-misalignment incident) —
+    // the visitor never sees the same layout twice. Public routes only: admin
+    // is staff-only and was never the complaint.
+    files: ["src/app/\\[locale\\]/**/*.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXOpeningElement[name.name=/^(input|textarea)$/] JSXAttribute[name.name='className'] Literal[value=/\\btext-(xs|sm)\\b/]",
+          message:
+            "Меньше text-base на публичной форме триггерит автозум при фокусе на мобильных — используйте text-base или крупнее.",
+        },
+        {
+          selector:
+            "JSXOpeningElement[name.name=/^(input|textarea)$/] JSXAttribute[name.name='className'] TemplateElement[value.raw=/\\btext-(xs|sm)\\b/]",
+          message:
+            "Меньше text-base на публичной форме триггерит автозум при фокусе на мобильных — используйте text-base или крупнее.",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
