@@ -163,7 +163,10 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
               value={buyerName}
               onChange={(e) => setBuyerName(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border border-cream-dark rounded-full bg-cream/30 text-sm text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
+              // text-base, not text-sm: below 16px, iOS/Android auto-zoom the
+              // page on focus, and the header's fixed mobile menu then sits
+              // mispositioned relative to that zoomed viewport until it resets.
+              className="w-full px-4 py-2.5 border border-cream-dark rounded-full bg-cream/30 text-base text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>
           <div>
@@ -176,7 +179,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
               value={buyerPhone}
               onChange={(e) => setBuyerPhone(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border border-cream-dark rounded-full bg-cream/30 text-sm text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
+              className="w-full px-4 py-2.5 border border-cream-dark rounded-full bg-cream/30 text-base text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>
 
