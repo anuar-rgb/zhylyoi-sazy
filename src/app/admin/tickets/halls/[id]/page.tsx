@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getHallById, listHallSeats } from "@/lib/halls";
+import { listCultureEventsByHall } from "@/lib/cultureEvents";
+import { formatEventDateTime } from "@/lib/eventFields";
 import HallForm from "../HallForm";
 import GenerateGridForm from "../GenerateGridForm";
 import SeatMapEditor from "../SeatMapEditor";
@@ -21,6 +23,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   if (!hall) notFound();
 
   const seats = await listHallSeats(id);
+  const events = await listCultureEventsByHall(id);
 
   return (
     <div>
@@ -35,6 +38,46 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
       </Link>
 
       <HallForm hall={hall} action={updateHall} heading={hall.nameRu ?? hall.nameKk ?? "Зал"} />
+
+      <section className="mt-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-ocean">
+            Мероприятия <span className="text-ocean/40 font-normal text-base">({events.length})</span>
+          </h2>
+          <Link
+            href={`/admin/culture-events/new?hallId=${hall.id}`}
+            className="btn-primary px-5 py-2.5 text-sm font-semibold"
+          >
+            Добавить мероприятие
+          </Link>
+        </div>
+
+        {events.length === 0 ? (
+          <div className={CARD}>
+            <p className="text-sm text-ocean/60">В этом зале пока нет мероприятий.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {events.map((event) => (
+              <div
+                key={event.id}
+                className={`${CARD} p-4 flex flex-wrap items-center justify-between gap-3`}
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold text-ocean truncate">{event.titleRu ?? event.titleKk}</p>
+                  <p className="text-xs text-ocean/50">{formatEventDateTime(event.eventDate)}</p>
+                </div>
+                <Link
+                  href={`/admin/culture-events/${event.id}/tickets`}
+                  className="text-xs font-semibold text-ocean hover:text-gold-dark shrink-0"
+                >
+                  Билеты
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="mt-8">
         <h2 className="text-lg sm:text-xl font-bold text-ocean mb-4">

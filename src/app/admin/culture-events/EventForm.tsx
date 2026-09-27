@@ -56,12 +56,15 @@ export default function EventForm({
   event,
   organizationId,
   halls,
+  defaultHallId,
   action,
   heading,
 }: {
   event?: CultureEventRecord;
   organizationId: string;
   halls: { id: string; name: string }[];
+  /** Preselects the hall on a new event, e.g. arriving from that hall's own page. Ignored when editing. */
+  defaultHallId?: string;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -155,7 +158,7 @@ export default function EventForm({
             <label className={LABEL} htmlFor="hall_id">
               Зал
             </label>
-            <select id="hall_id" name="hall_id" defaultValue={event?.hallId ?? ""} className={INPUT}>
+            <select id="hall_id" name="hall_id" defaultValue={event?.hallId ?? defaultHallId ?? ""} className={INPUT}>
               <option value="">Без зала</option>
               {halls.map((hall) => (
                 <option key={hall.id} value={hall.id}>

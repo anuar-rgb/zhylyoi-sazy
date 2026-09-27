@@ -127,6 +127,19 @@ export async function listCultureEvents(): Promise<CultureEventRecord[]> {
   return (data as unknown as Row[]).map(toRecord);
 }
 
+/** Events taking place in a given hall, newest first — for the hall's own page. */
+export async function listCultureEventsByHall(hallId: string): Promise<CultureEventRecord[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("culture_events")
+    .select(COLUMNS)
+    .eq("hall_id", hallId)
+    .order("event_date", { ascending: false });
+
+  if (error || !data) return [];
+  return (data as unknown as Row[]).map(toRecord);
+}
+
 /** One event by id, for the edit form. Null when missing or not visible to the caller. */
 export async function getCultureEventById(id: string): Promise<CultureEventRecord | null> {
   const supabase = await createClient();

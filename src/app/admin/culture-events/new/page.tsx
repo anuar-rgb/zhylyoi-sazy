@@ -5,7 +5,13 @@ import { listHalls } from "@/lib/halls";
 import EventForm from "../EventForm";
 import { createEvent } from "../actions";
 
-export default async function NewEventPage() {
+export default async function NewEventPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ hallId?: string }>;
+}) {
+  const { hallId } = await searchParams;
+
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) redirect("/admin/culture-events");
 
@@ -19,5 +25,18 @@ export default async function NewEventPage() {
     .filter((hall) => hall.isActive)
     .map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }));
 
-  return <EventForm organizationId={organizationId} halls={halls} action={createEvent} heading="Новое мероприятие" />;
+  // Only a hall this person can actually see is honoured. The id comes from the
+  // address bar, and preselecting one that is not in the list would show a
+  // picker whose value is not among its options.
+  const defaultHallId = hallId && halls.some((hall) => hall.id === hallId) ? hallId : undefined;
+
+  return (
+    <EventForm
+      organizationId={organizationId}
+      halls={halls}
+      defaultHallId={defaultHallId}
+      action={createEvent}
+      heading="Новое мероприятие"
+    />
+  );
 }
