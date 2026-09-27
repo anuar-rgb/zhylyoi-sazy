@@ -23,6 +23,7 @@ const content: Record<
       { href: "/honored", label: "Халықтық үлгілі атағы бар ұжымдар" },
       { href: "/collectives", label: "Ұжымдар" },
       { href: "/afisha", label: "Афиша" },
+      { href: "/tickets", label: "Билеттер" },
     ],
     more: [
       { href: "/#clubs", label: "Шығармашылық үйірмелер мен секциялар" },
@@ -43,6 +44,7 @@ const content: Record<
       { href: "/honored", label: "Коллективы со званием «Народный»" },
       { href: "/collectives", label: "Коллективы" },
       { href: "/afisha", label: "Афиша" },
+      { href: "/tickets", label: "Билеты" },
     ],
     more: [
       { href: "/#clubs", label: "Творческие кружки и секции" },

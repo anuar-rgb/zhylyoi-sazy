@@ -76,3 +76,49 @@ export async function listPublicEventTicketTypes(eventId: string): Promise<Event
   if (error || !data) return [];
   return (data as unknown as Row[]).map(toRecord);
 }
+
+/**
+ * Active ticket types for several events in one query — the price range on a
+ * showcase card is derived from this, not from calling listPublicEventTicketTypes
+ * once per event in a loop.
+ */
+export async function listPublicEventTicketTypesForEvents(
+  eventIds: string[],
+): Promise<Map<string, EventTicketTypeRecord[]>> {
+  const byEvent = new Map<string, EventTicketTypeRecord[]>();
+  if (eventIds.length === 0) return byEvent;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("event_ticket_types")
+    .select(COLUMNS)
+    .in("event_id", eventIds)
+    .eq("is_active", true);
+
+  if (error || !data) return byEvent;
+
+  for (const row of data as unknown as Row[]) {
+    const record = toRecord(row);
+    const current = byEvent.get(record.eventId);
+    if (current) current.push(record);
+    else byEvent.set(record.eventId, [record]);
+  }
+  return byEvent;
+}
+
+export type PriceRange = { kind: "unknown" } | { kind: "free" } | { kind: "range"; min: number; max: number };
+
+/**
+ * A price summary from an event's ticket types alone — no query. Free categories
+ * (e.g. a children's ticket) are excluded from the paid range rather than pulling
+ * its minimum down to 0, mirroring how SeatPicker prices a free seat separately
+ * from the paid total.
+ */
+export function summarizePriceRange(types: EventTicketTypeRecord[]): PriceRange {
+  if (types.length === 0) return { kind: "unknown" };
+
+  const paidPrices = types.filter((t) => !t.isFree).map((t) => t.price);
+  if (paidPrices.length === 0) return { kind: "free" };
+
+  return { kind: "range", min: Math.min(...paidPrices), max: Math.max(...paidPrices) };
+}

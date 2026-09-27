@@ -140,6 +140,30 @@ export async function listCultureEventsByHall(hallId: string): Promise<CultureEv
   return (data as unknown as Row[]).map(toRecord);
 }
 
+/**
+ * Published, future, ticketed events of this site's institution — the "Билеты"
+ * showcase. A hall means seats and event_ticket_types exist for it (Phases 3-5);
+ * an event with no hall simply has nothing to sell, so it belongs on /afisha
+ * only, not here.
+ */
+export const listPublicTicketedCultureEvents = cache(async (): Promise<CultureEventRecord[]> => {
+  const organizationId = await getSiteOrganizationId();
+  if (!organizationId) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("culture_events")
+    .select(COLUMNS)
+    .eq("organization_id", organizationId)
+    .eq("status", "published")
+    .not("hall_id", "is", null)
+    .gte("event_date", new Date().toISOString())
+    .order("event_date", { ascending: true });
+
+  if (error || !data) return [];
+  return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
+});
+
 /** One event by id, for the edit form. Null when missing or not visible to the caller. */
 export async function getCultureEventById(id: string): Promise<CultureEventRecord | null> {
   const supabase = await createClient();
