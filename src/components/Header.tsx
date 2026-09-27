@@ -6,6 +6,7 @@ import NextLink from "next/link";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useLocale } from "next-intl";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -79,8 +80,26 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  // The overlay portals into this node instead of straight into
+  // document.documentElement: React treats <html>/<body> as "singleton" host
+  // elements and, empirically, redirects a portal targeting <html> to land
+  // inside <body> anyway — reproducing the exact bug this is meant to avoid.
+  // A plain div appended by hand isn't a singleton, so a portal into it
+  // behaves like an ordinary portal. Doesn't exist during SSR, so the portal
+  // itself only renders once this is set, after mount.
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    let root = document.getElementById("mobile-menu-portal-root");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "mobile-menu-portal-root";
+      document.documentElement.appendChild(root);
+    }
+    setPortalRoot(root);
+  }, []);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -137,158 +156,173 @@ export default function Header() {
   }, [menuOpen, moreOpen]);
 
   return (
-    <header
-      className={`bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10 transition-transform duration-300 ease-in-out ${
-        hidden ? "-translate-y-full" : "translate-y-0"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
-          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
-              <Image
-                src="/images/gallery/logo.png"
-                alt={t.brand}
-                fill
-                quality={95}
-                className="object-cover"
-                sizes="56px"
-              />
-            </div>
-            <div className="min-w-0">
-              <div className="text-gold font-bold text-sm sm:text-base lg:text-lg leading-tight truncate">{t.brand}</div>
-              <div className="text-cream/70 text-[10px] sm:text-[11px] lg:text-xs leading-snug truncate">{t.tagline}</div>
-            </div>
-          </Link>
-
-          <nav className="hidden lg:flex items-center gap-0.5">
-            {t.nav.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
-                  pathname === link.href
-                    ? "bg-gold text-ocean"
-                    : "text-cream/90 hover:bg-ocean-light hover:text-gold"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <NextLink
-              href="/login"
-              className="hidden lg:inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border border-cream/35 text-cream hover:bg-ocean-light hover:text-gold transition-colors"
-            >
-              {t.loginLabel}
-            </NextLink>
-
-            <LanguageSwitcher pathname={pathname} className="hidden lg:inline-block" />
-
-            <div className="relative hidden lg:block" ref={moreRef}>
-              <button
-                onClick={() => setMoreOpen((v) => !v)}
-                className={`p-2 rounded-full transition-colors ${
-                  moreOpen ? "bg-ocean-light text-gold" : "text-cream/90 hover:bg-ocean-light hover:text-gold"
-                }`}
-                aria-label={t.moreLabel}
-                aria-expanded={moreOpen}
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <circle cx="4" cy="10" r="1.8" />
-                  <circle cx="10" cy="10" r="1.8" />
-                  <circle cx="16" cy="10" r="1.8" />
-                </svg>
-              </button>
-
-              {moreOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-3xl border border-cream-dark shadow-lg p-2 z-50">
-                  {t.more.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`block px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                        pathname === link.href
-                          ? "bg-gold text-ocean"
-                          : "text-ocean hover:bg-cream/60"
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 -mr-2 rounded-full text-cream hover:bg-ocean-light transition-colors"
-              aria-label={t.menuLabel}
-              aria-expanded={menuOpen}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {menuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile menu overlay */}
-      <div
-        className={`lg:hidden fixed left-0 right-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto bg-ocean z-40 transition-transform duration-300 ease-in-out ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
+    <>
+      <header
+        className={`bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10 transition-transform duration-300 ease-in-out ${
+          hidden ? "-translate-y-full" : "translate-y-0"
         }`}
       >
-        <nav className="px-4 py-6 space-y-1">
-          {t.nav.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
-                pathname === link.href
-                  ? "bg-gold text-ocean"
-                  : "text-cream/90 active:bg-ocean-light"
-              }`}
-            >
-              {link.label}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
+            <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
+                <Image
+                  src="/images/gallery/logo.png"
+                  alt={t.brand}
+                  fill
+                  quality={95}
+                  className="object-cover"
+                  sizes="56px"
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="text-gold font-bold text-sm sm:text-base lg:text-lg leading-tight truncate">{t.brand}</div>
+                <div className="text-cream/70 text-[10px] sm:text-[11px] lg:text-xs leading-snug truncate">{t.tagline}</div>
+              </div>
             </Link>
-          ))}
 
-          {t.more.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
-                pathname === link.href
-                  ? "bg-gold text-ocean"
-                  : "text-cream/90 active:bg-ocean-light"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+            <nav className="hidden lg:flex items-center gap-0.5">
+              {t.nav.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                    pathname === link.href
+                      ? "bg-gold text-ocean"
+                      : "text-cream/90 hover:bg-ocean-light hover:text-gold"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
-          <div className="pt-4 mt-2 border-t border-cream/10 flex items-center gap-3">
-            <LanguageSwitcher pathname={pathname} className="text-sm" />
-            <NextLink
-              href="/login"
-              onClick={() => setMenuOpen(false)}
-              className="px-4 py-1.5 rounded-full text-sm font-semibold border border-cream/35 text-cream active:bg-ocean-light transition-colors"
-            >
-              {t.loginLabel}
-            </NextLink>
+            <div className="flex items-center gap-2">
+              <NextLink
+                href="/login"
+                className="hidden lg:inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border border-cream/35 text-cream hover:bg-ocean-light hover:text-gold transition-colors"
+              >
+                {t.loginLabel}
+              </NextLink>
+
+              <LanguageSwitcher pathname={pathname} className="hidden lg:inline-block" />
+
+              <div className="relative hidden lg:block" ref={moreRef}>
+                <button
+                  onClick={() => setMoreOpen((v) => !v)}
+                  className={`p-2 rounded-full transition-colors ${
+                    moreOpen ? "bg-ocean-light text-gold" : "text-cream/90 hover:bg-ocean-light hover:text-gold"
+                  }`}
+                  aria-label={t.moreLabel}
+                  aria-expanded={moreOpen}
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <circle cx="4" cy="10" r="1.8" />
+                    <circle cx="10" cy="10" r="1.8" />
+                    <circle cx="16" cy="10" r="1.8" />
+                  </svg>
+                </button>
+
+                {moreOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-3xl border border-cream-dark shadow-lg p-2 z-50">
+                    {t.more.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={`block px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                          pathname === link.href
+                            ? "bg-gold text-ocean"
+                            : "text-ocean hover:bg-cream/60"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="lg:hidden p-2 -mr-2 rounded-full text-cream hover:bg-ocean-light transition-colors"
+                aria-label={t.menuLabel}
+                aria-expanded={menuOpen}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {menuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
-        </nav>
-      </div>
-    </header>
+        </div>
+      </header>
+
+      {/* Mobile menu overlay, portaled to a standalone node under <html>:
+          <header> always carries an active transform (even translate-y-0, for
+          the scroll-hide effect above), which per spec makes it the containing
+          block for a fixed descendant — a full-bleed overlay needs the real
+          viewport instead. Nesting it as a plain sibling under <body> (itself
+          flex flex-col) doesn't work either: empirically, any second flex
+          child there — even an inert one — breaks <header>'s own
+          position: sticky in this layout. Portaling elsewhere sidesteps both,
+          but only via portalRoot, not document.documentElement directly — see
+          the comment by its declaration. */}
+      {portalRoot &&
+        createPortal(
+          <div
+            className={`lg:hidden fixed left-0 right-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto bg-ocean z-40 transition-transform duration-300 ease-in-out ${
+              menuOpen ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            <nav className="px-4 py-6 space-y-1">
+              {t.nav.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
+                    pathname === link.href
+                      ? "bg-gold text-ocean"
+                      : "text-cream/90 active:bg-ocean-light"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {t.more.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
+                    pathname === link.href
+                      ? "bg-gold text-ocean"
+                      : "text-cream/90 active:bg-ocean-light"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              <div className="pt-4 mt-2 border-t border-cream/10 flex items-center gap-3">
+                <LanguageSwitcher pathname={pathname} className="text-sm" />
+                <NextLink
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="px-4 py-1.5 rounded-full text-sm font-semibold border border-cream/35 text-cream active:bg-ocean-light transition-colors"
+                >
+                  {t.loginLabel}
+                </NextLink>
+              </div>
+            </nav>
+          </div>,
+          portalRoot,
+        )}
+    </>
   );
 }
