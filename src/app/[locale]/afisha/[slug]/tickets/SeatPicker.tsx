@@ -119,7 +119,13 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
 
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start">
-      <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-4 sm:p-5">
+      {/* min-w-0: a grid item's automatic minimum size is its content's min-content
+          width unless told otherwise, and a wide hall's seat row (many seats,
+          no wrapping) has a large one. Without this, that width wins on a
+          narrow phone — the card grows past the viewport instead of SeatMap's
+          own overflow-x-auto ever getting a chance to scroll internally, and
+          the page's overflow-x-hidden wrapper (see layout.tsx) just clips it. */}
+      <div className="min-w-0 bg-white rounded-3xl border border-cream-dark shadow-sm p-4 sm:p-5">
         <SeatMap
           rows={seatMapRows}
           seatVariant={seatVariant}
