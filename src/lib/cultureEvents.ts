@@ -174,11 +174,16 @@ export async function getCultureEventById(id: string): Promise<CultureEventRecor
 }
 
 /**
- * Published events of this site's institution.
+ * Published events of this site's institution — the general afisha feed.
  *
  * Scoped to the organization deliberately: the read policy publishes every
  * published event on the platform, so without this filter another institution's
  * poster would appear here once a second one joins.
+ *
+ * Excludes events with a hall (ticketed events): those get their own listing
+ * on the "Билеты" page and never appear here automatically. If an event needs
+ * both a ticket sale and an afisha announcement, staff create a separate
+ * afisha entry for it — this is a one-way split, not two views of one row.
  */
 export const listPublicCultureEvents = cache(async (): Promise<CultureEventRecord[]> => {
   const organizationId = await getSiteOrganizationId();
@@ -190,6 +195,7 @@ export const listPublicCultureEvents = cache(async (): Promise<CultureEventRecor
     .select(COLUMNS)
     .eq("organization_id", organizationId)
     .eq("status", "published")
+    .is("hall_id", null)
     .order("event_date", { ascending: true });
 
   if (error || !data) return [];
