@@ -138,8 +138,18 @@ export default function Header() {
 
   return (
     <header
+      // No "translate-y-0" for the visible state: that still computes to a
+      // real, non-"none" translate value, and per spec ANY non-"none"
+      // transform/translate on an ancestor becomes the containing block for a
+      // position:fixed descendant — which is exactly why the mobile overlay
+      // below rendered only partway across the screen on a zoomed phone.
+      // Leaving the class off entirely when not hidden keeps that computed
+      // value at the true initial "none", so header has no special
+      // containing-block behavior in the state the overlay is actually shown
+      // in — no DOM restructuring, no portal, just not applying a transform
+      // that was never needed while visible in the first place.
       className={`bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10 transition-transform duration-300 ease-in-out ${
-        hidden ? "-translate-y-full" : "translate-y-0"
+        hidden ? "-translate-y-full" : ""
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -223,7 +233,15 @@ export default function Header() {
             </div>
 
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => {
+                // Not just so the header is visible behind the open menu:
+                // "hidden" also decides whether it carries a transform at all
+                // (see the comment on <header>) — opening the menu should
+                // never leave that transform in place from before the click,
+                // rather than only fixing itself on the next scroll event.
+                setMenuOpen((v) => !v);
+                setHidden(false);
+              }}
               className="lg:hidden p-2 -mr-2 rounded-full text-cream hover:bg-ocean-light transition-colors"
               aria-label={t.menuLabel}
               aria-expanded={menuOpen}
