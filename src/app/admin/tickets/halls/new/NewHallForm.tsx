@@ -3,32 +3,27 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import BilingualField from "@/components/admin/BilingualField";
-import type { HallRecord } from "@/lib/halls";
-import type { FormState } from "./actions";
+import GridFieldset from "../GridFieldset";
+import { createHall } from "../actions";
+import type { FormState } from "../actions";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
-export default function HallForm({
-  hall,
-  action,
-  heading,
-  cancelHref = "/admin/tickets/halls",
-}: {
-  hall?: HallRecord;
-  action: (prev: FormState, form: FormData) => Promise<FormState>;
-  heading: string;
-  /** Where "Отмена" goes back to — the hall's own page when editing, the list when creating. */
-  cancelHref?: string;
-}) {
-  const [state, formAction, pending] = useActionState(action, { error: null });
+/**
+ * Creates a hall and its initial seat grid in one step — unlike editing a
+ * hall, which splits name and grid into two separate forms (see
+ * HallForm/GenerateGridForm on the edit page), a brand new hall has no grid
+ * yet to protect, so rows/seats-per-row are required here.
+ */
+export default function NewHallForm() {
+  const initialState: FormState = { error: null };
+  const [state, formAction, pending] = useActionState(createHall, initialState);
 
   return (
     <form action={formAction} className="space-y-5">
-      {hall && <input type="hidden" name="id" value={hall.id} />}
-
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <h1 className="text-xl sm:text-2xl font-bold text-ocean">Новый зал</h1>
+        <Link href="/admin/tickets/halls" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
@@ -42,21 +37,19 @@ export default function HallForm({
           kkName="name_kk"
           ruName="name_ru"
           label="Название зала"
-          defaultKk={hall?.nameKk}
-          defaultRu={hall?.nameRu}
           placeholderKk="Үлкен зал"
           placeholderRu="Большой зал"
         />
 
         <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer mt-5 pt-5 border-t border-cream-dark">
-          <input
-            type="checkbox"
-            name="is_active"
-            defaultChecked={hall?.isActive ?? true}
-            className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
-          />
+          <input type="checkbox" name="is_active" defaultChecked className="mt-0.5 w-4 h-4 accent-ocean shrink-0" />
           <span>Зал используется</span>
         </label>
+      </div>
+
+      <div className={`${CARD} space-y-4`}>
+        <p className="text-sm font-semibold text-ocean">Сетка мест</p>
+        <GridFieldset required />
       </div>
 
       <div className="flex items-center gap-3">
@@ -65,9 +58,9 @@ export default function HallForm({
           disabled={pending}
           className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
         >
-          {pending ? "Сохранение…" : "Сохранить"}
+          {pending ? "Создание…" : "Создать зал"}
         </button>
-        <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href="/admin/tickets/halls" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>

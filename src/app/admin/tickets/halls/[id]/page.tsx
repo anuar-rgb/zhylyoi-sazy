@@ -4,10 +4,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getHallById, listHallSeats } from "@/lib/halls";
 import { listCultureEventsByHall } from "@/lib/cultureEvents";
 import { formatEventDateTime } from "@/lib/eventFields";
-import HallForm from "../HallForm";
-import GenerateGridForm from "../GenerateGridForm";
 import SeatMapEditor from "../SeatMapEditor";
-import { updateHall } from "../actions";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
@@ -37,7 +34,18 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
         Залы
       </Link>
 
-      <HallForm hall={hall} action={updateHall} heading={hall.nameRu ?? hall.nameKk ?? "Зал"} />
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-ocean">
+          {hall.nameRu ?? hall.nameKk ?? "Зал"}
+          {!hall.isActive && <span className="text-ocean/40 font-normal text-base"> · не используется</span>}
+        </h1>
+        <Link
+          href={`/admin/tickets/halls/${hall.id}/edit`}
+          className="text-sm font-semibold text-ocean border border-cream-dark rounded-full px-4 py-2 hover:bg-cream hover:text-gold-dark transition-colors"
+        >
+          Изменить
+        </Link>
+      </div>
 
       <section className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -87,10 +95,14 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
         {seats.length === 0 ? (
           <div className={CARD}>
             <p className="text-sm text-ocean/60 mb-4">
-              В зале ещё нет мест. Задайте сетку один раз — дальше отдельные места можно будет менять и скрывать по
-              одному.
+              В зале ещё нет мест — задайте сетку (число рядов и мест) на странице «Изменить».
             </p>
-            <GenerateGridForm hallId={hall.id} />
+            <Link
+              href={`/admin/tickets/halls/${hall.id}/edit`}
+              className="btn-primary inline-flex px-5 py-2.5 text-sm font-semibold"
+            >
+              Изменить
+            </Link>
           </div>
         ) : (
           <div className={CARD}>

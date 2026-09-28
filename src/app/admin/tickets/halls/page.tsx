@@ -52,17 +52,26 @@ export default async function HallsPage() {
             const name = hall.nameRu ?? hall.nameKk ?? "Без названия";
 
             return (
-              <div key={hall.id} className={`${CARD} p-4 sm:p-5 flex items-center justify-between gap-4`}>
-                <div className="min-w-0">
+              <div key={hall.id} className={`${CARD} relative p-4 sm:p-5 flex items-center justify-between gap-4`}>
+                {/* Absolutely-positioned full-card link, not a wrapper around
+                    everything below: a <Link> can't contain another <Link>
+                    (invalid nested <a>), so "Изменить"/"Удалить" sit as normal
+                    siblings above this one in stacking order instead. */}
+                <Link
+                  href={`/admin/tickets/halls/${hall.id}`}
+                  className="absolute inset-0 rounded-3xl"
+                  aria-label={`Открыть зал «${name}»`}
+                />
+                <div className="min-w-0 pointer-events-none">
                   <h2 className="font-bold text-ocean truncate">{name}</h2>
                   <p className="text-sm text-ocean/50">
                     {hall.totalCapacity} {hall.totalCapacity === 1 ? "место" : "мест"}
                     {!hall.isActive && <span className="text-ocean/40"> · не используется</span>}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="relative z-10 flex items-center gap-3 shrink-0">
                   <Link
-                    href={`/admin/tickets/halls/${hall.id}`}
+                    href={`/admin/tickets/halls/${hall.id}/edit`}
                     className="text-xs font-semibold text-ocean border border-cream-dark rounded-full px-3 py-1.5 hover:bg-cream hover:text-gold-dark transition-colors"
                   >
                     Изменить

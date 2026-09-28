@@ -56,6 +56,13 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
   const data = await fillHallTranslations(hallPayload(form));
   if (!data.name_kk && !data.name_ru) return { error: "Укажите название зала хотя бы на одном языке." };
 
+  const rows = intField(form, "rows");
+  const seatsPerRow = intField(form, "seats_per_row");
+  if (!rows || rows < 1 || rows > 200) return { error: "Число рядов — от 1 до 200." };
+  if (!seatsPerRow || seatsPerRow < 1 || seatsPerRow > 200) return { error: "Число мест в ряду — от 1 до 200." };
+  const rowFormat = field(form, "row_format") === "number" ? "number" : "letter";
+  const category = field(form, "category") ?? "standard";
+
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 
@@ -67,6 +74,22 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
     .single();
 
   if (error || !created) return { error: "Не удалось создать зал." };
+
+  // The hall row exists before its seats do — a brand new hall_id can never
+  // collide with the (hall_id, row_label, seat_number) unique index, so this
+  // insert only fails on a genuine database error, same risk as any other
+  // two-step admin write in this codebase.
+  const seats: { hall_id: string; row_label: string; seat_number: number; category: string }[] = [];
+  for (let r = 1; r <= rows; r++) {
+    const rowLabel = rowFormat === "letter" ? letterLabel(r) : String(r);
+    for (let s = 1; s <= seatsPerRow; s++) {
+      seats.push({ hall_id: created.id, row_label: rowLabel, seat_number: s, category });
+    }
+  }
+  const { error: seatsError } = await supabase.from("hall_seats").insert(seats);
+  if (seatsError) {
+    return { error: "Зал создан, но не удалось создать сетку мест. Задайте её на странице зала через «Изменить»." };
+  }
 
   revalidateHalls();
   redirect(`/admin/tickets/halls/${created.id}`);
@@ -125,41 +148,68 @@ function letterLabel(n: number): string {
   return label;
 }
 
-export async function generateSeatGrid(_prev: FormState, form: FormData): Promise<FormState> {
+/**
+ * Grows and/or shrinks a hall's grid to the given shape. Never deletes a
+ * row — same rule as setSeatActive below: a seat outside the new shape is
+ * deactivated, not removed, because booking_items may already reference it.
+ * A seat already inside the new shape is left completely alone (category,
+ * active state, everything) — resizing only touches the boundary, never
+ * seats staff have already fine-tuned individually.
+ */
+export async function regenerateSeatGrid(_prev: FormState, form: FormData): Promise<FormState> {
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
-  const hallId = field(form, "hall_id");
+  const hallId = field(form, "id");
   if (!hallId) return { error: "Зал не найден." };
 
   const rows = intField(form, "rows");
   const seatsPerRow = intField(form, "seats_per_row");
-  const rowFormat = field(form, "row_format") === "number" ? "number" : "letter";
-  const category = field(form, "category") ?? "standard";
-
+  if (!rows && !seatsPerRow) return { error: null }; // both left blank — no grid change requested
   if (!rows || rows < 1 || rows > 200) return { error: "Число рядов — от 1 до 200." };
   if (!seatsPerRow || seatsPerRow < 1 || seatsPerRow > 200) return { error: "Число мест в ряду — от 1 до 200." };
 
-  const seats: { hall_id: string; row_label: string; seat_number: number; category: string }[] = [];
+  const rowFormat = field(form, "row_format") === "number" ? "number" : "letter";
+  const category = field(form, "category") ?? "standard";
+
+  const supabase = await createClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("hall_seats")
+    .select("id, row_label, seat_number, is_active")
+    .eq("hall_id", hallId);
+  if (fetchError) return { error: "Не удалось прочитать текущие места." };
+
+  const existingByKey = new Map((existing ?? []).map((s) => [`${s.row_label}#${s.seat_number}`, s]));
+  const targetKeys = new Set<string>();
+  const toInsert: { hall_id: string; row_label: string; seat_number: number; category: string }[] = [];
+  const toReactivate: string[] = [];
+
   for (let r = 1; r <= rows; r++) {
     const rowLabel = rowFormat === "letter" ? letterLabel(r) : String(r);
     for (let s = 1; s <= seatsPerRow; s++) {
-      seats.push({ hall_id: hallId, row_label: rowLabel, seat_number: s, category });
+      const key = `${rowLabel}#${s}`;
+      targetKeys.add(key);
+      const seat = existingByKey.get(key);
+      if (!seat) toInsert.push({ hall_id: hallId, row_label: rowLabel, seat_number: s, category });
+      else if (!seat.is_active) toReactivate.push(seat.id);
     }
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("hall_seats").insert(seats);
+  const toDeactivate = (existing ?? [])
+    .filter((s) => s.is_active && !targetKeys.has(`${s.row_label}#${s.seat_number}`))
+    .map((s) => s.id);
 
-  if (error) {
-    // The unique index on (hall_id, row_label, seat_number) is the likely cause —
-    // this action is meant for an empty hall, not for extending an existing grid.
-    return {
-      error:
-        error.code === "23505"
-          ? "В зале уже есть места с такой разметкой рядов. Уберите пересекающиеся места или измените формат ряда, прежде чем создавать сетку заново."
-          : "Не удалось создать сетку мест.",
-    };
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from("hall_seats").insert(toInsert);
+    if (error) return { error: "Не удалось добавить новые места." };
+  }
+  if (toReactivate.length > 0) {
+    const { error } = await supabase.from("hall_seats").update({ is_active: true }).in("id", toReactivate);
+    if (error) return { error: "Не удалось восстановить места." };
+  }
+  if (toDeactivate.length > 0) {
+    const { error } = await supabase.from("hall_seats").update({ is_active: false }).in("id", toDeactivate);
+    if (error) return { error: "Не удалось скрыть лишние места." };
   }
 
   revalidateHalls(hallId);
@@ -201,6 +251,8 @@ export async function setSeatActive(id: string, isActive: boolean): Promise<{ ok
   return { ok: !error && count === 1 };
 }
 
-// No deleteSeat: Phase 3's booking_items will reference hall_seats.id, and a hard
-// delete would cascade into whatever booked it. setSeatActive(id, false) is the
-// only removal a seat gets — see SeatControls.tsx.
+// No deleteSeat: booking_items.seat_id references hall_seats(id) with no ON
+// DELETE CASCADE, so a hard delete of a booked seat would simply fail with a
+// foreign key violation rather than losing the booking silently — but that's
+// still the wrong failure mode for an admin action. setSeatActive(id, false)
+// is the only removal a seat gets — see SeatControls.tsx.
