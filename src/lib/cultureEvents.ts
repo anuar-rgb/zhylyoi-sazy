@@ -111,7 +111,15 @@ async function fillPublicTranslations(records: CultureEventRecord[]): Promise<Cu
 }
 
 /**
- * Events the signed-in staff member may see, newest first.
+ * Events the signed-in staff member may see, newest first — the admin
+ * "Афиша" content list.
+ *
+ * Excludes events with a hall for the same reason the public afisha feed
+ * does (see listPublicCultureEvents): a ticketed event isn't an afisha entry
+ * that happens to also sell tickets, it's a separate thing entirely, managed
+ * from the "Билеты" admin page instead — including editing its own title,
+ * photos and description, which "Билеты" links out to directly so nothing is
+ * lost by not listing it here.
  *
  * RLS decides the scope. A failed query returns an empty list rather than
  * throwing, so one bad request cannot take down the page around it.
@@ -121,6 +129,7 @@ export async function listCultureEvents(): Promise<CultureEventRecord[]> {
   const { data, error } = await supabase
     .from("culture_events")
     .select(COLUMNS)
+    .is("hall_id", null)
     .order("event_date", { ascending: false });
 
   if (error || !data) return [];

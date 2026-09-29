@@ -48,12 +48,17 @@ export default async function TicketsPage() {
                 <p className="font-semibold text-ocean truncate">{event.titleRu ?? event.titleKk}</p>
                 <p className="text-xs text-ocean/50">{formatEventDateTime(event.eventDate)}</p>
               </div>
-              <Link
-                href={`/admin/culture-events/${event.id}/tickets`}
-                className="text-xs font-semibold text-ocean hover:text-gold-dark shrink-0"
-              >
-                Билеты
-              </Link>
+              <div className="flex items-center gap-3 shrink-0">
+                <Link
+                  href={`/admin/culture-events/${event.id}/tickets`}
+                  className="text-xs font-semibold text-ocean hover:text-gold-dark"
+                >
+                  Билеты
+                </Link>
+                <Link href={`/admin/culture-events/${event.id}`} className="text-xs font-semibold text-ocean hover:text-gold-dark">
+                  Изменить
+                </Link>
+              </div>
             </div>
           ))}
         </div>
