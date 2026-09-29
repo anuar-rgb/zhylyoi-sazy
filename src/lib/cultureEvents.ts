@@ -136,19 +136,6 @@ export async function listCultureEvents(): Promise<CultureEventRecord[]> {
   return (data as unknown as Row[]).map(toRecord);
 }
 
-/** Events taking place in a given hall, newest first — for the hall's own page. */
-export async function listCultureEventsByHall(hallId: string): Promise<CultureEventRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("culture_events")
-    .select(COLUMNS)
-    .eq("hall_id", hallId)
-    .order("event_date", { ascending: false });
-
-  if (error || !data) return [];
-  return (data as unknown as Row[]).map(toRecord);
-}
-
 /**
  * Published, future, ticketed events of this site's institution — the "Билеты"
  * showcase. A hall means seats and event_ticket_types exist for it (Phases 3-5);

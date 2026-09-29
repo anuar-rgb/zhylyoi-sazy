@@ -2,8 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getHallById, listHallSeats } from "@/lib/halls";
-import { listCultureEventsByHall } from "@/lib/cultureEvents";
-import { formatEventDateTime } from "@/lib/eventFields";
 import SeatMapEditor from "../SeatMapEditor";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
@@ -20,7 +18,6 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   if (!hall) notFound();
 
   const seats = await listHallSeats(id);
-  const events = await listCultureEventsByHall(id);
 
   return (
     <div>
@@ -46,45 +43,6 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           Изменить
         </Link>
       </div>
-
-      <section className="mt-8">
-        <h2 className="text-lg sm:text-xl font-bold text-ocean mb-4">
-          Мероприятия <span className="text-ocean/40 font-normal text-base">({events.length})</span>
-        </h2>
-
-        {events.length === 0 ? (
-          <div className={CARD}>
-            <p className="text-sm text-ocean/60">
-              В этом зале пока нет мероприятий. Добавить можно через «⋯» на странице «Билеты».
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className={`${CARD} p-4 flex flex-wrap items-center justify-between gap-3`}
-              >
-                <div className="min-w-0">
-                  <p className="font-semibold text-ocean truncate">{event.titleRu ?? event.titleKk}</p>
-                  <p className="text-xs text-ocean/50">{formatEventDateTime(event.eventDate)}</p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <Link
-                    href={`/admin/culture-events/${event.id}/tickets`}
-                    className="text-xs font-semibold text-ocean hover:text-gold-dark"
-                  >
-                    Билеты
-                  </Link>
-                  <Link href={`/admin/culture-events/${event.id}`} className="text-xs font-semibold text-ocean hover:text-gold-dark">
-                    Изменить
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
 
       <section className="mt-8">
         <h2 className="text-lg sm:text-xl font-bold text-ocean mb-4">
