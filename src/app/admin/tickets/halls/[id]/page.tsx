@@ -48,21 +48,15 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
       </div>
 
       <section className="mt-8">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="text-lg sm:text-xl font-bold text-ocean">
-            Мероприятия <span className="text-ocean/40 font-normal text-base">({events.length})</span>
-          </h2>
-          <Link
-            href={`/admin/culture-events/new?hallId=${hall.id}`}
-            className="btn-primary px-5 py-2.5 text-sm font-semibold"
-          >
-            Добавить мероприятие
-          </Link>
-        </div>
+        <h2 className="text-lg sm:text-xl font-bold text-ocean mb-4">
+          Мероприятия <span className="text-ocean/40 font-normal text-base">({events.length})</span>
+        </h2>
 
         {events.length === 0 ? (
           <div className={CARD}>
-            <p className="text-sm text-ocean/60">В этом зале пока нет мероприятий.</p>
+            <p className="text-sm text-ocean/60">
+              В этом зале пока нет мероприятий. Добавить можно через «⋯» на странице «Билеты».
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
