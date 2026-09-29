@@ -150,7 +150,7 @@ function letterLabel(n: number): string {
 
 /**
  * Grows and/or shrinks a hall's grid to the given shape. Never deletes a
- * row — same rule as setSeatActive below: a seat outside the new shape is
+ * row — same rule as setSeatsActive below: a seat outside the new shape is
  * deactivated, not removed, because booking_items may already reference it.
  * A seat already inside the new shape is left completely alone (category,
  * active state, everything) — resizing only touches the boundary, never
@@ -216,7 +216,8 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
   return { error: null };
 }
 
-export async function updateSeatCategory(id: string, category: string): Promise<{ ok: boolean }> {
+/** One seat or many at once — SeatBulkPanel calls this the same way either way. */
+export async function updateSeatsCategory(ids: string[], category: string): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -224,35 +225,36 @@ export async function updateSeatCategory(id: string, category: string): Promise<
   if (!user) return { ok: false };
 
   const trimmed = category.trim();
-  if (!trimmed) return { ok: false };
+  if (!trimmed || ids.length === 0) return { ok: false };
 
   const { error, count } = await supabase
     .from("hall_seats")
     .update({ category: trimmed }, { count: "exact" })
-    .eq("id", id);
+    .in("id", ids);
 
-  if (!error && count === 1) revalidatePath("/admin/tickets/halls", "layout");
-  return { ok: !error && count === 1 };
+  if (!error && count === ids.length) revalidatePath("/admin/tickets/halls", "layout");
+  return { ok: !error && count === ids.length };
 }
 
-export async function setSeatActive(id: string, isActive: boolean): Promise<{ ok: boolean }> {
+export async function setSeatsActive(ids: string[], isActive: boolean): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
+  if (ids.length === 0) return { ok: false };
 
   const { error, count } = await supabase
     .from("hall_seats")
     .update({ is_active: isActive }, { count: "exact" })
-    .eq("id", id);
+    .in("id", ids);
 
-  if (!error && count === 1) revalidatePath("/admin/tickets/halls", "layout");
-  return { ok: !error && count === 1 };
+  if (!error && count === ids.length) revalidatePath("/admin/tickets/halls", "layout");
+  return { ok: !error && count === ids.length };
 }
 
 // No deleteSeat: booking_items.seat_id references hall_seats(id) with no ON
 // DELETE CASCADE, so a hard delete of a booked seat would simply fail with a
 // foreign key violation rather than losing the booking silently — but that's
-// still the wrong failure mode for an admin action. setSeatActive(id, false)
-// is the only removal a seat gets — see SeatControls.tsx.
+// still the wrong failure mode for an admin action. setSeatsActive(ids, false)
+// is the only removal a seat gets — see SeatBulkPanel.tsx.

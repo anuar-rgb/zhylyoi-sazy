@@ -33,6 +33,8 @@ export interface SeatMapProps {
   stageLabel?: string;
   seatTooltip?: (seat: SeatMapSeat) => string | undefined;
   className?: string;
+  /** When set, the row-label captions become clickable (whole-row bulk select). Unused on the public seat picker. */
+  onRowLabelClick?: (row: SeatMapRow) => void;
 }
 
 const SEAT_SIZE = 28;
@@ -104,6 +106,7 @@ export default function SeatMap({
   stageLabel = "Сцена",
   seatTooltip,
   className,
+  onRowLabelClick,
 }: SeatMapProps) {
   return (
     <div className={`overflow-x-auto ${className ?? ""}`}>
@@ -127,9 +130,20 @@ export default function SeatMap({
 
             return (
               <div key={row.label} className="flex items-center gap-2.5">
-                <span className="sticky left-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40">
-                  {row.label}
-                </span>
+                {onRowLabelClick ? (
+                  <button
+                    type="button"
+                    onClick={() => onRowLabelClick(row)}
+                    title={`Выбрать весь ряд ${row.label}`}
+                    className="sticky left-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40 hover:text-ocean-dark hover:underline cursor-pointer"
+                  >
+                    {row.label}
+                  </button>
+                ) : (
+                  <span className="sticky left-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40">
+                    {row.label}
+                  </span>
+                )}
 
                 <div className="flex items-end gap-2 py-1">
                   {slots.map((slot) => {
@@ -161,9 +175,20 @@ export default function SeatMap({
                   })}
                 </div>
 
-                <span className="sticky right-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40">
-                  {row.label}
-                </span>
+                {onRowLabelClick ? (
+                  <button
+                    type="button"
+                    onClick={() => onRowLabelClick(row)}
+                    title={`Выбрать весь ряд ${row.label}`}
+                    className="sticky right-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40 hover:text-ocean-dark hover:underline cursor-pointer"
+                  >
+                    {row.label}
+                  </button>
+                ) : (
+                  <span className="sticky right-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40">
+                    {row.label}
+                  </span>
+                )}
               </div>
             );
           })}

@@ -2,36 +2,39 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
-import SeatControls from "./SeatControls";
+import SeatBulkPanel from "./SeatBulkPanel";
 import type { HallSeatRecord } from "@/lib/halls";
 
 /**
  * Click-to-edit seat map for a hall. Category colour comes from
  * assignCategoryColors (ordered by first appearance, not hashed, so it stays
  * stable as categories are added) — "inactive" seats get the same colour,
- * muted, rather than a second independent colour axis. Clicking a seat opens
- * SeatControls for it below the map instead of the old always-visible
- * per-row inputs.
+ * muted, rather than a second independent colour axis.
+ *
+ * Selection is a set, not a single id: clicking a seat toggles its membership,
+ * clicking a row's label toggles the whole row at once (selects it if any seat
+ * in it isn't selected yet, clears it if the whole row already is) — the
+ * common case of "make the front two rows VIP" is a couple of row-label clicks
+ * instead of one dropdown per seat.
  */
 export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // A click anywhere outside the map or the panel closes it — otherwise the
-  // panel only ever closes by re-clicking the same seat, which isn't how a
-  // popover is expected to behave.
+  // A click anywhere outside the map or the panel clears the selection —
+  // otherwise it only ever clears by re-clicking every selected seat.
   useEffect(() => {
-    if (!editingId) return;
+    if (selectedIds.size === 0) return;
 
     function handlePointerDown(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setEditingId(null);
+        setSelectedIds(new Set());
       }
     }
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [editingId]);
+  }, [selectedIds.size]);
 
   const categoryColors = useMemo(() => assignCategoryColors(seats.map((seat) => seat.category)), [seats]);
 
@@ -43,16 +46,37 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
         rowLabel: seat.rowLabel,
         seatNumber: seat.seatNumber,
         category: seat.category,
-        status: seat.id === editingId ? "selected" : seat.isActive ? "active" : "inactive",
+        status: selectedIds.has(seat.id) ? "selected" : seat.isActive ? "active" : "inactive",
       };
       const current = grouped[grouped.length - 1];
       if (current && current.label === seat.rowLabel) current.seats.push(mapSeat);
       else grouped.push({ label: seat.rowLabel, seats: [mapSeat] });
     }
     return grouped;
-  }, [seats, editingId]);
+  }, [seats, selectedIds]);
 
-  const editingSeat = seats.find((seat) => seat.id === editingId) ?? null;
+  const selectedSeats = seats.filter((seat) => selectedIds.has(seat.id));
+
+  function toggleSeat(seat: SeatMapSeat) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(seat.id)) next.delete(seat.id);
+      else next.add(seat.id);
+      return next;
+    });
+  }
+
+  function toggleRow(row: SeatMapRow) {
+    setSelectedIds((current) => {
+      const allSelected = row.seats.every((seat) => current.has(seat.id));
+      const next = new Set(current);
+      for (const seat of row.seats) {
+        if (allSelected) next.delete(seat.id);
+        else next.add(seat.id);
+      }
+      return next;
+    });
+  }
 
   function seatVariant(mapSeat: SeatMapSeat) {
     const color = categoryColors.get(mapSeat.category) ?? "bg-ocean text-cream";
@@ -61,7 +85,7 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
     // colour in this palette, so overriding the fill made an edited vip seat
     // indistinguishable from an untouched one. The ring sits on top of
     // whatever colour the seat already has, so its category stays readable
-    // while it's open for editing.
+    // while it's selected.
     const ring = mapSeat.status === "selected" ? " ring-2 ring-offset-2 ring-ocean-dark" : "";
     return { className: muted + ring };
   }
@@ -71,7 +95,8 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
       <SeatMap
         rows={rows}
         seatVariant={seatVariant}
-        onSeatClick={(seat) => setEditingId((current) => (current === seat.id ? null : seat.id))}
+        onSeatClick={toggleSeat}
+        onRowLabelClick={toggleRow}
         seatTooltip={(seat) => `Ряд ${seat.rowLabel}, место ${seat.seatNumber} — ${seat.category}`}
         legend={[
           ...Array.from(categoryColors.entries()).map(([category, className]) => ({
@@ -82,28 +107,13 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
         ]}
       />
 
-      {editingSeat && (
-        <div className="mt-4 bg-cream/40 border border-cream-dark rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-ocean">
-            Ряд {editingSeat.rowLabel}, место {editingSeat.seatNumber}
-          </p>
-          <div className="flex items-center gap-3">
-            <SeatControls
-              id={editingSeat.id}
-              category={editingSeat.category}
-              isActive={editingSeat.isActive}
-              existingCategories={Array.from(categoryColors.keys())}
-            />
-            <button
-              type="button"
-              onClick={() => setEditingId(null)}
-              className="text-ocean/40 hover:text-ocean text-lg leading-none"
-              aria-label="Закрыть"
-            >
-              ×
-            </button>
-          </div>
-        </div>
+      {selectedSeats.length > 0 && (
+        <SeatBulkPanel
+          key={selectedSeats.map((seat) => seat.id).sort().join(",")}
+          seats={selectedSeats}
+          existingCategories={Array.from(categoryColors.keys())}
+          onDone={() => setSelectedIds(new Set())}
+        />
       )}
     </div>
   );
