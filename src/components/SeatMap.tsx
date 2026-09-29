@@ -75,15 +75,19 @@ function layoutRow(seats: SeatMapSeat[]): { slots: Slot[]; width: number } {
 }
 
 /**
- * Deterministic small palette for admin category colouring, assigned by order
- * of first appearance among the categories actually present — not a hash.
- * A hash can put two categories one shade apart, or reassign colours when a
- * third category is added; an ordered palette stays stable and distinct as
- * categories are added over time.
+ * standard/vip are pinned to specific colours rather than assigned by order of
+ * first appearance: with an order-based palette, a bulk edit or a re-fetch
+ * that changes which seat sorts first could flip which colour "vip" got from
+ * one save to the next — a category's colour has to mean the same thing every
+ * time, not just be stably distinct within one render.
  */
-const CATEGORY_PALETTE = [
-  "bg-ocean text-cream",
-  "bg-gold text-ocean-dark",
+const KNOWN_CATEGORY_COLORS: Record<string, string> = {
+  vip: "bg-gold text-ocean-dark",
+  standard: "bg-ocean text-cream",
+};
+
+/** For any category beyond the known ones — still stable, since the input is sorted before assigning. */
+const FALLBACK_PALETTE = [
   "bg-ocean-dark text-cream",
   "bg-gold-dark text-cream",
   "bg-ocean-light text-cream",
@@ -92,9 +96,12 @@ const CATEGORY_PALETTE = [
 
 export function assignCategoryColors(categories: string[]): Map<string, string> {
   const map = new Map<string, string>();
-  Array.from(new Set(categories)).forEach((category, i) => {
-    map.set(category, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]);
-  });
+  const unique = Array.from(new Set(categories)).sort();
+  let fallbackIndex = 0;
+  for (const category of unique) {
+    const known = KNOWN_CATEGORY_COLORS[category.trim().toLowerCase()];
+    map.set(category, known ?? FALLBACK_PALETTE[fallbackIndex++ % FALLBACK_PALETTE.length]);
+  }
   return map;
 }
 

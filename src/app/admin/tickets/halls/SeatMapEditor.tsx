@@ -7,9 +7,9 @@ import type { HallSeatRecord } from "@/lib/halls";
 
 /**
  * Click-to-edit seat map for a hall. Category colour comes from
- * assignCategoryColors (ordered by first appearance, not hashed, so it stays
- * stable as categories are added) — "inactive" seats get the same colour,
- * muted, rather than a second independent colour axis.
+ * assignCategoryColors — vip/standard are pinned colours, not assigned by
+ * order of appearance, so they never shift between saves — "inactive" seats
+ * get the same colour, muted, rather than a second independent colour axis.
  *
  * Selection is a set, not a single id: clicking a seat toggles its membership,
  * clicking a row's label toggles the whole row at once (selects it if any seat
