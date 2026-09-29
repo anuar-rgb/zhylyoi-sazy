@@ -119,9 +119,19 @@ async function fillTranslations(data: ReturnType<typeof payload>): Promise<Retur
 /** The poster and the front page read events directly, so a change has to reach them. */
 function revalidateEvent(slug: string | null) {
   revalidatePath("/admin/culture-events");
+  // A hall_id toggled on or off moves the event between the Афиша admin list
+  // and "Билеты" — both need to reflect that, not just whichever one the
+  // event ends up in.
+  revalidatePath("/admin/tickets");
   revalidatePath("/[locale]", "page");
   revalidatePath("/[locale]/afisha", "page");
+  revalidatePath("/[locale]/tickets", "page");
   if (slug) revalidatePath(`/[locale]/afisha/${slug}`, "page");
+}
+
+/** Афиша no longer lists a ticketed event, so saving one should land back on "Билеты" instead. */
+function redirectAfterSave(hallId: string | null): never {
+  redirect(hallId ? "/admin/tickets" : "/admin/culture-events");
 }
 
 export async function createEvent(_prev: FormState, form: FormData): Promise<FormState> {
@@ -162,7 +172,7 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   }
 
   revalidateEvent(slug);
-  redirect("/admin/culture-events");
+  redirectAfterSave(data.hall_id);
 }
 
 export async function updateEvent(_prev: FormState, form: FormData): Promise<FormState> {
@@ -203,7 +213,7 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   }
 
   revalidateEvent(slug);
-  redirect("/admin/culture-events");
+  redirectAfterSave(data.hall_id);
 }
 
 export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: string }> {

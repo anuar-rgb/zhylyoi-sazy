@@ -72,6 +72,11 @@ export default function EventForm({
   const [images, setImages] = useState<EventImage[]>(event?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // A ticketed event isn't listed under "Афиша" any more (it lives on
+  // "Билеты" instead), so cancelling out of editing one should return there,
+  // not to a list that no longer shows it. A brand new event (no hallId yet,
+  // hall picked further down in this same form) still defaults to Афиша.
+  const cancelHref = event?.hallId ? "/admin/tickets" : "/admin/culture-events";
 
   /**
    * Files go straight from the browser to Storage rather than through the server
@@ -115,7 +120,7 @@ export default function EventForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
-        <Link href="/admin/culture-events" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
@@ -294,7 +299,7 @@ export default function EventForm({
         >
           {pending ? "Сохранение…" : "Сохранить"}
         </button>
-        <Link href="/admin/culture-events" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+        <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
           Отмена
         </Link>
       </div>
