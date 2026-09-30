@@ -13,6 +13,7 @@ import {
   isoToDateTimeInput,
 } from "@/lib/eventFields";
 import type { CultureEventRecord, EventImage } from "@/lib/cultureEvents";
+import type { PaymentMethodRecord } from "@/lib/paymentMethods";
 import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
@@ -57,6 +58,7 @@ export default function EventForm({
   organizationId,
   halls,
   defaultHallId,
+  paymentMethods,
   action,
   heading,
 }: {
@@ -65,6 +67,8 @@ export default function EventForm({
   halls: { id: string; name: string }[];
   /** Preselects the hall on a new event, e.g. arriving from that hall's own page. Ignored when editing. */
   defaultHallId?: string;
+  /** The organization's enabled payment methods, for the optional per-event override below. */
+  paymentMethods: PaymentMethodRecord[];
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -172,10 +176,29 @@ export default function EventForm({
               ))}
             </select>
           </div>
+          <div>
+            <label className={LABEL} htmlFor="payment_method_id">
+              Способ оплаты
+            </label>
+            <select
+              id="payment_method_id"
+              name="payment_method_id"
+              defaultValue={event?.paymentMethodId ?? ""}
+              className={INPUT}
+            >
+              <option value="">Все включённые способы (по умолчанию)</option>
+              {paymentMethods.map((method) => (
+                <option key={method.id} value={method.id}>
+                  {method.displayNameRu ?? method.displayNameKk ?? method.providerName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           Время указывается по Атырау (UTC+5). Зал нужен только для продажи билетов — без него у мероприятия просто
-          не будет мест и цен.
+          не будет мест и цен. Способ оплаты — необязательно: без выбора покупателю показываются все включённые
+          способы организации, а не только один.
         </p>
       </div>
 

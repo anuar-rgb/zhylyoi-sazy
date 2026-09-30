@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { listHalls } from "@/lib/halls";
+import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import EventForm from "../EventForm";
 import { createEvent } from "../actions";
 
@@ -21,9 +22,12 @@ export default async function NewEventPage({
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
-  const halls = (await listHalls())
-    .filter((hall) => hall.isActive)
-    .map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }));
+  const [halls, paymentMethods] = await Promise.all([
+    listHalls().then((rows) =>
+      rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
+    ),
+    listPublicPaymentMethods(organizationId),
+  ]);
 
   // Only a hall this person can actually see is honoured. The id comes from the
   // address bar, and preselecting one that is not in the list would show a
@@ -35,6 +39,7 @@ export default async function NewEventPage({
       organizationId={organizationId}
       halls={halls}
       defaultHallId={defaultHallId}
+      paymentMethods={paymentMethods}
       action={createEvent}
       heading="Новое мероприятие"
     />

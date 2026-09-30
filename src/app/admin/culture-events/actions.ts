@@ -91,6 +91,7 @@ function payload(form: FormData) {
     status: parseStatus(form),
     images: parseImages(form),
     hall_id: field(form, "hall_id"),
+    payment_method_id: field(form, "payment_method_id"),
   };
 }
 
