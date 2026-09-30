@@ -130,3 +130,18 @@ export async function setTicketTypeActive(id: string, eventId: string, isActive:
   if (!error && count === 1) revalidateTickets(eventId);
   return { ok: !error && count === 1 };
 }
+
+/** null means "no override" — /my-ticket falls back to every enabled org-wide method. */
+export async function updateEventPaymentMethod(eventId: string, paymentMethodId: string | null): Promise<{ ok: boolean }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false };
+
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("culture_events")
+    .update({ payment_method_id: paymentMethodId }, { count: "exact" })
+    .eq("id", eventId);
+
+  if (!error && count === 1) revalidateTickets(eventId);
+  return { ok: !error && count === 1 };
+}

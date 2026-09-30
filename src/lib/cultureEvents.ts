@@ -32,13 +32,15 @@ export type CultureEventRecord = {
   images: EventImage[];
   /** The hall this event takes place in; null for one with no hall (no seats, no tickets). */
   hallId: string | null;
+  /** Restricts /my-ticket to this one organization_payment_methods row; null shows every enabled org-wide method. */
+  paymentMethodId: string | null;
 };
 
 const COLUMNS =
   "id, organization_id, slug, status, title, title_kk, title_ru, " +
   "description_kk, description_ru, full_text_kk, full_text_ru, " +
   "location_kk, location_ru, event_date, end_date, categories, " +
-  "organizer_kk, organizer_ru, age_limit, images, hall_id";
+  "organizer_kk, organizer_ru, age_limit, images, hall_id, payment_method_id";
 
 type Row = Record<string, unknown>;
 
@@ -92,6 +94,7 @@ function toRecord(row: Row): CultureEventRecord {
     ageLimit: str(row.age_limit),
     images: toImages(row.images),
     hallId: str(row.hall_id),
+    paymentMethodId: str(row.payment_method_id),
   };
 }
 

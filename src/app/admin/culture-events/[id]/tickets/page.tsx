@@ -4,8 +4,10 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getCultureEventById } from "@/lib/cultureEvents";
 import { listHallSeatCategories } from "@/lib/halls";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
+import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import TicketTypeForm from "./TicketTypeForm";
 import ToggleTicketTypeButton from "./ToggleTicketTypeButton";
+import EventPaymentMethodPicker from "./EventPaymentMethodPicker";
 import { createTicketType, updateTicketType } from "./actions";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
@@ -21,9 +23,10 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
   const event = await getCultureEventById(id);
   if (!event) notFound();
 
-  const [hallCategories, ticketTypes] = await Promise.all([
+  const [hallCategories, ticketTypes, paymentMethods] = await Promise.all([
     event.hallId ? listHallSeatCategories(event.hallId) : Promise.resolve<string[]>([]),
     listEventTicketTypes(id),
+    identity.organizationId ? listPublicPaymentMethods(identity.organizationId) : Promise.resolve([]),
   ]);
 
   // Only categories that don't already have a price — the unique (event_id,
@@ -56,6 +59,26 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
       ) : (
         <p className="text-sm text-ocean/60 mb-6">Категории ниже — те, что реально есть в зале мероприятия.</p>
       )}
+
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-ocean mb-1">Способ оплаты</h2>
+        <p className="text-sm text-ocean/60 mb-4">
+          По умолчанию покупатель видит все включённые способы оплаты организации. Выберите один здесь, чтобы для
+          этого мероприятия показывался только он.
+        </p>
+        {paymentMethods.length === 0 ? (
+          <div className={CARD}>
+            <p className="text-sm text-ocean/60 mb-3">В организации ещё нет включённых способов оплаты.</p>
+            <Link href="/admin/tickets/payments" className="text-sm font-semibold text-ocean hover:text-gold-dark">
+              Настроить способы оплаты →
+            </Link>
+          </div>
+        ) : (
+          <div className={CARD}>
+            <EventPaymentMethodPicker eventId={id} methods={paymentMethods} currentId={event.paymentMethodId} />
+          </div>
+        )}
+      </section>
 
       {ticketTypes.length > 0 && (
         <div className="space-y-3 mb-8">

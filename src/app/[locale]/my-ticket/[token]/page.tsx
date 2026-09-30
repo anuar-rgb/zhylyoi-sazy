@@ -4,7 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import { getBookingByToken } from "@/lib/bookings";
-import { listPublicPaymentMethods } from "@/lib/paymentMethods";
+import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
 import type { Locale } from "@/i18n/routing";
@@ -32,7 +32,9 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
 
   const isConfirmed = booking.status === "confirmed";
   const needsPayment = booking.status === "pending" && booking.totalAmount > 0;
-  const paymentMethods = needsPayment ? await listPublicPaymentMethods(booking.organizationId) : [];
+  const paymentMethods = needsPayment
+    ? await listPublicPaymentMethodsForEvent(booking.eventId, booking.organizationId)
+    : [];
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">

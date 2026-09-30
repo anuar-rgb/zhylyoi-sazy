@@ -26,6 +26,7 @@ export type BookingView = {
   createdAt: string;
   items: BookingItemView[];
   organizationId: string;
+  eventId: string;
 };
 
 type BookingByTokenRow = {
@@ -47,6 +48,7 @@ type BookingByTokenRow = {
   ticket_code: string | null;
   released_at: string | null;
   organization_id: string;
+  event_id: string;
 };
 
 function toStatus(value: string): BookingStatus {
@@ -98,6 +100,7 @@ export async function getBookingByToken(token: string): Promise<BookingView | nu
     createdAt: first.created_at,
     items,
     organizationId: first.organization_id,
+    eventId: first.event_id,
   };
 }
 

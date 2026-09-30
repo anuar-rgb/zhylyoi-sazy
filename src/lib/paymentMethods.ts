@@ -105,3 +105,35 @@ export async function listPublicPaymentMethods(organizationId: string): Promise<
   if (error || !data) return [];
   return (data as unknown as Row[]).map(toMethod);
 }
+
+/**
+ * Payment methods to show on /my-ticket for one specific event: its own
+ * override (culture_events.payment_method_id) when set and still enabled, or
+ * every enabled org-wide method otherwise — the same fallback the page showed
+ * before an event could override it, so an event with no override, or one
+ * whose chosen method got disabled/deleted since, behaves exactly as before.
+ */
+export async function listPublicPaymentMethodsForEvent(
+  eventId: string,
+  organizationId: string
+): Promise<PaymentMethodRecord[]> {
+  const supabase = await createClient();
+  const { data: event } = await supabase
+    .from("culture_events")
+    .select("payment_method_id")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  const overrideId = event && typeof event.payment_method_id === "string" ? event.payment_method_id : null;
+  if (overrideId) {
+    const { data, error } = await supabase
+      .from("organization_payment_methods")
+      .select("*, payment_providers(name)")
+      .eq("id", overrideId)
+      .eq("is_enabled", true)
+      .maybeSingle();
+    if (!error && data) return [toMethod(data as unknown as Row)];
+  }
+
+  return listPublicPaymentMethods(organizationId);
+}
