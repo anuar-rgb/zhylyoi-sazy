@@ -79,7 +79,7 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
   }
 
   function seatVariant(mapSeat: SeatMapSeat) {
-    const color = categoryColors.get(mapSeat.category) ?? "bg-ocean text-cream";
+    const color = categoryColors.get(mapSeat.category)?.solid ?? "bg-ocean text-cream";
     const muted = mapSeat.status === "inactive" ? `${color} opacity-30 grayscale` : color;
     // A ring instead of swapping the fill to gold — gold is already a category
     // colour in this palette, so overriding the fill made an edited vip seat
@@ -99,8 +99,8 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
         onRowLabelClick={toggleRow}
         seatTooltip={(seat) => `Ряд ${seat.rowLabel}, место ${seat.seatNumber} — ${seat.category}`}
         legend={[
-          ...Array.from(categoryColors.entries()).map(([category, className]) => ({
-            swatchClassName: className.split(" ")[0],
+          ...Array.from(categoryColors.entries()).map(([category, color]) => ({
+            swatchClassName: color.solid.split(" ")[0],
             label: category,
           })),
           { swatchClassName: "bg-ocean/10", label: "Скрыто (приглушено)" },

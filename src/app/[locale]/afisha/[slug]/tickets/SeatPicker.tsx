@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createBooking, type CreateBookingResult } from "@/app/actions/bookings";
-import SeatMap, { type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
+import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 
 export type SeatOption = {
   id: string;
@@ -51,6 +51,10 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
   // ticketName to decide what a click or a tooltip means.
   const seatsById = useMemo(() => new Map(allSeats.map((seat) => [seat.id, seat])), [allSeats]);
 
+  // Same pinned vip/standard colours as the admin seat map (SeatMap.tsx) — a
+  // buyer needs to tell categories apart at a glance just as much as staff do.
+  const categoryColors = useMemo(() => assignCategoryColors(allSeats.map((seat) => seat.category)), [allSeats]);
+
   function toggleSeat(seat: SeatOption) {
     if (seat.taken || seat.price === null) return;
     setSelected((current) => {
@@ -73,9 +77,19 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
   }));
 
   function seatVariant(mapSeat: SeatMapSeat) {
-    if (mapSeat.status === "selected") return { className: "bg-gold text-ocean-dark" };
-    if (mapSeat.status === "taken") return { className: "bg-ocean/10 text-ocean/25", disabled: true };
-    return { className: "bg-ocean/20 text-ocean hover:bg-ocean/30" };
+    if (mapSeat.status === "taken") return { className: "bg-ocean/10 text-ocean/25 grayscale", disabled: true };
+
+    const color = categoryColors.get(mapSeat.category) ?? { solid: "bg-ocean text-cream", muted: "bg-ocean/25 text-ocean hover:bg-ocean/40" };
+    if (mapSeat.status === "selected") {
+      // A ring, not a fill swap: an already-gold vip seat turning "selected
+      // gold" would look identical to an untouched one — same reasoning as
+      // the admin seat map (SeatMapEditor.tsx).
+      return { className: `${color.solid} ring-2 ring-offset-2 ring-ocean-dark` };
+    }
+    // A muted tint of the same colour for "available" — the full-strength
+    // fill is reserved for legend/selected, or a mostly-free hall would read
+    // as already half booked.
+    return { className: color.muted };
   }
 
   function seatTooltip(mapSeat: SeatMapSeat): string | undefined {
@@ -132,8 +146,10 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
           seatTooltip={seatTooltip}
           onSeatClick={handleSeatMapClick}
           legend={[
-            { swatchClassName: "bg-ocean/20", label: "Свободно" },
-            { swatchClassName: "bg-gold", label: "Выбрано" },
+            ...Array.from(categoryColors.entries()).map(([category, color]) => ({
+              swatchClassName: color.solid.split(" ")[0],
+              label: category,
+            })),
             { swatchClassName: "bg-ocean/10", label: "Занято / недоступно" },
           ]}
         />

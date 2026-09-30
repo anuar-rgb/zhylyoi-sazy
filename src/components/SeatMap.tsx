@@ -75,27 +75,44 @@ function layoutRow(seats: SeatMapSeat[]): { slots: Slot[]; width: number } {
 }
 
 /**
+ * Both the full-strength fill (legend, selected/edited seats) and a muted tint
+ * of the same colour (an untouched, available seat) — as complete class name
+ * literals, not built at runtime by slicing a string and appending "/25":
+ * Tailwind only generates CSS for classes it can find as literal text while
+ * scanning source files, so a class assembled from runtime fragments compiles
+ * to nothing and the seat silently loses its colour.
+ */
+export type CategoryColor = { solid: string; muted: string };
+
+/**
  * standard/vip are pinned to specific colours rather than assigned by order of
  * first appearance: with an order-based palette, a bulk edit or a re-fetch
  * that changes which seat sorts first could flip which colour "vip" got from
  * one save to the next — a category's colour has to mean the same thing every
  * time, not just be stably distinct within one render.
+ *
+ * Both spellings of "vip" are pinned: category is free text (see hall_seats),
+ * and staff type it phonetically in Cyrillic ("вип") as often as in Latin —
+ * an admin who only recognised "vip" would silently fall through to the
+ * fallback palette for a category actually spelled "вип".
  */
-const KNOWN_CATEGORY_COLORS: Record<string, string> = {
-  vip: "bg-gold text-ocean-dark",
-  standard: "bg-ocean text-cream",
+const KNOWN_CATEGORY_COLORS: Record<string, CategoryColor> = {
+  vip: { solid: "bg-gold text-ocean-dark", muted: "bg-gold/25 text-ocean hover:bg-gold/40" },
+  "вип": { solid: "bg-gold text-ocean-dark", muted: "bg-gold/25 text-ocean hover:bg-gold/40" },
+  standard: { solid: "bg-ocean text-cream", muted: "bg-ocean/25 text-ocean hover:bg-ocean/40" },
+  "стандарт": { solid: "bg-ocean text-cream", muted: "bg-ocean/25 text-ocean hover:bg-ocean/40" },
 };
 
 /** For any category beyond the known ones — still stable, since the input is sorted before assigning. */
-const FALLBACK_PALETTE = [
-  "bg-ocean-dark text-cream",
-  "bg-gold-dark text-cream",
-  "bg-ocean-light text-cream",
-  "bg-gold-light text-ocean-dark",
+const FALLBACK_PALETTE: CategoryColor[] = [
+  { solid: "bg-ocean-dark text-cream", muted: "bg-ocean-dark/25 text-ocean hover:bg-ocean-dark/40" },
+  { solid: "bg-gold-dark text-cream", muted: "bg-gold-dark/25 text-ocean hover:bg-gold-dark/40" },
+  { solid: "bg-ocean-light text-cream", muted: "bg-ocean-light/25 text-ocean hover:bg-ocean-light/40" },
+  { solid: "bg-gold-light text-ocean-dark", muted: "bg-gold-light/25 text-ocean hover:bg-gold-light/40" },
 ];
 
-export function assignCategoryColors(categories: string[]): Map<string, string> {
-  const map = new Map<string, string>();
+export function assignCategoryColors(categories: string[]): Map<string, CategoryColor> {
+  const map = new Map<string, CategoryColor>();
   const unique = Array.from(new Set(categories)).sort();
   let fallbackIndex = 0;
   for (const category of unique) {
