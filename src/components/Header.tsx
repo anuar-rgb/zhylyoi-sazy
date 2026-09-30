@@ -137,23 +137,27 @@ export default function Header() {
   }, [menuOpen, moreOpen]);
 
   return (
-    <header
-      // No "translate-y-0" for the visible state: that still computes to a
-      // real, non-"none" translate value, and per spec ANY non-"none"
-      // transform/translate on an ancestor becomes the containing block for a
-      // position:fixed descendant — which is exactly why the mobile overlay
-      // below rendered only partway across the screen on a zoomed phone.
-      // Leaving the class off entirely when not hidden keeps that computed
-      // value at the true initial "none", so header has no special
-      // containing-block behavior in the state the overlay is actually shown
-      // in — no DOM restructuring, no portal, just not applying a transform
-      // that was never needed while visible in the first place.
-      className={`bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg sticky top-0 z-50 border-b border-white/10 transition-transform duration-300 ease-in-out ${
-        hidden ? "-translate-y-full" : ""
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
+    <header className="sticky top-0 z-50">
+      {/* Every visual style (background, blur, the hide-on-scroll transform)
+          lives on THIS inner div, not on <header> itself. backdrop-filter
+          (blur/saturate) creates a new containing block for position:fixed
+          descendants, exactly like transform does — and <header> always had
+          it, unconditionally, so even after the earlier fix that dropped
+          "translate-y-0" from the visible state, the fixed mobile overlay
+          below was still being sized against header's own box instead of the
+          real viewport (visible as a partial-width menu once the visual and
+          layout viewports diverged, e.g. on a zoomed phone). Keeping the
+          overlay a sibling of this div — both still children of <header>,
+          no portal, no extra node under <body> — means header itself now has
+          no filter/transform of its own, so nothing between the overlay and
+          the true viewport creates a containing block. */}
+      <div
+        className={`bg-ocean/65 backdrop-blur-lg backdrop-saturate-150 text-cream shadow-lg border-b border-white/10 transition-transform duration-300 ease-in-out ${
+          hidden ? "-translate-y-full" : ""
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
               <Image
@@ -254,6 +258,7 @@ export default function Header() {
                 )}
               </svg>
             </button>
+          </div>
           </div>
         </div>
       </div>
