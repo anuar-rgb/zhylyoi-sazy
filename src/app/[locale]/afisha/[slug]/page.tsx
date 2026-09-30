@@ -14,6 +14,7 @@ const content: Record<
   Locale,
   {
     back: string;
+    backToTickets: string;
     location: string;
     organizer: string;
     addToCalendar: string;
@@ -24,6 +25,7 @@ const content: Record<
 > = {
   kk: {
     back: "Афишаға оралу",
+    backToTickets: "Билеттерге оралу",
     location: "Өтетін орны",
     organizer: "Ұйымдастырушы",
     addToCalendar: "Күнтізбеге қосу",
@@ -33,6 +35,7 @@ const content: Record<
   },
   ru: {
     back: "Назад к афише",
+    backToTickets: "Назад к билетам",
     location: "Место проведения",
     organizer: "Организатор",
     addToCalendar: "Добавить в календарь",
@@ -81,14 +84,18 @@ export default async function EventDetailPage({
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
+          {/* A ticketed event (hallId set) is never listed on the public Афиша
+              feed — the only way here is via "Билеты" — so its back link must
+              return there instead, or it would point at a list this event
+              never actually appears in. */}
           <Link
-            href="/afisha"
+            href={record.hallId ? "/tickets" : "/afisha"}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ocean/70 hover:text-gold-dark transition-colors mb-6"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
-            {t.back}
+            {record.hallId ? t.backToTickets : t.back}
           </Link>
         </FadeIn>
 
