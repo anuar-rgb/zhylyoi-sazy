@@ -15,6 +15,7 @@ import {
 import type { CultureEventRecord, EventImage } from "@/lib/cultureEvents";
 import type { PaymentMethodRecord } from "@/lib/paymentMethods";
 import BilingualField from "@/components/admin/BilingualField";
+import DeleteEventButton from "./DeleteEventButton";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -314,17 +315,26 @@ export default function EventForm({
         </details>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending || uploading}
-          className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
-        >
-          {pending ? "Сохранение…" : "Сохранить"}
-        </button>
-        <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          Отмена
-        </Link>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={pending || uploading}
+            className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
+          >
+            {pending ? "Сохранение…" : "Сохранить"}
+          </button>
+          <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+            Отмена
+          </Link>
+        </div>
+        {event && (
+          <DeleteEventButton
+            id={event.id}
+            title={event.titleRu ?? event.titleKk ?? "мероприятие"}
+            redirectHref={cancelHref}
+          />
+        )}
       </div>
     </form>
   );

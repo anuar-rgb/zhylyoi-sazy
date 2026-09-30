@@ -4,7 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteEvent } from "./actions";
 
-export default function DeleteEventButton({ id, title }: { id: string; title: string }) {
+export default function DeleteEventButton({
+  id,
+  title,
+  redirectHref,
+}: {
+  id: string;
+  title: string;
+  /** From the event editor: nowhere left on this page once it's gone, so navigate away instead of refreshing in place. Omitted on a list, which just refreshes without the deleted row. */
+  redirectHref?: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +28,12 @@ export default function DeleteEventButton({ id, title }: { id: string; title: st
 
     // A delete the caller has no rights for removes zero rows without erroring,
     // so without this the row would stay put and look like a glitch.
-    if (result.ok) router.refresh();
-    else setError(result.error ?? "Не удалось удалить.");
+    if (result.ok) {
+      if (redirectHref) router.push(redirectHref);
+      else router.refresh();
+    } else {
+      setError(result.error ?? "Не удалось удалить.");
+    }
   }
 
   return (
