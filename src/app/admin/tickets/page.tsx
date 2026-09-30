@@ -43,22 +43,27 @@ export default async function TicketsPage() {
       ) : (
         <div className="space-y-2">
           {events.map((event) => (
-            <div key={event.id} className={`${CARD} p-4 flex flex-wrap items-center justify-between gap-3`}>
-              <div className="min-w-0">
+            <div key={event.id} className={`${CARD} relative p-4 flex flex-wrap items-center justify-between gap-3`}>
+              {/* Absolutely-positioned full-card link, not a wrapper around
+                  everything below: a <Link> can't contain another <Link>
+                  (invalid nested <a>), so "Изменить" sits as a normal sibling
+                  above this one in stacking order instead — same pattern as
+                  the halls list. */}
+              <Link
+                href={`/admin/culture-events/${event.id}/tickets`}
+                className="absolute inset-0 rounded-3xl"
+                aria-label={`Билеты: ${event.titleRu ?? event.titleKk}`}
+              />
+              <div className="min-w-0 pointer-events-none">
                 <p className="font-semibold text-ocean truncate">{event.titleRu ?? event.titleKk}</p>
                 <p className="text-xs text-ocean/50">{formatEventDateTime(event.eventDate)}</p>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <Link
-                  href={`/admin/culture-events/${event.id}/tickets`}
-                  className="text-xs font-semibold text-ocean hover:text-gold-dark"
-                >
-                  Билеты
-                </Link>
-                <Link href={`/admin/culture-events/${event.id}`} className="text-xs font-semibold text-ocean hover:text-gold-dark">
-                  Изменить
-                </Link>
-              </div>
+              <Link
+                href={`/admin/culture-events/${event.id}`}
+                className="relative z-10 text-xs font-semibold text-ocean hover:text-gold-dark shrink-0"
+              >
+                Изменить
+              </Link>
             </div>
           ))}
         </div>
