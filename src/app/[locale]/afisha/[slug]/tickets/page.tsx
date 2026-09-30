@@ -96,7 +96,12 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Wider than the other detail pages on purpose: a hall's seat row is
+          real pixel width (SeatMap.tsx lays it out with fixed seat/gap sizes
+          for its curvature math), and max-w-5xl left a typical 14-15-seat row
+          just barely wider than the card — enough to force the mobile-style
+          horizontal scrollbar even on a full desktop window. */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>{backLink}</FadeIn>
 
         <FadeIn>
