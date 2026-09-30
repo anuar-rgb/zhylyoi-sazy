@@ -49,6 +49,13 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           Места <span className="text-ocean/40 font-normal text-base">({hall.totalCapacity})</span>
         </h2>
 
+        {seats.length > 0 && (
+          <p className="text-xs text-ocean/40 mb-3">
+            Это только базовая раскладка зала. Продажу вип-мест включают отдельно на странице «Билеты» каждого
+            мероприятия — категория, заданная здесь, сама по себе покупателю не показывается.
+          </p>
+        )}
+
         {seats.length === 0 ? (
           <div className={CARD}>
             <p className="text-sm text-ocean/60 mb-4">

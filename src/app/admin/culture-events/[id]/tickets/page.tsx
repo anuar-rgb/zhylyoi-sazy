@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getCultureEventById } from "@/lib/cultureEvents";
-import { listHallSeatCategories } from "@/lib/halls";
+import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import TicketTypeForm from "./TicketTypeForm";
 import ToggleTicketTypeButton from "./ToggleTicketTypeButton";
+import EventSeatMap from "./EventSeatMap";
 import { createTicketType, updateTicketType } from "./actions";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
@@ -21,16 +22,22 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
   const event = await getCultureEventById(id);
   if (!event) notFound();
 
-  const [hallCategories, ticketTypes] = await Promise.all([
-    event.hallId ? listHallSeatCategories(event.hallId) : Promise.resolve<string[]>([]),
+  const [eventSeats, ticketTypes] = await Promise.all([
+    event.hallId ? listEventSeatsForAdmin(id, event.hallId) : Promise.resolve([]),
     listEventTicketTypes(id),
   ]);
+
+  // This event's own categories — "standard" for every seat with no override,
+  // plus whatever the seat map below marked otherwise. Never the hall's own
+  // category list: that's just the hall's base layout now, not what this
+  // event actually sells (see event_seat_categories).
+  const eventCategories = [...new Set(eventSeats.map((seat) => seat.category))].sort();
 
   // Only categories that don't already have a price — the unique (event_id,
   // category) index would just reject a second one for the same category, and
   // there is no reason to offer a choice that can only fail.
   const pricedCategories = new Set(ticketTypes.map((t) => t.category));
-  const availableCategories = hallCategories.filter((category) => !pricedCategories.has(category));
+  const availableCategories = eventCategories.filter((category) => !pricedCategories.has(category));
 
   const eventTitle = event.titleRu ?? event.titleKk ?? "Мероприятие";
 
@@ -54,7 +61,19 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
           сюда сами. Пока можно задать категорию вручную ниже.
         </p>
       ) : (
-        <p className="text-sm text-ocean/60 mb-6">Категории ниже — те, что реально есть в зале мероприятия.</p>
+        <p className="text-sm text-ocean/60 mb-6">
+          Все места — «standard», пока вы сами не отметите какие-то как другую категорию ниже. Это касается только
+          этого мероприятия и не трогает базовую раскладку зала.
+        </p>
+      )}
+
+      {event.hallId && eventSeats.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-ocean mb-4">Категории мест этого мероприятия</h2>
+          <div className={CARD}>
+            <EventSeatMap eventId={id} seats={eventSeats} />
+          </div>
+        </section>
       )}
 
       {ticketTypes.length > 0 && (
@@ -81,7 +100,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
                   <TicketTypeForm
                     eventId={id}
                     ticketType={ticketType}
-                    categories={hallCategories}
+                    categories={eventCategories}
                     action={updateTicketType}
                     submitLabel="Сохранить"
                   />
@@ -104,7 +123,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
         </div>
       )}
 
-      {event.hallId && hallCategories.length === 0 && (
+      {event.hallId && eventSeats.length === 0 && (
         <div className={`${CARD} text-center`}>
           <p className="text-ocean/60 text-sm">
             В привязанном зале ещё нет мест — создайте сетку мест в разделе «Залы», тогда здесь появятся категории
@@ -113,7 +132,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
         </div>
       )}
 
-      {event.hallId && hallCategories.length > 0 && availableCategories.length === 0 && (
+      {event.hallId && eventSeats.length > 0 && availableCategories.length === 0 && (
         <p className="text-xs text-ocean/40 mt-3 text-center">Цена задана для всех категорий этого зала.</p>
       )}
     </div>

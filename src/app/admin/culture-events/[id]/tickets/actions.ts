@@ -130,3 +130,36 @@ export async function setTicketTypeActive(id: string, eventId: string, isActive:
   if (!error && count === 1) revalidateTickets(eventId);
   return { ok: !error && count === 1 };
 }
+
+/**
+ * category === null resets the selected seats back to "standard" for this
+ * event by deleting their override row entirely — there is no "standard"
+ * row to write, absence already means that (see event_seat_categories).
+ */
+export async function setEventSeatCategory(
+  eventId: string,
+  seatIds: string[],
+  category: string | null
+): Promise<{ ok: boolean }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false };
+  if (seatIds.length === 0) return { ok: true };
+
+  const supabase = await createClient();
+
+  if (category === null) {
+    const { error } = await supabase
+      .from("event_seat_categories")
+      .delete()
+      .eq("event_id", eventId)
+      .in("seat_id", seatIds);
+    if (!error) revalidateTickets(eventId);
+    return { ok: !error };
+  }
+
+  const rows = seatIds.map((seatId) => ({ event_id: eventId, seat_id: seatId, category }));
+  const { error } = await supabase.from("event_seat_categories").upsert(rows, { onConflict: "event_id,seat_id" });
+
+  if (!error) revalidateTickets(eventId);
+  return { ok: !error };
+}

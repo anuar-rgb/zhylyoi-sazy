@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
 import { getPublicCultureEventBySlug } from "@/lib/cultureEvents";
-import { listPublicHallSeats } from "@/lib/halls";
+import { listPublicEventSeats } from "@/lib/eventSeatCategories";
 import { listPublicEventTicketTypes } from "@/lib/eventTicketTypes";
 import { getTakenSeatIds } from "@/lib/bookings";
 import SeatPicker, { type SeatOption } from "./SeatPicker";
@@ -66,7 +66,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
   }
 
   const [seats, ticketTypes, takenSeatIds] = await Promise.all([
-    listPublicHallSeats(event.hallId),
+    listPublicEventSeats(event.id, event.hallId),
     listPublicEventTicketTypes(event.id),
     getTakenSeatIds(event.id),
   ]);
