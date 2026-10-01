@@ -30,6 +30,23 @@ export type ConfirmedBooking = {
 type Row = Record<string, unknown>;
 
 /**
+ * Active (pending or confirmed) bookings for one event — used to warn before
+ * deleting it, since bookings.event_id cascades on delete and would take
+ * every sale/ticket with it. Cancelled/expired holds don't count: they're
+ * abandoned carts, not sales anyone would miss.
+ */
+export async function countActiveBookingsForEvent(eventId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("bookings")
+    .select("id", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .in("status", ["pending", "confirmed"]);
+
+  return error || count === null ? 0 : count;
+}
+
+/**
  * Paid bookings still waiting on staff to confirm the payment — the admin
  * counterpart to /my-ticket's "оплатите и дождитесь подтверждения" message.
  * Scoped to the caller's organization by is_staff_of via bookings_staff_read;

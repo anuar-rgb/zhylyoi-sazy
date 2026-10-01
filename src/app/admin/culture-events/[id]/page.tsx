@@ -4,6 +4,7 @@ import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureEventById } from "@/lib/cultureEvents";
 import { listHalls } from "@/lib/halls";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
+import { countActiveBookingsForEvent } from "@/lib/bookingsAdmin";
 import EventForm from "../EventForm";
 import { updateEvent } from "../actions";
 
@@ -22,11 +23,12 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   const organizationId = identity.organizationId ?? event.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
-  const [halls, paymentMethods] = await Promise.all([
+  const [halls, paymentMethods, bookingCount] = await Promise.all([
     listHalls().then((rows) =>
       rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
     ),
     listPublicPaymentMethods(organizationId),
+    countActiveBookingsForEvent(id),
   ]);
 
   return (
@@ -35,6 +37,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       organizationId={organizationId}
       halls={halls}
       paymentMethods={paymentMethods}
+      bookingCount={bookingCount}
       action={updateEvent}
       heading={event.titleRu ?? event.titleKk ?? "Мероприятие"}
     />

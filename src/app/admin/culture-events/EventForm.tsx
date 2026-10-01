@@ -60,6 +60,7 @@ export default function EventForm({
   halls,
   defaultHallId,
   paymentMethods,
+  bookingCount = 0,
   action,
   heading,
 }: {
@@ -70,6 +71,8 @@ export default function EventForm({
   defaultHallId?: string;
   /** The organization's enabled payment methods, for the optional per-event override below. */
   paymentMethods: PaymentMethodRecord[];
+  /** Active bookings against this event, so the delete button can warn before it takes them with it. */
+  bookingCount?: number;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -333,6 +336,7 @@ export default function EventForm({
             id={event.id}
             title={event.titleRu ?? event.titleKk ?? "мероприятие"}
             redirectHref={cancelHref}
+            bookingCount={bookingCount}
           />
         )}
       </div>
