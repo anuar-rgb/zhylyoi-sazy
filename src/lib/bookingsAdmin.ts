@@ -46,6 +46,25 @@ export async function countActiveBookingsForEvent(eventId: string): Promise<numb
   return error || count === null ? 0 : count;
 }
 
+/** Same as countActiveBookingsForEvent, for a whole list at once — the "Билеты" dashboard's delete buttons. */
+export async function countActiveBookingsForEvents(eventIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (eventIds.length === 0) return counts;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("event_id")
+    .in("event_id", eventIds)
+    .in("status", ["pending", "confirmed"]);
+
+  if (error || !data) return counts;
+  for (const row of data as { event_id: string }[]) {
+    counts.set(row.event_id, (counts.get(row.event_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
 /**
  * Paid bookings still waiting on staff to confirm the payment — the admin
  * counterpart to /my-ticket's "оплатите и дождитесь подтверждения" message.

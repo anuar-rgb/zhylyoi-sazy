@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { listPendingPaidBookings } from "@/lib/bookingsAdmin";
+import { listPendingPaidBookings, countActiveBookingsForEvents } from "@/lib/bookingsAdmin";
 import { listPublicTicketedCultureEvents } from "@/lib/cultureEvents";
 import { formatEventDateTime } from "@/lib/eventFields";
+import DeleteEventButton from "../culture-events/DeleteEventButton";
 import MoreMenu from "./MoreMenu";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
@@ -15,6 +16,7 @@ export default async function TicketsPage() {
     organizationId ? listPendingPaidBookings(organizationId).then((rows) => rows.length) : Promise.resolve(0),
     listPublicTicketedCultureEvents(),
   ]);
+  const bookingCounts = await countActiveBookingsForEvents(events.map((event) => event.id));
 
   return (
     <div>
@@ -58,12 +60,19 @@ export default async function TicketsPage() {
                 <p className="font-semibold text-ocean truncate">{event.titleRu ?? event.titleKk}</p>
                 <p className="text-xs text-ocean/50">{formatEventDateTime(event.eventDate)}</p>
               </div>
-              <Link
-                href={`/admin/culture-events/${event.id}`}
-                className="relative z-10 text-xs font-semibold text-ocean hover:text-gold-dark shrink-0"
-              >
-                Изменить
-              </Link>
+              <div className="relative z-10 flex items-center gap-3 shrink-0">
+                <Link
+                  href={`/admin/culture-events/${event.id}`}
+                  className="text-xs font-semibold text-ocean hover:text-gold-dark"
+                >
+                  Изменить
+                </Link>
+                <DeleteEventButton
+                  id={event.id}
+                  title={event.titleRu ?? event.titleKk ?? "мероприятие"}
+                  bookingCount={bookingCounts.get(event.id) ?? 0}
+                />
+              </div>
             </div>
           ))}
         </div>
