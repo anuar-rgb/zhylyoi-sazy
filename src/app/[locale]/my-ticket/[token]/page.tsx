@@ -133,7 +133,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                             <Image src={method.staticQrImageUrl} alt={name} fill className="object-contain" />
                           </div>
                         )}
-                        <div>
+                        <div className="text-center sm:text-left">
                           <p className="text-sm font-semibold text-ocean">
                             {name}
                             {method.isDefault && (
@@ -142,6 +142,16 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                               </span>
                             )}
                           </p>
+                          {method.paymentUrl && (
+                            <a
+                              href={method.paymentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-primary inline-block mt-3 px-6 py-2.5 text-sm font-semibold"
+                            >
+                              {locale === "kk" ? "Төлеу" : "Оплатить"}
+                            </a>
+                          )}
                         </div>
                       </div>
                     );

@@ -17,6 +17,8 @@ export type PaymentMethodRecord = {
   isDefault: boolean;
   staticQrImageUrl: string | null;
   staticQrImagePath: string | null;
+  /** A link the buyer can open to pay; https only. */
+  paymentUrl: string | null;
   mode: string;
 };
 
@@ -39,6 +41,7 @@ function toMethod(row: Row): PaymentMethodRecord {
     isDefault: row.is_default === true,
     staticQrImageUrl: str(row.static_qr_image_url),
     staticQrImagePath: str(row.static_qr_image_path),
+    paymentUrl: str(row.payment_url),
     mode: String(row.mode ?? "manual"),
   };
 }

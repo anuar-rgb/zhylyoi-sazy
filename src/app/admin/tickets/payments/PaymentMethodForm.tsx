@@ -152,6 +152,25 @@ export default function PaymentMethodForm({
         {uploadError && <p className="text-xs text-red-600 mt-2">{uploadError}</p>}
       </div>
 
+      <div className={CARD}>
+        <label className={LABEL} htmlFor="payment_url">
+          Ссылка на оплату
+        </label>
+        <input
+          id="payment_url"
+          name="payment_url"
+          type="url"
+          inputMode="url"
+          defaultValue={method?.paymentUrl ?? ""}
+          placeholder="https://pay.kaspi.kz/..."
+          className={INPUT}
+        />
+        <p className="text-xs text-ocean/40 mt-1.5">
+          Необязательно. Если указать, у зрителя под QR-кодом появится кнопка «Оплатить». Только адреса, которые
+          начинаются с https://.
+        </p>
+      </div>
+
       <div className="flex items-center gap-3">
         <button
           type="submit"

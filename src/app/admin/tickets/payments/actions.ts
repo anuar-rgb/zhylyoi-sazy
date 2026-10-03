@@ -23,6 +23,22 @@ function revalidatePayments(id?: string) {
   if (id) revalidatePath(`/admin/tickets/payments/${id}`);
 }
 
+/**
+ * The pay link, or an error message. Only https is accepted: the value ends up as a link on a
+ * public page, and the database enforces the same rule.
+ */
+function parsePaymentUrl(form: FormData): { url: string | null; error: string | null } {
+  const raw = field(form, "payment_url");
+  if (!raw) return { url: null, error: null };
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol === "https:") return { url: parsed.toString(), error: null };
+  } catch {
+    // falls through to the message below
+  }
+  return { url: null, error: "Ссылка на оплату должна начинаться с https:// и быть корректным адресом." };
+}
+
 function paymentPayload(form: FormData) {
   return {
     provider_code: field(form, "provider_code"),
@@ -61,6 +77,9 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 
+  const link = parsePaymentUrl(form);
+  if (link.error) return { error: link.error };
+
   const { url, path } = parseQrImage(form);
 
   const supabase = await createClient();
@@ -74,6 +93,7 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
       is_default: data.is_default,
       static_qr_image_url: url,
       static_qr_image_path: path,
+      payment_url: link.url,
     })
     .select("id")
     .single();
@@ -99,6 +119,9 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
   if (!id) return { error: "Способ оплаты не найден." };
 
   const data = await fillPaymentTranslations(paymentPayload(form));
+  const link = parsePaymentUrl(form);
+  if (link.error) return { error: link.error };
+
   const { url, path } = parseQrImage(form);
 
   const supabase = await createClient();
@@ -110,6 +133,7 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
         display_name_ru: data.display_name_ru,
         static_qr_image_url: url,
         static_qr_image_path: path,
+        payment_url: link.url,
       },
       { count: "exact" }
     )
