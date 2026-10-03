@@ -163,6 +163,38 @@ export const listPublicTicketedCultureEvents = cache(async (): Promise<CultureEv
   return fillPublicTranslations((data as unknown as Row[]).map(toRecord));
 });
 
+/**
+ * Every event that sells tickets, whatever its status or date — for the staff list.
+ *
+ * The public listing above hides finished and unpublished ones on purpose; reusing it
+ * for the admin page meant a finished event could be neither found nor deleted from
+ * the panel. RLS scopes the rows to the caller's institution.
+ */
+export async function listAllTicketedCultureEvents(): Promise<{
+  /** Published and still to come — exactly what the public "Билеты" page shows. */
+  current: CultureEventRecord[];
+  /** Finished, draft or archived: invisible to visitors. */
+  other: CultureEventRecord[];
+}> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("culture_events")
+    .select(COLUMNS)
+    .not("hall_id", "is", null)
+    .order("event_date", { ascending: false });
+
+  if (error || !data) return { current: [], other: [] };
+
+  const now = Date.now();
+  const records = (data as unknown as Row[]).map(toRecord);
+  const isCurrent = (event: CultureEventRecord) =>
+    event.status === "published" && new Date(event.eventDate).getTime() >= now;
+  return {
+    current: records.filter(isCurrent).reverse(),
+    other: records.filter((event) => !isCurrent(event)),
+  };
+}
+
 /** One event by id, for the edit form. Null when missing or not visible to the caller. */
 export async function getCultureEventById(id: string): Promise<CultureEventRecord | null> {
   const supabase = await createClient();
