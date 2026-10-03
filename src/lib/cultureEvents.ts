@@ -195,6 +195,11 @@ export async function listAllTicketedCultureEvents(): Promise<{
   };
 }
 
+/** True once the event has started: ticket sales are closed from that moment, as on the public listing. */
+export function hasEventStarted(event: Pick<CultureEventRecord, "eventDate">): boolean {
+  return new Date(event.eventDate).getTime() < Date.now();
+}
+
 /** One event by id, for the edit form. Null when missing or not visible to the caller. */
 export async function getCultureEventById(id: string): Promise<CultureEventRecord | null> {
   const supabase = await createClient();

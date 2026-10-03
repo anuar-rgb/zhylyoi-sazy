@@ -4,7 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import SectionTitle from "@/components/SectionTitle";
-import { getPublicCultureEventBySlug } from "@/lib/cultureEvents";
+import { getPublicCultureEventBySlug, hasEventStarted } from "@/lib/cultureEvents";
 import { listPublicEventSeats } from "@/lib/eventSeatCategories";
 import { listPublicEventTicketTypes } from "@/lib/eventTicketTypes";
 import { getTakenSeatIds } from "@/lib/bookings";
@@ -57,6 +57,25 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
                 {locale === "kk"
                   ? "Бұл іс-шараға билеттер қолжетімсіз."
                   : "Билеты для этого мероприятия недоступны."}
+              </p>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+    );
+  }
+
+  if (hasEventStarted(event)) {
+    return (
+      <section className="py-12 sm:py-16 lg:py-20">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <FadeIn>
+            {backLink}
+            <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-8">
+              <p className="text-ocean/70">
+                {locale === "kk"
+                  ? "Бұл іс-шараға билет сату аяқталды."
+                  : "Продажа билетов на это мероприятие завершена."}
               </p>
             </div>
           </FadeIn>

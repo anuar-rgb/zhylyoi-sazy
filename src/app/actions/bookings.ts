@@ -43,6 +43,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     if (error.message?.includes("seat_not_available")) return { ok: false, error: "unavailable" };
     if (error.message?.includes("event_has_no_hall")) return { ok: false, error: "unavailable" };
     if (error.message?.includes("event_not_found")) return { ok: false, error: "unavailable" };
+    if (error.message?.includes("event_finished")) return { ok: false, error: "unavailable" };
     return { ok: false, error: "failed" };
   }
 
