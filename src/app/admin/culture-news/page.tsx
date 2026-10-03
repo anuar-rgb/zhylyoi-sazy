@@ -67,7 +67,7 @@ export default async function CultureNewsPage() {
                       <h2 className="font-bold text-ocean leading-tight">{item.titleRu ?? item.titleKk}</h2>
                       <p className="text-sm text-ocean/50 truncate">{item.titleKk}</p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${PUBLISH_STATUS_STYLE[item.status]}`}>
                         {PUBLISH_STATUS_LABELS[item.status]}
                       </span>

@@ -88,7 +88,7 @@ export default async function CollectivesPage() {
                         where every other card keeps them empty — which reads as a
                         card that cannot be edited at all. The badges wrap instead,
                         under the name, where moving costs nothing. */}
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <h2 className="font-bold text-ocean leading-tight">{name}</h2>
                         <p className="text-sm text-ocean/50 truncate">
@@ -111,7 +111,7 @@ export default async function CollectivesPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                         <Link
                           href={`/admin/culture-collectives/${collective.id}`}
                           className="text-xs font-semibold text-ocean border border-cream-dark rounded-full px-3 py-1.5 hover:bg-cream hover:text-gold-dark transition-colors"

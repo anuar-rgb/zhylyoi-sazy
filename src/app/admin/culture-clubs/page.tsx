@@ -65,7 +65,7 @@ export default async function ClubsPage() {
                       <h2 className="font-bold text-ocean leading-tight">{club.nameRu ?? club.nameKk}</h2>
                       <p className="text-sm text-ocean/50 truncate">{club.nameKk}</p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       {club.isActive ? (
                         <span className="bg-gold/15 text-ocean-dark text-xs font-semibold px-3 py-1.5 rounded-full">
                           На сайте

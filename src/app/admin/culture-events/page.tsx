@@ -73,7 +73,8 @@ export default async function CultureEventsPage() {
                       <h2 className="font-bold text-ocean leading-tight">{event.titleRu ?? event.titleKk}</h2>
                       <p className="text-sm text-ocean/50 truncate">{event.titleKk}</p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    {/* No shrink-0: the row is wider than a phone card, so it must be allowed to wrap. */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <span
                         className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
                           STATUS_STYLE[event.status] ?? STATUS_STYLE.draft
