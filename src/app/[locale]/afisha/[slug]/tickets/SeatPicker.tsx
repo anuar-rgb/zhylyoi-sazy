@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackProvider";
@@ -119,11 +119,11 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
   // SeatMap only ever hands back the reduced {id, rowLabel, seatNumber,
   // category, status} shape — this is how its callbacks recover price/taken/
   // ticketName to decide what a click or a tooltip means.
-  const seatsById = useMemo(() => new Map(allSeats.map((seat) => [seat.id, seat])), [allSeats]);
+  const seatsById = new Map(allSeats.map((seat) => [seat.id, seat]));
 
   // Same pinned vip/standard colours as the admin seat map (SeatMap.tsx) — a
   // buyer needs to tell categories apart at a glance just as much as staff do.
-  const categoryColors = useMemo(() => assignCategoryColors(allSeats.map((seat) => seat.category)), [allSeats]);
+  const categoryColors = assignCategoryColors(allSeats.map((seat) => seat.category));
 
   function toggleSeat(seat: SeatOption) {
     if (seat.taken || seat.price === null) return;

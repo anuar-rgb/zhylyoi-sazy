@@ -82,10 +82,14 @@ export default function Header() {
   const moreRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
-  useEffect(() => {
+  // Moving to another page closes both menus. Done while rendering, on the render that first sees
+  // the new path, rather than in an effect that sets state after the page has already painted.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setMenuOpen(false);
     setMoreOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     const locked = menuOpen || moreOpen;
