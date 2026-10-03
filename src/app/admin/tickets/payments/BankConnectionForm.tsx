@@ -39,6 +39,14 @@ export default function BankConnectionForm({
   const feedback = useFeedback();
   const [removing, setRemoving] = useState(false);
 
+  // The tick belongs to the stored keys: once they are gone (or saved anew) it must start unticked,
+  // or the button keeps saying "Удалить данные" with nothing left to delete.
+  const [hadSecret, setHadSecret] = useState(hasSecret);
+  if (hadSecret !== hasSecret) {
+    setHadSecret(hasSecret);
+    setRemoving(false);
+  }
+
   const webhookUrl = () => `${window.location.origin}/api/payments/webhook/${methodId}`;
   const [shownUrl, setShownUrl] = useState<string | null>(null);
 
@@ -142,7 +150,7 @@ export default function BankConnectionForm({
         disabled={pending || !serverReady}
         className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {pending ? "Сохранение…" : removing ? "Удалить данные" : "Сохранить данные банка"}
+        {pending ? "Сохранение…" : hasSecret && removing ? "Удалить данные" : "Сохранить данные банка"}
       </button>
     </form>
   );
