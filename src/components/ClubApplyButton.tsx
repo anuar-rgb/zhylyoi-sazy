@@ -211,8 +211,8 @@ export default function ClubApplyButton({
                       </button>
                       <button
                         type="submit"
-                        disabled={status === "submitting"}
-                        className="btn-primary flex-1 py-2.5 text-sm font-semibold disabled:opacity-60"
+                        disabled={status === "submitting" || !consent}
+                        className="btn-primary flex-1 py-2.5 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {submitLabel}
                       </button>
