@@ -39,6 +39,7 @@ type Texts = {
   working: string;
   book: string;
   confirm: string;
+  consent: string;
 };
 
 // The wording is fixed here, not in a translation file: it is one screen and it changes with the code.
@@ -46,6 +47,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
   ru: {
     errors: {
       missing: "Укажите имя и телефон.",
+      consent: "Для брони нужно дать согласие на обработку данных.",
       no_seats: "Выберите хотя бы одно место.",
       unavailable: "Билеты для этого мероприятия сейчас недоступны.",
       seat_taken: "Одно из выбранных мест только что заняли — выберите другое.",
@@ -67,10 +69,12 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     working: "Оформление…",
     book: "Забронировать",
     confirm: "Подтвердить",
+    consent: "Даю согласие на обработку персональных данных",
   },
   kk: {
     errors: {
       missing: "Аты-жөніңіз бен телефоныңызды көрсетіңіз.",
+      consent: "Броньдау үшін деректерді өңдеуге келісім беру қажет.",
       no_seats: "Кемінде бір орынды таңдаңыз.",
       unavailable: "Бұл іс-шараға билеттер қазір қолжетімсіз.",
       seat_taken: "Таңдалған орындардың бірін жаңа ғана алып қойды — басқасын таңдаңыз.",
@@ -92,6 +96,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     working: "Рәсімделуде…",
     book: "Броньдау",
     confirm: "Растау",
+    consent: "Дербес деректерді өңдеуге келісім беремін",
   },
 };
 
@@ -109,6 +114,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -191,6 +197,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
         buyerName,
         buyerPhone,
         seatIds: [...selected],
+        consent,
       });
 
       if (!result.ok) {
@@ -280,12 +287,22 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
             />
           </div>
 
+          <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
+            />
+            <span>{t.consent}</span>
+          </label>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
             type="submit"
-            disabled={pending || selectedSeats.length === 0}
-            className="btn-primary w-full py-2.5 text-sm font-semibold disabled:opacity-50"
+            disabled={pending || selectedSeats.length === 0 || !consent}
+            className="btn-primary w-full py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {pending ? t.working : total > 0 ? t.book : t.confirm}
           </button>

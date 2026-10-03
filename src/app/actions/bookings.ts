@@ -1,17 +1,20 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CreateBookingInput = {
   eventId: string;
   buyerName: string;
   buyerPhone: string;
   seatIds: string[];
+  /** The buyer ticked the consent to personal data processing. */
+  consent: boolean;
 };
 
 export type CreateBookingResult =
   | { ok: true; accessToken: string }
-  | { ok: false; error: "missing" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
+  | { ok: false; error: "missing" | "consent" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
 
 /**
  * The only way a booking is ever created. Everything that matters — price,
@@ -24,6 +27,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
   const buyerName = input.buyerName.trim();
   const buyerPhone = input.buyerPhone.trim();
   if (!buyerName || !buyerPhone) return { ok: false, error: "missing" };
+  if (input.consent !== true) return { ok: false, error: "consent" };
   if (input.seatIds.length === 0) return { ok: false, error: "no_seats" };
 
   const supabase = await createClient();
@@ -49,6 +53,19 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.access_token) return { ok: false, error: "failed" };
+
+  // Keep the proof that consent was given. Best effort on purpose: the booking already exists and
+  // holds the seats, so a failure here must never turn into a failed booking for the buyer.
+  if (row.booking_id) {
+    try {
+      await createAdminClient()
+        ?.from("bookings")
+        .update({ consent_given_at: new Date().toISOString() })
+        .eq("id", row.booking_id as string);
+    } catch {
+      // not recorded; the booking stands
+    }
+  }
 
   return { ok: true, accessToken: row.access_token as string };
 }

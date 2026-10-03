@@ -5,7 +5,7 @@ import type { Locale } from "@/i18n/routing";
 
 const content: Record<
   Locale,
-  { eyebrow: string; titleGold: string; titleCream: string; subtitle: string; afisha: string; about: string; scroll: string }
+  { eyebrow: string; titleGold: string; titleCream: string; subtitle: string; afisha: string; about: string; scroll: string; imageAlt: string }
 > = {
   kk: {
     eyebrow: "Атырау облысы, Жылыой ауданы",
@@ -15,6 +15,7 @@ const content: Record<
     afisha: "Афиша",
     about: "Біз туралы",
     scroll: "Төмен айналдыру",
+    imageAlt: "«Кең Жылыой» мәдениет үйінің ғимараты",
   },
   ru: {
     eyebrow: "Атырауская область, Жылыойский район",
@@ -24,6 +25,7 @@ const content: Record<
     afisha: "Афиша",
     about: "О нас",
     scroll: "Прокрутить вниз",
+    imageAlt: "Здание дома культуры «Кен Жылыой»",
   },
 };
 
@@ -32,7 +34,7 @@ export default async function Hero() {
   const t = content[locale];
   const text = await getSiteText(locale);
 
-  const common = { alt: text("hero.eyebrow"), sizes: "100vw", quality: 80 };
+  const common = { alt: t.imageAlt, sizes: "100vw", quality: 80 };
   const {
     props: { srcSet: desktopSrcSet },
   } = getImageProps({
@@ -56,9 +58,9 @@ export default async function Hero() {
         <picture>
           <source media="(min-width: 1024px)" srcSet={desktopSrcSet} />
           <source media="(max-width: 1023px)" srcSet={mobileSrcSet} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             {...mobileImgProps}
+            alt={t.imageAlt}
             fetchPriority="high"
             className="absolute inset-0 h-full w-full object-cover"
           />
