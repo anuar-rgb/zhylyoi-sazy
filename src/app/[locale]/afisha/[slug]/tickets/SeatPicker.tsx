@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { createBooking, type CreateBookingResult } from "@/app/actions/bookings";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
@@ -20,12 +21,78 @@ export type SeatOption = {
 
 type BookingError = Extract<CreateBookingResult, { ok: false }>["error"];
 
-const ERROR_MESSAGES: Record<BookingError, string> = {
-  missing: "Укажите имя и телефон.",
-  no_seats: "Выберите хотя бы одно место.",
-  unavailable: "Билеты для этого мероприятия сейчас недоступны.",
-  seat_taken: "Одно из выбранных мест только что заняли — выберите другое.",
-  failed: "Не удалось оформить бронь. Попробуйте ещё раз.",
+type Texts = {
+  errors: Record<BookingError, string>;
+  taken: string;
+  noPrice: string;
+  free: string;
+  created: string;
+  legendTaken: string;
+  stage: string;
+  scrollHint: string;
+  selected: string;
+  row: string;
+  seat: string;
+  total: string;
+  name: string;
+  phone: string;
+  working: string;
+  book: string;
+  confirm: string;
+};
+
+// The wording is fixed here, not in a translation file: it is one screen and it changes with the code.
+const TEXTS: Record<"ru" | "kk", Texts> = {
+  ru: {
+    errors: {
+      missing: "Укажите имя и телефон.",
+      no_seats: "Выберите хотя бы одно место.",
+      unavailable: "Билеты для этого мероприятия сейчас недоступны.",
+      seat_taken: "Одно из выбранных мест только что заняли — выберите другое.",
+      failed: "Не удалось оформить бронь. Попробуйте ещё раз.",
+    },
+    taken: "Место занято",
+    noPrice: "Цена для этой категории ещё не задана",
+    free: "бесплатно",
+    created: "Бронь создана",
+    legendTaken: "Занято / недоступно",
+    stage: "Сцена",
+    scrollHint: "Листайте схему в стороны",
+    selected: "Выбрано мест",
+    row: "Ряд",
+    seat: "место",
+    total: "Итого",
+    name: "Имя",
+    phone: "Телефон",
+    working: "Оформление…",
+    book: "Забронировать",
+    confirm: "Подтвердить",
+  },
+  kk: {
+    errors: {
+      missing: "Аты-жөніңіз бен телефоныңызды көрсетіңіз.",
+      no_seats: "Кемінде бір орынды таңдаңыз.",
+      unavailable: "Бұл іс-шараға билеттер қазір қолжетімсіз.",
+      seat_taken: "Таңдалған орындардың бірін жаңа ғана алып қойды — басқасын таңдаңыз.",
+      failed: "Броньдау сәтсіз аяқталды. Қайталап көріңіз.",
+    },
+    taken: "Орын бос емес",
+    noPrice: "Бұл санат үшін баға әлі белгіленбеген",
+    free: "тегін",
+    created: "Бронь жасалды",
+    legendTaken: "Бос емес / қолжетімсіз",
+    stage: "Сахна",
+    scrollHint: "Схеманы бүйірге жылжытыңыз",
+    selected: "Таңдалған орын",
+    row: "Қатар",
+    seat: "орын",
+    total: "Барлығы",
+    name: "Аты-жөні",
+    phone: "Телефон",
+    working: "Рәсімделуде…",
+    book: "Броньдау",
+    confirm: "Растау",
+  },
 };
 
 /**
@@ -38,6 +105,7 @@ const ERROR_MESSAGES: Record<BookingError, string> = {
 export default function SeatPicker({ eventId, rows }: { eventId: string; rows: { label: string; seats: SeatOption[] }[] }) {
   const router = useRouter();
   const feedback = useFeedback();
+  const t = TEXTS[useLocale() === "kk" ? "kk" : "ru"];
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
@@ -97,9 +165,9 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
   function seatTooltip(mapSeat: SeatMapSeat): string | undefined {
     const seat = seatsById.get(mapSeat.id);
     if (!seat) return undefined;
-    if (seat.taken) return "Место занято";
-    if (seat.price === null) return "Цена для этой категории ещё не задана";
-    return `${seat.ticketName} — ${seat.isFree ? "бесплатно" : `${seat.price} ₸`}`;
+    if (seat.taken) return t.taken;
+    if (seat.price === null) return t.noPrice;
+    return `${seat.ticketName} — ${seat.isFree ? t.free : `${seat.price} ₸`}`;
   }
 
   function handleSeatMapClick(mapSeat: SeatMapSeat) {
@@ -112,8 +180,8 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
     setError(null);
 
     if (selectedSeats.length === 0) {
-      setError(ERROR_MESSAGES.no_seats);
-      feedback.error(ERROR_MESSAGES.no_seats);
+      setError(t.errors.no_seats);
+      feedback.error(t.errors.no_seats);
       return;
     }
 
@@ -126,12 +194,12 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
       });
 
       if (!result.ok) {
-        setError(ERROR_MESSAGES[result.error]);
-        feedback.error(ERROR_MESSAGES[result.error]);
+        setError(t.errors[result.error]);
+        feedback.error(t.errors[result.error]);
         return;
       }
 
-      feedback.success("Бронь создана");
+      feedback.success(t.created);
       router.push(`/my-ticket/${result.accessToken}`);
     });
   }
@@ -149,20 +217,22 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
           rows={seatMapRows}
           seatVariant={seatVariant}
           seatTooltip={seatTooltip}
+          stageLabel={t.stage}
+          scrollHint={t.scrollHint}
           onSeatClick={handleSeatMapClick}
           legend={[
             ...Array.from(categoryColors.entries()).map(([category, color]) => ({
               swatchClassName: color.solid.split(" ")[0],
               label: category,
             })),
-            { swatchClassName: "bg-ocean/10", label: "Занято / недоступно" },
+            { swatchClassName: "bg-ocean/10", label: t.legendTaken },
           ]}
         />
       </div>
 
       <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6 lg:sticky lg:top-24">
         <p className="font-bold text-ocean mb-3">
-          Выбрано мест: {selectedSeats.length}
+          {t.selected}: {selectedSeats.length}
         </p>
 
         {selectedSeats.length > 0 && (
@@ -170,20 +240,20 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
             {selectedSeats.map((seat) => (
               <li key={seat.id} className="flex items-center justify-between gap-2">
                 <span>
-                  Ряд {seat.rowLabel}, место {seat.seatNumber}
+                  {t.row} {seat.rowLabel}, {t.seat} {seat.seatNumber}
                 </span>
-                <span className="shrink-0">{seat.isFree ? "бесплатно" : `${seat.price} ₸`}</span>
+                <span className="shrink-0">{seat.isFree ? t.free : `${seat.price} ₸`}</span>
               </li>
             ))}
           </ul>
         )}
 
-        <p className="text-lg font-bold text-ocean mb-4">Итого: {total > 0 ? `${total} ₸` : "бесплатно"}</p>
+        <p className="text-lg font-bold text-ocean mb-4">{t.total}: {total > 0 ? `${total} ₸` : t.free}</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-ocean/70 mb-1.5" htmlFor="buyer_name">
-              Имя
+              {t.name}
             </label>
             <input
               id="buyer_name"
@@ -198,7 +268,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
           </div>
           <div>
             <label className="block text-sm font-medium text-ocean/70 mb-1.5" htmlFor="buyer_phone">
-              Телефон
+              {t.phone}
             </label>
             <input
               id="buyer_phone"
@@ -217,7 +287,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
             disabled={pending || selectedSeats.length === 0}
             className="btn-primary w-full py-2.5 text-sm font-semibold disabled:opacity-50"
           >
-            {pending ? "Оформление…" : total > 0 ? "Забронировать" : "Подтвердить"}
+            {pending ? t.working : total > 0 ? t.book : t.confirm}
           </button>
         </form>
       </div>

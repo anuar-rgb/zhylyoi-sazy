@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
@@ -10,6 +11,7 @@ import QRCode from "qrcode";
  * all, since there is nothing for the door to honour yet.
  */
 export default function TicketQr({ value }: { value: string }) {
+  const kk = useLocale() === "kk";
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export default function TicketQr({ value }: { value: string }) {
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={dataUrl}
-      alt="QR-код билета"
+      alt={kk ? "Билет QR-коды" : "QR-код билета"}
       width={112}
       height={112}
       className="w-28 h-28 rounded-2xl border border-cream-dark bg-white p-1.5 shrink-0"

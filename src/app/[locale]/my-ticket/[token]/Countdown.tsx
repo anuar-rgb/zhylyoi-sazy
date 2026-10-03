@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 
 /**
@@ -11,6 +12,7 @@ import { useRouter } from "next/navigation";
  */
 export default function Countdown({ expiresAt }: { expiresAt: string }) {
   const router = useRouter();
+  const kk = useLocale() === "kk";
   const [remainingMs, setRemainingMs] = useState(() => new Date(expiresAt).getTime() - Date.now());
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function Countdown({ expiresAt }: { expiresAt: string }) {
     return () => clearInterval(interval);
   }, [expiresAt, router]);
 
-  if (remainingMs <= 0) return <p className="text-sm text-ocean/60">Время брони истекает…</p>;
+  if (remainingMs <= 0) return <p className="text-sm text-ocean/60">{kk ? "Бронь уақыты аяқталуда…" : "Время брони истекает…"}</p>;
 
   const totalSeconds = Math.floor(remainingMs / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -34,10 +36,11 @@ export default function Countdown({ expiresAt }: { expiresAt: string }) {
 
   return (
     <p className="text-sm text-ocean/70">
-      Место удерживается ещё{" "}
+      {kk ? "Орын тағы" : "Место удерживается ещё"}{" "}
       <span className="font-bold text-ocean">
         {minutes}:{String(seconds).padStart(2, "0")}
       </span>
+      {kk ? " ұсталады" : ""}
     </p>
   );
 }
