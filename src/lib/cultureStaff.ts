@@ -21,11 +21,13 @@ export type CultureStaffRecord = {
   email: string | null;
   sortOrder: number;
   images: StaffImage[];
+  /** When the person's consent to publication was recorded; null until it is. */
+  consentGivenAt: string | null;
 };
 
 const COLUMNS =
   "id, organization_id, is_active, name, name_kk, name_ru, role_kk, role_ru, " +
-  "description_kk, description_ru, phone, email, sort_order, images";
+  "description_kk, description_ru, phone, email, sort_order, images, consent_given_at";
 
 type Row = Record<string, unknown>;
 
@@ -63,6 +65,7 @@ function toRecord(row: Row): CultureStaffRecord {
     email: str(row.email),
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
     images: toImages(row.images),
+    consentGivenAt: str(row.consent_given_at),
   };
 }
 

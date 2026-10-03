@@ -36,12 +36,14 @@ export type CultureMemberRecord = {
   hasHigherEducation: boolean;
   sortOrder: number;
   images: MemberImage[];
+  /** When the person's consent to publication was recorded; null until it is. */
+  consentGivenAt: string | null;
 };
 
 const COLUMNS =
   "id, organization_id, is_active, name, name_kk, name_ru, role_kk, role_ru, " +
   "education_kk, education_ru, specialty_kk, specialty_ru, level_kk, level_ru, " +
-  "has_higher_education, note_kk, note_ru, club_id, sort_order, images";
+  "has_higher_education, note_kk, note_ru, club_id, sort_order, images, consent_given_at";
 
 type Row = Record<string, unknown>;
 
@@ -85,6 +87,7 @@ function toRecord(row: Row): CultureMemberRecord {
     hasHigherEducation: row.has_higher_education === true,
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
     images: toImages(row.images),
+    consentGivenAt: str(row.consent_given_at),
   };
 }
 

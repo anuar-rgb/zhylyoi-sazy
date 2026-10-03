@@ -11,6 +11,8 @@ import { translateFieldPair } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null };
 
+const CONSENT_REQUIRED = "Отметьте, что получено согласие человека на публикацию его данных.";
+
 /** A trimmed value, or null — an empty input means "unknown", not an empty string. */
 function field(form: FormData, name: string): string | null {
   const value = form.get(name);
@@ -136,6 +138,8 @@ export async function createMember(_prev: FormState, form: FormData): Promise<Fo
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
+  if (form.get("consent") !== "on") return { error: CONSENT_REQUIRED };
+
   const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите имя хотя бы на одном языке." };
 
@@ -144,7 +148,7 @@ export async function createMember(_prev: FormState, form: FormData): Promise<Fo
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("culture_members").insert({ ...data, organization_id: organizationId });
+  const { error } = await supabase.from("culture_members").insert({ ...data, organization_id: organizationId, consent_given_at: new Date().toISOString() });
 
   if (error) return { error: "Не удалось сохранить артиста." };
 
@@ -159,13 +163,18 @@ export async function updateMember(_prev: FormState, form: FormData): Promise<Fo
   const id = field(form, "id");
   if (!id) return { error: "Артист не найден." };
 
+  if (form.get("consent") !== "on") return { error: CONSENT_REQUIRED };
+  // The date records when consent was first given; later edits must not move it.
+  const existing = await getCultureMemberById(id);
+  const consentGivenAt = existing?.consentGivenAt ?? new Date().toISOString();
+
   const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите имя хотя бы на одном языке." };
 
   const supabase = await createClient();
   const { error, count } = await supabase
     .from("culture_members")
-    .update({ ...data, updated_at: new Date().toISOString() }, { count: "exact" })
+    .update({ ...data, consent_given_at: consentGivenAt, updated_at: new Date().toISOString() }, { count: "exact" })
     .eq("id", id);
 
   if (error) return { error: "Не удалось сохранить изменения." };

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import type { CultureMemberRecord, MemberImage } from "@/lib/cultureMembers";
 import BilingualField from "@/components/admin/BilingualField";
+import ConsentCheckbox from "@/components/admin/ConsentCheckbox";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -68,6 +69,7 @@ export default function MemberForm({
   const [state, formAction, pending] = useActionState(action, { error: null });
   const [images, setImages] = useState<MemberImage[]>(member?.images ?? []);
   const [uploading, setUploading] = useState(false);
+  const [consent, setConsent] = useState(member?.consentGivenAt != null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   /**
@@ -275,11 +277,13 @@ export default function MemberForm({
         </p>
       </div>
 
+      <ConsentCheckbox checked={consent} onChange={setConsent} givenAt={member?.consentGivenAt ?? null} />
+
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={pending || uploading}
-          className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
+          disabled={pending || uploading || !consent}
+          className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {pending ? "Сохранение…" : "Сохранить"}
         </button>
