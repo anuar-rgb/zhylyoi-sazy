@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 /**
  * Pure presentation: one row of seats in, one row of circles out. The
  * component never fetches or interprets data — status is whatever string the
@@ -35,6 +37,8 @@ export interface SeatMapProps {
   className?: string;
   /** When set, the row-label captions become clickable (whole-row bulk select). Unused on the public seat picker. */
   onRowLabelClick?: (row: SeatMapRow) => void;
+  /** Shown only when the hall is wider than its box, i.e. on a phone. */
+  scrollHint?: string;
 }
 
 const SEAT_SIZE = 28;
@@ -131,10 +135,44 @@ export default function SeatMap({
   seatTooltip,
   className,
   onRowLabelClick,
+  scrollHint = "Листайте схему в стороны",
 }: SeatMapProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [overflowing, setOverflowing] = useState(false);
+
+  // A hall wider than its box scrolls sideways. Start in the middle, where the best seats are,
+  // and say so, so the cut-off edge is not mistaken for the end of the hall.
+  useEffect(() => {
+    const outer = scrollRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+
+    let centered = false;
+    const measure = () => {
+      const over = inner.scrollWidth > outer.clientWidth + 1;
+      setOverflowing(over);
+      if (over && !centered) {
+        outer.scrollLeft = (inner.scrollWidth - outer.clientWidth) / 2;
+        centered = true;
+      }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(outer);
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className={`overflow-x-auto ${className ?? ""}`}>
-      <div className="w-max mx-auto px-2 py-1">
+    <div className={className}>
+      {overflowing && (
+        <p className="text-xs text-ocean/50 text-center mb-2" aria-hidden>
+          ← {scrollHint} →
+        </p>
+      )}
+      <div ref={scrollRef} className="overflow-x-auto">
+      <div ref={innerRef} className="w-max mx-auto px-2 py-1">
         <div className="flex flex-col items-center mb-6 select-none" aria-hidden>
           <span className="text-[11px] font-semibold tracking-[0.2em] text-ocean/40 uppercase mb-1.5">
             {stageLabel}
@@ -204,12 +242,12 @@ export default function SeatMap({
                     type="button"
                     onClick={() => onRowLabelClick(row)}
                     title={`Выбрать весь ряд ${row.label}`}
-                    className="sticky right-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40 hover:text-ocean-dark hover:underline cursor-pointer"
+                    className="w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40 hover:text-ocean-dark hover:underline cursor-pointer"
                   >
                     {row.label}
                   </button>
                 ) : (
-                  <span className="sticky right-0 z-10 bg-white w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40">
+                  <span className="w-5 shrink-0 text-center text-[11px] font-semibold text-ocean/40">
                     {row.label}
                   </span>
                 )}
@@ -218,14 +256,17 @@ export default function SeatMap({
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-6 pt-4 border-t border-cream-dark text-xs text-ocean/60">
+      </div>
+      </div>
+
+      {/* Outside the scrolling box: the legend must stay in view however far the hall is scrolled. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-6 pt-4 px-2 border-t border-cream-dark text-xs text-ocean/60">
           {legend.map((item) => (
             <span key={item.label} className="inline-flex items-center gap-1.5">
               <span className={`inline-block w-3 h-3 rounded-full ${item.swatchClassName}`} />
               {item.label}
             </span>
           ))}
-        </div>
       </div>
     </div>
   );
