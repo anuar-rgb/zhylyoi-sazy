@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { markApplication } from "../actions";
 import type { ApplicationStatus } from "@/lib/applications";
 
@@ -13,6 +14,7 @@ export default function MarkProcessedButton({
   status: ApplicationStatus;
 }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +30,13 @@ export default function MarkProcessedButton({
 
     // An update the caller has no rights for changes zero rows without erroring,
     // so without this the badge would stay put and look like a glitch.
-    if (result.ok) router.refresh();
-    else setError("Не удалось сохранить.");
+    if (result.ok) {
+      feedback.success(processed ? "Заявка возвращена в новые" : "Заявка отмечена как обработанная");
+      router.refresh();
+    } else {
+      setError("Не удалось сохранить.");
+      feedback.error("Не удалось сохранить.");
+    }
   }
 
   return (

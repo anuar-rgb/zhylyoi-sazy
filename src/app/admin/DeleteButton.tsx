@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { removeApplication } from "./actions";
 
 export default function DeleteButton({ id, childName }: { id: string; childName: string }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
   async function handleDelete() {
-    if (!confirm(`Удалить заявку «${childName}»?`)) return;
+    const confirmed = await feedback.confirm({ title: `Удалить заявку «${childName}»?`, confirmLabel: "Удалить", danger: true });
+    if (!confirmed) return;
     setBusy(true);
     setFailed(false);
 
@@ -19,8 +22,13 @@ export default function DeleteButton({ id, childName }: { id: string; childName:
 
     // A delete the caller has no rights for removes zero rows without erroring, so
     // without this the row would simply stay put and look like a glitch.
-    if (result.ok) router.refresh();
-    else setFailed(true);
+    if (result.ok) {
+      feedback.success("Заявка удалена");
+      router.refresh();
+    } else {
+      setFailed(true);
+      feedback.error("Недостаточно прав для удаления");
+    }
   }
 
   return (

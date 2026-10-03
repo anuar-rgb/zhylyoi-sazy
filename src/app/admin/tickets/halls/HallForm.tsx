@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState } from "react";
 import Link from "next/link";
 import BilingualField from "@/components/admin/BilingualField";
@@ -21,6 +22,7 @@ export default function HallForm({
   cancelHref?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
 
   return (
     <form action={formAction} className="space-y-5">

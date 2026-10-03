@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState } from "react";
 import type { OrganizationRecord } from "@/lib/organization";
 import BilingualField from "@/components/admin/BilingualField";
@@ -45,6 +46,7 @@ export default function SettingsForm({
   action: (prev: FormState, form: FormData) => Promise<FormState>;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null, saved: false });
+  useActionToast(state, "Настройки сохранены");
 
   return (
     <form action={formAction} className="space-y-5">

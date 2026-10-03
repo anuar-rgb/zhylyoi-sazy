@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureEventById, type EventImage } from "@/lib/cultureEvents";
@@ -131,7 +132,8 @@ function revalidateEvent(slug: string | null) {
 }
 
 /** Афиша no longer lists a ticketed event, so saving one should land back on "Билеты" instead. */
-function redirectAfterSave(hallId: string | null): never {
+async function redirectAfterSave(hallId: string | null, message: string): Promise<never> {
+  await flash(message);
   redirect(hallId ? "/admin/tickets" : "/admin/culture-events");
 }
 
@@ -173,7 +175,7 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   }
 
   revalidateEvent(slug);
-  redirectAfterSave(data.hall_id);
+  return redirectAfterSave(data.hall_id, "Добавлено");
 }
 
 export async function updateEvent(_prev: FormState, form: FormData): Promise<FormState> {
@@ -214,7 +216,7 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   }
 
   revalidateEvent(slug);
-  redirectAfterSave(data.hall_id);
+  return redirectAfterSave(data.hall_id, "Изменения сохранены");
 }
 
 export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: string }> {

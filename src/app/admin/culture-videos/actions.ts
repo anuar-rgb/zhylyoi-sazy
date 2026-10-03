@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureVideoById } from "@/lib/cultureVideos";
@@ -118,6 +119,7 @@ export async function createVideo(_prev: FormState, form: FormData): Promise<For
   if (error) return { error: "Не удалось сохранить видео." };
 
   revalidateVideos();
+  await flash("Добавлено");
   redirect(destination(form));
 }
 
@@ -160,6 +162,7 @@ export async function updateVideo(_prev: FormState, form: FormData): Promise<For
   if (count === 0) return { error: "Недостаточно прав для редактирования." };
 
   revalidateVideos();
+  await flash("Изменения сохранены");
   redirect(destination(form));
 }
 

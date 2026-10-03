@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { setTicketTypeActive } from "./actions";
 
 export default function ToggleTicketTypeButton({
@@ -14,6 +15,7 @@ export default function ToggleTicketTypeButton({
   isActive: boolean;
 }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
 
   async function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
@@ -26,7 +28,12 @@ export default function ToggleTicketTypeButton({
     setBusy(true);
     const result = await setTicketTypeActive(id, eventId, !isActive);
     setBusy(false);
-    if (result.ok) router.refresh();
+    if (result.ok) {
+      feedback.success(isActive ? "Тип билета скрыт" : "Тип билета показывается");
+      router.refresh();
+    } else {
+      feedback.error("Не удалось сохранить.");
+    }
   }
 
   return (

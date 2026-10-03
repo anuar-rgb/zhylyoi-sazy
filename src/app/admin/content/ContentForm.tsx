@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState } from "react";
 import { CONTENT_GROUPS } from "@/lib/siteContent";
 import type { ContentOverrides } from "@/lib/orgContent";
@@ -16,6 +17,7 @@ export default function ContentForm({
   action: (prev: FormState, form: FormData) => Promise<FormState>;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null, saved: null });
+  useActionToast(state, "Тексты сохранены");
 
   const changedCount = Object.keys(overrides).length;
 

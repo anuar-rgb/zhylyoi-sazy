@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { deletePaymentMethod, setPaymentMethodDefault, setPaymentMethodEnabled } from "./actions";
 
 export default function PaymentMethodControls({
@@ -16,6 +17,7 @@ export default function PaymentMethodControls({
   isDefault: boolean;
 }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +26,13 @@ export default function PaymentMethodControls({
     setError(null);
     const result = await setPaymentMethodEnabled(id, !isEnabled);
     setBusy(false);
-    if (result.ok) router.refresh();
-    else setError("Не удалось сохранить.");
+    if (result.ok) {
+      feedback.success(isEnabled ? "Способ оплаты выключен" : "Способ оплаты включён");
+      router.refresh();
+    } else {
+      setError("Не удалось сохранить.");
+      feedback.error("Не удалось сохранить.");
+    }
   }
 
   async function handleSetDefault() {
@@ -33,18 +40,34 @@ export default function PaymentMethodControls({
     setError(null);
     const result = await setPaymentMethodDefault(id);
     setBusy(false);
-    if (result.ok) router.refresh();
-    else setError("Не удалось сохранить.");
+    if (result.ok) {
+      feedback.success("Способ оплаты выбран по умолчанию");
+      router.refresh();
+    } else {
+      setError("Не удалось сохранить.");
+      feedback.error("Не удалось сохранить.");
+    }
   }
 
   async function handleDelete() {
-    if (!confirm(`Удалить способ оплаты «${providerName}»?`)) return;
+    const confirmed = await feedback.confirm({
+      title: `Удалить способ оплаты «${providerName}»?`,
+      confirmLabel: "Удалить",
+      danger: true,
+    });
+    if (!confirmed) return;
     setBusy(true);
     setError(null);
     const result = await deletePaymentMethod(id);
     setBusy(false);
-    if (result.ok) router.refresh();
-    else setError(result.error ?? "Не удалось удалить.");
+    if (result.ok) {
+      feedback.success("Удалено");
+      router.refresh();
+    } else {
+      const message = result.error ?? "Не удалось удалить.";
+      setError(message);
+      feedback.error(message);
+    }
   }
 
   return (

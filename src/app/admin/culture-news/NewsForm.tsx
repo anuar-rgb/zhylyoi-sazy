@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -66,6 +67,7 @@ export default function NewsForm({
   heading: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
   const [images, setImages] = useState<NewsImage[]>(item?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState } from "react";
 import Link from "next/link";
 import BilingualField from "@/components/admin/BilingualField";
@@ -18,6 +19,7 @@ const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6
 export default function NewHallForm() {
   const initialState: FormState = { error: null };
   const [state, formAction, pending] = useActionState(createHall, initialState);
+  useActionToast(state, "Сохранено");
 
   return (
     <form action={formAction} className="space-y-5">

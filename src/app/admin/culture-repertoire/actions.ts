@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureRepertoireById } from "@/lib/cultureRepertoire";
@@ -116,6 +117,7 @@ export async function createPiece(_prev: FormState, form: FormData): Promise<For
   if (error) return { error: "Не удалось сохранить произведение." };
 
   revalidateRepertoire();
+  await flash("Добавлено");
   redirect(destination(form));
 }
 
@@ -142,6 +144,7 @@ export async function updatePiece(_prev: FormState, form: FormData): Promise<For
   if (count === 0) return { error: "Недостаточно прав для редактирования." };
 
   revalidateRepertoire();
+  await flash("Изменения сохранены");
   redirect(destination(form));
 }
 

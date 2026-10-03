@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -79,6 +80,7 @@ export default function CollectiveForm({
   heading: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
   const [images, setImages] = useState<CultureClubImage[]>(collective?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);

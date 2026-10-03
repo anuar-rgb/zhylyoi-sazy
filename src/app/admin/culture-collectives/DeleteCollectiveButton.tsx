@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { deleteCollective } from "./actions";
 
 export default function DeleteCollectiveButton({
@@ -15,6 +16,7 @@ export default function DeleteCollectiveButton({
   memberCount: number;
 }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,8 @@ export default function DeleteCollectiveButton({
         ? `\n\nАртисты (${memberCount}) не удалятся — они останутся в разделе «Состав ансамбля» без коллектива, и их можно будет приписать к другому.`
         : "";
 
-    if (!confirm(`Удалить коллектив «${name}»? Его страница исчезнет с сайта.${about}`)) return;
+    const confirmed = await feedback.confirm({ title: `Удалить коллектив «${name}»?`, message: `Его страница исчезнет с сайта.${about}`, confirmLabel: "Удалить", danger: true });
+    if (!confirmed) return;
 
     setBusy(true);
     setError(null);
@@ -34,8 +37,14 @@ export default function DeleteCollectiveButton({
 
     // A delete the caller has no rights for removes zero rows without erroring,
     // so without this the row would stay put and look like a glitch.
-    if (result.ok) router.refresh();
-    else setError(result.error ?? "Не удалось удалить.");
+    if (result.ok) {
+      feedback.success("Удалено");
+      router.refresh();
+    } else {
+      const message = result.error ?? "Не удалось удалить.";
+      setError(message);
+      feedback.error(message);
+    }
   }
 
   return (

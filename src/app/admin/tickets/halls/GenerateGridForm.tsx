@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState } from "react";
 import { regenerateSeatGrid } from "./actions";
 import GridFieldset from "./GridFieldset";
@@ -13,6 +14,7 @@ import GridFieldset from "./GridFieldset";
  */
 export default function GenerateGridForm({ hallId }: { hallId: string }) {
   const [state, formAction, pending] = useActionState(regenerateSeatGrid, { error: null });
+  useActionToast(state, "Схема зала обновлена");
 
   return (
     <form action={formAction} className="space-y-4">

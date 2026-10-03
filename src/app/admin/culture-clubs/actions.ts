@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureClubById, type CultureClubImage } from "@/lib/cultureClubs";
@@ -136,6 +137,7 @@ export async function createClub(_prev: FormState, form: FormData): Promise<Form
   }
 
   revalidateClub(slug);
+  await flash("Добавлено");
   redirect("/admin/culture-clubs");
 }
 
@@ -178,6 +180,7 @@ export async function updateClub(_prev: FormState, form: FormData): Promise<Form
 
   revalidateClub(slug);
   if (before?.slug && before.slug !== slug) revalidateClub(before.slug);
+  await flash("Изменения сохранены");
   redirect("/admin/culture-clubs");
 }
 

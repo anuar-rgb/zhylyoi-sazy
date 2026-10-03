@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { youtubeId, youtubeThumbnailUrl, youtubeWatchUrl } from "@/lib/youtube";
@@ -60,6 +61,7 @@ export default function VideoForm({
   heading: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
 
   // Prefilled with a full link rather than the stored eleven characters: the person
   // pasted a link, and a link is what they will recognise when they come back.

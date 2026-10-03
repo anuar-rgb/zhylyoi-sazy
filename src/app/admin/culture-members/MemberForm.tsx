@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -67,6 +68,7 @@ export default function MemberForm({
   heading: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
   const [images, setImages] = useState<MemberImage[]>(member?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [consent, setConsent] = useState(member?.consentGivenAt != null);

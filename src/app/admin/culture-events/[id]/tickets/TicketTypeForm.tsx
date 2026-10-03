@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState, useState } from "react";
 import BilingualField from "@/components/admin/BilingualField";
 import type { EventTicketTypeRecord } from "@/lib/eventTicketTypes";
@@ -31,6 +32,7 @@ export default function TicketTypeForm({
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
   const [isFree, setIsFree] = useState(ticketType?.isFree ?? false);
 
   return (

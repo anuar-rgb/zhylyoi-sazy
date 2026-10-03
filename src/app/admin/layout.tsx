@@ -4,6 +4,7 @@ import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { countUnseenApplications } from "@/lib/applications";
+import FeedbackProvider from "@/components/feedback/FeedbackProvider";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
 import "../globals.css";
@@ -37,6 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <html lang="ru" className={`${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full bg-cream/30">
+        <FeedbackProvider>
         <header className="bg-ocean-dark text-cream">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -72,6 +74,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </aside>
           <main className="min-w-0">{children}</main>
         </div>
+        </FeedbackProvider>
       </body>
     </html>
   );

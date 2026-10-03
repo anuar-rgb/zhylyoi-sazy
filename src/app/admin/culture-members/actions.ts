@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureMemberById, type MemberImage } from "@/lib/cultureMembers";
@@ -156,6 +157,7 @@ export async function createMember(_prev: FormState, form: FormData): Promise<Fo
   if (error) return { error: "Не удалось сохранить артиста." };
 
   revalidateMembers();
+  await flash("Добавлено");
   redirect(destination(form));
 }
 
@@ -190,6 +192,7 @@ export async function updateMember(_prev: FormState, form: FormData): Promise<Fo
   if (count === 0) return { error: "Недостаточно прав для редактирования." };
 
   revalidateMembers();
+  await flash("Изменения сохранены");
   redirect(destination(form));
 }
 

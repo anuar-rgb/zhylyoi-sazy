@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState } from "react";
 import Link from "next/link";
 import { REPERTOIRE_CATEGORIES, REPERTOIRE_CATEGORY_ADMIN_LABELS } from "@/lib/repertoireFields";
@@ -54,6 +55,7 @@ export default function PieceForm({
   heading: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
 
   return (
     <form action={formAction} className="space-y-5">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { deleteEvent } from "./actions";
 
 export default function DeleteEventButton({
@@ -18,16 +19,29 @@ export default function DeleteEventButton({
   bookingCount?: number;
 }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
-    const message =
+    const confirmed = await feedback.confirm(
       bookingCount > 0
-        ? `У мероприятия «${title}» есть ${bookingCount} ${bookingCount === 1 ? "бронь" : "броней"} (оплаты, билеты). ` +
-          `Удаление мероприятия безвозвратно удалит их тоже — отменить это будет нельзя. Удалить?`
-        : `Удалить мероприятие «${title}»? Страница исчезнет с сайта.`;
-    if (!confirm(message)) return;
+        ? {
+            title: `Удалить мероприятие «${title}»?`,
+            message:
+              `У него есть ${bookingCount} ${bookingCount === 1 ? "бронь" : "броней"} (оплаты, билеты). ` +
+              `Они удалятся вместе с мероприятием, отменить это будет нельзя.`,
+            confirmLabel: "Удалить",
+            danger: true,
+          }
+        : {
+            title: `Удалить мероприятие «${title}»?`,
+            message: "Страница исчезнет с сайта.",
+            confirmLabel: "Удалить",
+            danger: true,
+          }
+    );
+    if (!confirmed) return;
     setBusy(true);
     setError(null);
 
@@ -37,10 +51,13 @@ export default function DeleteEventButton({
     // A delete the caller has no rights for removes zero rows without erroring,
     // so without this the row would stay put and look like a glitch.
     if (result.ok) {
+      feedback.success("Удалено");
       if (redirectHref) router.push(redirectHref);
       else router.refresh();
     } else {
-      setError(result.error ?? "Не удалось удалить.");
+      const message = result.error ?? "Не удалось удалить.";
+      setError(message);
+      feedback.error(message);
     }
   }
 

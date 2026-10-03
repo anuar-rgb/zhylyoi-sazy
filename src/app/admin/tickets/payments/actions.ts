@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { translateFieldPair } from "@/lib/autoTranslate";
@@ -108,6 +109,7 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
   }
 
   revalidatePayments();
+  await flash("Добавлено");
   redirect(`/admin/tickets/payments/${created.id}`);
 }
 

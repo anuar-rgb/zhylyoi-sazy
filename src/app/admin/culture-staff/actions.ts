@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureStaffById, type StaffImage } from "@/lib/cultureStaff";
@@ -118,6 +119,7 @@ export async function createStaff(_prev: FormState, form: FormData): Promise<For
   if (error) return { error: "Не удалось сохранить сотрудника." };
 
   revalidateStaff();
+  await flash("Добавлено");
   redirect("/admin/culture-staff");
 }
 
@@ -152,6 +154,7 @@ export async function updateStaff(_prev: FormState, form: FormData): Promise<For
   if (count === 0) return { error: "Недостаточно прав для редактирования." };
 
   revalidateStaff();
+  await flash("Изменения сохранены");
   redirect("/admin/culture-staff");
 }
 

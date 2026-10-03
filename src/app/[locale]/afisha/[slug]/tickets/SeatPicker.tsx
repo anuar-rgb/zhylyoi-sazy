@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { createBooking, type CreateBookingResult } from "@/app/actions/bookings";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 
@@ -36,6 +37,7 @@ const ERROR_MESSAGES: Record<BookingError, string> = {
  */
 export default function SeatPicker({ eventId, rows }: { eventId: string; rows: { label: string; seats: SeatOption[] }[] }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
@@ -111,6 +113,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
 
     if (selectedSeats.length === 0) {
       setError(ERROR_MESSAGES.no_seats);
+      feedback.error(ERROR_MESSAGES.no_seats);
       return;
     }
 
@@ -124,9 +127,11 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
 
       if (!result.ok) {
         setError(ERROR_MESSAGES[result.error]);
+        feedback.error(ERROR_MESSAGES[result.error]);
         return;
       }
 
+      feedback.success("Бронь создана");
       router.push(`/my-ticket/${result.accessToken}`);
     });
   }

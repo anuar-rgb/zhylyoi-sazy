@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FeedbackProvider from "@/components/feedback/FeedbackProvider";
 import "../globals.css";
 
 const montserrat = Montserrat({
@@ -83,6 +84,7 @@ export default async function RootLayout({
     <html lang={locale} className={`${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale}>
+          <FeedbackProvider>
           <Header />
           {/* overflow-x-hidden lives here, not on html/body: that combination breaks
               position: sticky on Header (see globals.css). */}
@@ -90,6 +92,7 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          </FeedbackProvider>
         </NextIntlClientProvider>
       </body>
     </html>

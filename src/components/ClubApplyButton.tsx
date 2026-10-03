@@ -1,5 +1,6 @@
 "use client";
 
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { submitClubApplication } from "@/app/actions/applications";
@@ -58,6 +59,7 @@ export default function ClubApplyButton({
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
+  const feedback = useFeedback();
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error" | "consent">("idle");
 
@@ -103,6 +105,8 @@ export default function ClubApplyButton({
       consent,
     });
     setStatus(result.ok ? "success" : "error");
+    if (result.ok) feedback.success(successMessage);
+    else feedback.error(errorMessage);
   }
 
   return (

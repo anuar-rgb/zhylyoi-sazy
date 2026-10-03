@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { deleteHall } from "./actions";
 
 export default function DeleteHallButton({
@@ -15,12 +16,19 @@ export default function DeleteHallButton({
   seatCount: number;
 }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
     const about = seatCount > 0 ? `\n\nВместе с залом удалятся все его места (${seatCount}).` : "";
-    if (!confirm(`Удалить зал «${name}»?${about}`)) return;
+    const confirmed = await feedback.confirm({
+      title: `Удалить зал «${name}»?`,
+      message: about.trim() || undefined,
+      confirmLabel: "Удалить",
+      danger: true,
+    });
+    if (!confirmed) return;
 
     setBusy(true);
     setError(null);
@@ -28,8 +36,14 @@ export default function DeleteHallButton({
     const result = await deleteHall(id);
     setBusy(false);
 
-    if (result.ok) router.refresh();
-    else setError(result.error ?? "Не удалось удалить.");
+    if (result.ok) {
+      feedback.success("Удалено");
+      router.refresh();
+    } else {
+      const message = result.error ?? "Не удалось удалить.";
+      setError(message);
+      feedback.error(message);
+    }
   }
 
   return (

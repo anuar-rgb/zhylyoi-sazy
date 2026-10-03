@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { confirmBookingPayment } from "./actions";
 
 export default function ConfirmPaymentButton({ id }: { id: string }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,8 +16,14 @@ export default function ConfirmPaymentButton({ id }: { id: string }) {
     setError(null);
     const result = await confirmBookingPayment(id);
     setBusy(false);
-    if (result.ok) router.refresh();
-    else setError(result.error ?? "Не удалось подтвердить.");
+    if (result.ok) {
+      feedback.success("Оплата подтверждена");
+      router.refresh();
+    } else {
+      const message = result.error ?? "Не удалось подтвердить.";
+      setError(message);
+      feedback.error(message);
+    }
   }
 
   return (

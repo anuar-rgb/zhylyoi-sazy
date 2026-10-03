@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { deleteVideo } from "./actions";
 
 export default function DeleteVideoButton({ id, title }: { id: string; title: string }) {
   const router = useRouter();
+  const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
-    if (!confirm(`Удалить видео «${title}»? Запись исчезнет с сайта. На YouTube ничего не изменится.`)) return;
+    const confirmed = await feedback.confirm({ title: `Удалить видео «${title}»?`, message: `Запись исчезнет с сайта. На YouTube ничего не изменится.`, confirmLabel: "Удалить", danger: true });
+    if (!confirmed) return;
     setBusy(true);
     setError(null);
 
@@ -19,8 +22,14 @@ export default function DeleteVideoButton({ id, title }: { id: string; title: st
 
     // A delete the caller has no rights for removes zero rows without erroring,
     // so without this the row would stay put and look like a glitch.
-    if (result.ok) router.refresh();
-    else setError(result.error ?? "Не удалось удалить.");
+    if (result.ok) {
+      feedback.success("Удалено");
+      router.refresh();
+    } else {
+      const message = result.error ?? "Не удалось удалить.";
+      setError(message);
+      feedback.error(message);
+    }
   }
 
   return (

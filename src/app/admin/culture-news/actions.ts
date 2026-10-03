@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureNewsById, type NewsImage } from "@/lib/cultureNews";
@@ -148,6 +149,7 @@ export async function createNews(_prev: FormState, form: FormData): Promise<Form
   }
 
   revalidateNews(checked.slug);
+  await flash("Добавлено");
   redirect("/admin/culture-news");
 }
 
@@ -178,6 +180,7 @@ export async function updateNews(_prev: FormState, form: FormData): Promise<Form
   if (count === 0) return { error: DENIED };
 
   revalidateNews(checked.slug);
+  await flash("Изменения сохранены");
   redirect("/admin/culture-news");
 }
 

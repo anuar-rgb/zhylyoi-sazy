@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export default function PaymentMethodForm({
   heading: string;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  useActionToast(state, "Сохранено");
   const [qrImage, setQrImage] = useState<{ url: string; path: string } | null>(
     method?.staticQrImageUrl && method.staticQrImagePath
       ? { url: method.staticQrImageUrl, path: method.staticQrImagePath }
