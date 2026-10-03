@@ -104,8 +104,9 @@ export const getDashboardStats = cache(
     ] = await Promise.all([
         countOf("applications"),
         countOf("applications").eq("status", "new"),
-        countOf("culture_events").eq("status", "published"),
-        countOf("culture_events").eq("status", "draft"),
+        // Afisha only: events with a hall are ticketed and live in the "Билеты" listing.
+        countOf("culture_events").eq("status", "published").is("hall_id", null),
+        countOf("culture_events").eq("status", "draft").is("hall_id", null),
         countOf("culture_news").eq("status", "published"),
         countOf("culture_news").eq("status", "draft"),
         countOf("culture_clubs").eq("is_active", true),
