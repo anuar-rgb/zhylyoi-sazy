@@ -61,6 +61,7 @@ export default function StaffForm({
   const [images, setImages] = useState<StaffImage[]>(person?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [consent, setConsent] = useState(person?.consentGivenAt != null);
+  const [shown, setShown] = useState(person?.isActive ?? true);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   /**
@@ -204,7 +205,8 @@ export default function StaffForm({
             <input
               type="checkbox"
               name="is_active"
-              defaultChecked={person?.isActive ?? true}
+              checked={shown}
+              onChange={(e) => setShown(e.target.checked)}
               className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
             />
             <span>Показывать на сайте</span>
@@ -217,12 +219,12 @@ export default function StaffForm({
         </p>
       </div>
 
-      <ConsentCheckbox checked={consent} onChange={setConsent} givenAt={person?.consentGivenAt ?? null} />
+      <ConsentCheckbox required={shown} checked={consent} onChange={setConsent} givenAt={person?.consentGivenAt ?? null} />
 
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={pending || uploading || !consent}
+          disabled={pending || uploading || (shown && !consent)}
           className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {pending ? "Сохранение…" : "Сохранить"}

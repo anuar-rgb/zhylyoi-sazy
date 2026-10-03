@@ -10,10 +10,13 @@ const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6
  * the server action checks it again and records the date.
  */
 export default function ConsentCheckbox({
+  required,
   checked,
   onChange,
   givenAt,
 }: {
+  /** True while the person is shown on the site: only then is saving blocked without consent. */
+  required: boolean;
   checked: boolean;
   onChange: (checked: boolean) => void;
   /** ISO date the consent was first recorded, or null while it has not been. */
@@ -33,9 +36,12 @@ export default function ConsentCheckbox({
         <span>Получено согласие этого человека на публикацию его данных (имя, фото, контакты) на сайте</span>
       </label>
       <p className="text-xs text-ocean/40 mt-2">
-        {givenAt
-          ? `Согласие записано ${new Date(givenAt).toLocaleDateString("ru-RU", { timeZone: "Asia/Oral" })}.`
-          : "Без этой отметки сохранить нельзя. Дата отметки сохраняется как подтверждение."}
+        {givenAt && checked
+          ? `Согласие записано ${new Date(givenAt).toLocaleDateString("ru-RU", { timeZone: "Asia/Oral" })}. `
+          : ""}
+        {required
+          ? "Пока человек показывается на сайте, без этой отметки сохранить нельзя. Дата отметки сохраняется как подтверждение."
+          : "Человек скрыт с сайта, поэтому сохранить можно и без согласия. Если он отозвал согласие, снимите отметку: дата будет удалена."}
       </p>
     </div>
   );

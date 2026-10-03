@@ -11,7 +11,7 @@ import { translateFieldPair } from "@/lib/autoTranslate";
 
 export type FormState = { error: string | null };
 
-const CONSENT_REQUIRED = "Отметьте, что получено согласие человека на публикацию его данных.";
+const CONSENT_REQUIRED = "Чтобы показывать человека на сайте, отметьте, что получено его согласие на публикацию данных. Без согласия запись можно сохранить только скрытой.";
 
 /** A trimmed value, or null — an empty input means "unknown", not an empty string. */
 function field(form: FormData, name: string): string | null {
@@ -138,7 +138,10 @@ export async function createMember(_prev: FormState, form: FormData): Promise<Fo
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
 
-  if (form.get("consent") !== "on") return { error: CONSENT_REQUIRED };
+  const consent = form.get("consent") === "on";
+  // Only a person shown on the site needs the consent. Withdrawing it (art. 8 of the law)
+  // must stay possible: hide the record, untick, save.
+  if (form.get("is_active") === "on" && !consent) return { error: CONSENT_REQUIRED };
 
   const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите имя хотя бы на одном языке." };
@@ -148,7 +151,7 @@ export async function createMember(_prev: FormState, form: FormData): Promise<Fo
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("culture_members").insert({ ...data, organization_id: organizationId, consent_given_at: new Date().toISOString() });
+  const { error } = await supabase.from("culture_members").insert({ ...data, organization_id: organizationId, consent_given_at: consent ? new Date().toISOString() : null });
 
   if (error) return { error: "Не удалось сохранить артиста." };
 
@@ -163,10 +166,13 @@ export async function updateMember(_prev: FormState, form: FormData): Promise<Fo
   const id = field(form, "id");
   if (!id) return { error: "Артист не найден." };
 
-  if (form.get("consent") !== "on") return { error: CONSENT_REQUIRED };
+  const consent = form.get("consent") === "on";
+  // Only a person shown on the site needs the consent. Withdrawing it (art. 8 of the law)
+  // must stay possible: hide the record, untick, save.
+  if (form.get("is_active") === "on" && !consent) return { error: CONSENT_REQUIRED };
   // The date records when consent was first given; later edits must not move it.
   const existing = await getCultureMemberById(id);
-  const consentGivenAt = existing?.consentGivenAt ?? new Date().toISOString();
+  const consentGivenAt = consent ? (existing?.consentGivenAt ?? new Date().toISOString()) : null;
 
   const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите имя хотя бы на одном языке." };
