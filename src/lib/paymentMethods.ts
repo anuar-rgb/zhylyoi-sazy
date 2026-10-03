@@ -133,6 +133,8 @@ export async function listPublicPaymentMethodsForEvent(
       .from("organization_payment_methods")
       .select("*, payment_providers(name)")
       .eq("id", overrideId)
+      // Never another institution's method, whatever the event row says: its QR is its account.
+      .eq("organization_id", organizationId)
       .eq("is_enabled", true)
       .maybeSingle();
     if (!error && data) return [toMethod(data as unknown as Row)];

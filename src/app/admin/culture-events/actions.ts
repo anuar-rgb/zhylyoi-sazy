@@ -137,6 +137,20 @@ async function redirectAfterSave(hallId: string | null, message: string): Promis
   redirect(hallId ? "/admin/tickets" : "/admin/culture-events");
 }
 
+const FOREIGN_PAYMENT_METHOD = "Этот способ оплаты принадлежит другому учреждению.";
+
+/** True when a method is chosen that does not belong to the institution the event is saved for. */
+async function isForeignPaymentMethod(methodId: string | null, organizationId: string): Promise<boolean> {
+  if (!methodId) return false;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("organization_payment_methods")
+    .select("organization_id")
+    .eq("id", methodId)
+    .maybeSingle();
+  return !data || data.organization_id !== organizationId;
+}
+
 export async function createEvent(_prev: FormState, form: FormData): Promise<FormState> {
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
@@ -153,6 +167,7 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   // A platform admin belongs to no institution, so fall back to the site's own.
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение." };
+  if (await isForeignPaymentMethod(data.payment_method_id, organizationId)) return { error: FOREIGN_PAYMENT_METHOD };
 
   const supabase = await createClient();
   const {
@@ -195,6 +210,12 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   // An address of only punctuation transliterates to nothing; storing that empty
   // string would collide with the next such record under the unique index.
   if (!slug) return { error: "Не удалось составить адрес страницы. Заполните поле «Адрес»." };
+
+  // The event’s own institution decides, not the form: the form is just what the browser sent.
+  const existing = await getCultureEventById(id);
+  if (existing && (await isForeignPaymentMethod(data.payment_method_id, existing.organizationId))) {
+    return { error: FOREIGN_PAYMENT_METHOD };
+  }
 
   const supabase = await createClient();
   const { error, count } = await supabase
