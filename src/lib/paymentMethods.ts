@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isMockEnabled } from "@/lib/payments/dev";
 
 export type PaymentProviderRecord = {
   code: string;
@@ -65,7 +66,8 @@ export async function listPaymentProviders(): Promise<PaymentProviderRecord[]> {
   const { data, error } = await supabase.from("payment_providers").select("code, name, integration_type").order("name");
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map((row) => ({
+  // The mock is for developers: it is never offered on the live site.
+  return (data as unknown as Row[]).filter((row) => isMockEnabled() || row.code !== "mock").map((row) => ({
     code: String(row.code),
     name: String(row.name),
     integrationType: String(row.integration_type),

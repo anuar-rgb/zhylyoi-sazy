@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getPaymentMethodById } from "@/lib/paymentMethods";
 import { getBankConnection } from "@/lib/payments/keys";
-import { adapters } from "@/lib/payments/registry";
+import { hasProvider } from "@/lib/payments/registry";
 import PaymentMethodForm from "../PaymentMethodForm";
 import BankConnectionForm from "../BankConnectionForm";
 import { updatePaymentMethod } from "../actions";
@@ -35,7 +35,7 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
         <BankConnectionForm
           methodId={method.id}
           providerName={method.providerName}
-          integrationReady={Boolean(adapters[method.providerCode])}
+          integrationReady={hasProvider(method.providerCode)}
           serverReady={connection.serverReady}
           hasSecret={connection.hasSecret}
           merchantId={connection.merchantId}
