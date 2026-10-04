@@ -37,6 +37,9 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
     ? await listPublicPaymentMethodsForEvent(booking.eventId, booking.organizationId)
     : [];
 
+  // Every method goes through the bank: the order confirms itself when the bank reports the payment.
+  const bankOnly = paymentMethods.length > 0 && paymentMethods.every((method) => method.mode === "api");
+
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -107,11 +110,13 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
             <div className="mt-6 bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8">
               <h2 className="text-lg font-bold text-ocean mb-1">{locale === "kk" ? "Төлем" : "Оплата"}</h2>
               <p className="text-sm text-ocean/60 mb-5">
-                {locale === "kk"
-                  ? `Төлеңіз (${booking.totalAmount} ₸) және әкімшінің растауын күтіңіз. Бет автоматты жаңармайды —
-                     кейінірек осы сілтеме арқылы кіріп тексеріңіз.`
-                  : `Оплатите (${booking.totalAmount} ₸) и дождитесь подтверждения администратором. Страница не
-                     обновляется автоматически — зайдите по этой же ссылке позже, чтобы проверить статус.`}
+                {bankOnly
+                  ? locale === "kk"
+                    ? `Төлеу үшін «Төлеу» түймесін басыңыз (${booking.totalAmount} ₸): банк бетіне өтесіз. Банк төлемді хабарлаған бойда тапсырыс өзі расталады.`
+                    : `Нажмите «Оплатить» (${booking.totalAmount} ₸): вы перейдёте на страницу банка. Заказ подтвердится сам, как только банк сообщит об оплате.`
+                  : locale === "kk"
+                    ? `Төлеңіз (${booking.totalAmount} ₸) және әкімшінің растауын күтіңіз. Бет автоматты жаңармайды — кейінірек осы сілтеме арқылы кіріп тексеріңіз.`
+                    : `Оплатите (${booking.totalAmount} ₸) и дождитесь подтверждения администратором. Страница не обновляется автоматически — зайдите по этой же ссылке позже, чтобы проверить статус.`}
               </p>
 
               {paymentMethods.length === 0 ? (

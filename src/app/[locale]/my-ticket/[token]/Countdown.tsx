@@ -13,20 +13,29 @@ import { useRouter } from "next/navigation";
 export default function Countdown({ expiresAt }: { expiresAt: string }) {
   const router = useRouter();
   const kk = useLocale() === "kk";
-  const [remainingMs, setRemainingMs] = useState(() => new Date(expiresAt).getTime() - Date.now());
+  // Null until the browser has the clock: the server and the browser read it a moment apart, and
+  // rendering the number on both made React report a mismatch on every page load.
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
   useEffect(() => {
     const target = new Date(expiresAt).getTime();
-    const interval = setInterval(() => {
+    const tick = () => {
       const left = target - Date.now();
       setRemainingMs(left);
       if (left <= 0) {
         clearInterval(interval);
         router.refresh();
       }
-    }, 1000);
-    return () => clearInterval(interval);
+    };
+    const interval = setInterval(tick, 1000);
+    const first = setTimeout(tick, 0);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(first);
+    };
   }, [expiresAt, router]);
+
+  if (remainingMs === null) return <p className="text-sm text-ocean/70">&nbsp;</p>;
 
   if (remainingMs <= 0) return <p className="text-sm text-ocean/60">{kk ? "Бронь уақыты аяқталуда…" : "Время брони истекает…"}</p>;
 
