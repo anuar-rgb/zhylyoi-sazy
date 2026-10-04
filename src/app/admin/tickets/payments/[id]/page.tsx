@@ -5,6 +5,7 @@ import { getBankConnection } from "@/lib/payments/keys";
 import { hasProvider } from "@/lib/payments/registry";
 import PaymentMethodForm from "../PaymentMethodForm";
 import BankConnectionForm from "../BankConnectionForm";
+import PaymentModeForm from "../PaymentModeForm";
 import { updatePaymentMethod } from "../actions";
 
 export default async function EditPaymentMethodPage({ params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +40,20 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
           serverReady={connection.serverReady}
           hasSecret={connection.hasSecret}
           merchantId={connection.merchantId}
+        />
+      )}
+      {connection && (
+        <PaymentModeForm
+          methodId={method.id}
+          mode={method.mode}
+          canUseBank={hasProvider(method.providerCode) && connection.hasSecret}
+          reason={
+            !hasProvider(method.providerCode)
+              ? "Для этого банка автоматическое подтверждение ещё не подключено."
+              : !connection.hasSecret
+                ? "Сначала сохраните данные банка (секретный ключ) выше."
+                : null
+          }
         />
       )}
     </>

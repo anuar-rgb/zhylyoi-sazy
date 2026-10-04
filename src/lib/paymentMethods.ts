@@ -108,7 +108,12 @@ export async function listPublicPaymentMethods(organizationId: string): Promise<
     .order("created_at");
 
   if (error || !data) return [];
-  return (data as unknown as Row[]).map(toMethod);
+  return (data as unknown as Row[]).map(toMethod).filter(isOfferable);
+}
+
+/** The pretend provider is for developers; a buyer on the live site is never shown it. */
+function isOfferable(method: PaymentMethodRecord): boolean {
+  return isMockEnabled() || method.providerCode !== "mock";
 }
 
 /**
@@ -139,7 +144,7 @@ export async function listPublicPaymentMethodsForEvent(
       .eq("organization_id", organizationId)
       .eq("is_enabled", true)
       .maybeSingle();
-    if (!error && data) return [toMethod(data as unknown as Row)];
+    if (!error && data && isOfferable(toMethod(data as unknown as Row))) return [toMethod(data as unknown as Row)];
   }
 
   return listPublicPaymentMethods(organizationId);

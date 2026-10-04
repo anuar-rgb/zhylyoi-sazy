@@ -7,6 +7,7 @@ import { getBookingByToken } from "@/lib/bookings";
 import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
+import PayButton from "./PayButton";
 import type { Locale } from "@/i18n/routing";
 
 const STATUS_LABEL: Record<string, Record<Locale, string>> = {
@@ -123,6 +124,14 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                 <div className="space-y-4">
                   {paymentMethods.map((method) => {
                     const name = method.displayNameRu ?? method.displayNameKk ?? method.providerName;
+                    if (method.mode === "api") {
+                      return (
+                        <div key={method.id} className="bg-cream/30 rounded-2xl p-4 text-center sm:text-left">
+                          <p className="text-sm font-semibold text-ocean mb-3">{name}</p>
+                          <PayButton accessToken={token} methodId={method.id} />
+                        </div>
+                      );
+                    }
                     return (
                       <div
                         key={method.id}
