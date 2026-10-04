@@ -14,6 +14,7 @@ const TEXTS = {
     failed: "Не удалось скопировать. Скопируйте адрес из строки браузера.",
     more: "Купить ещё билеты",
     mine: "Все мои билеты",
+    download: "Скачать билеты PDF",
   },
   kk: {
     hint: "Билеттер осы құрылғыда сақталады және әрқашан «Билеттер» бөлімінде тұрады. Басқа құрылғыдан осы сілтемені ашыңыз.",
@@ -22,6 +23,7 @@ const TEXTS = {
     failed: "Көшіру мүмкін болмады. Мекенжайды браузер жолынан көшіріңіз.",
     more: "Тағы билет сатып алу",
     mine: "Менің барлық билеттерім",
+    download: "Билеттерді PDF жүктеу",
   },
 } as const;
 
@@ -30,8 +32,9 @@ const TEXTS = {
  * more tickets. The token in the address is the only key to the booking, so it can be copied to
  * open the same tickets on another device.
  */
-export default function TicketActions({ token }: { token: string }) {
-  const t = TEXTS[useLocale() === "kk" ? "kk" : "ru"];
+export default function TicketActions({ token, canDownload }: { token: string; canDownload: boolean }) {
+  const locale = useLocale() === "kk" ? "kk" : "ru";
+  const t = TEXTS[locale];
   const feedback = useFeedback();
 
   useEffect(() => {
@@ -51,6 +54,15 @@ export default function TicketActions({ token }: { token: string }) {
     <div className="mt-6 text-center">
       <p className="text-xs text-ocean/50 max-w-md mx-auto">{t.hint}</p>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+        {canDownload && (
+          <a
+            href={`/api/tickets/pdf/${token}?lang=${locale}`}
+            download
+            className="btn-primary inline-flex px-5 py-2.5 text-sm font-semibold"
+          >
+            {t.download}
+          </a>
+        )}
         <button
           type="button"
           onClick={copy}
@@ -58,7 +70,7 @@ export default function TicketActions({ token }: { token: string }) {
         >
           {t.copy}
         </button>
-        <Link href="/tickets" className="btn-primary inline-flex px-5 py-2.5 text-sm font-semibold">
+        <Link href="/tickets" className="px-5 py-2.5 rounded-full border border-cream-dark bg-white text-sm font-semibold text-ocean hover:bg-cream transition-colors">
           {t.more}
         </Link>
       </div>

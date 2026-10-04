@@ -180,7 +180,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
         )}
 
         <FadeIn>
-          <TicketActions token={token} />
+          <TicketActions token={token} canDownload={isConfirmed} />
           <div className="mt-6 text-center">
             <Link href="/afisha" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
               ← {locale === "kk" ? "Афишаға оралу" : "Все мероприятия"}
