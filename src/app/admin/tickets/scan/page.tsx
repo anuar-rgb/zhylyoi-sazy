@@ -1,4 +1,6 @@
 import { getStaffIdentity } from "@/lib/profile";
+import { listCheckInEvents } from "@/lib/cultureEvents";
+import { formatEventDateTime } from "@/lib/eventFields";
 import BackToTickets from "../BackToTickets";
 import ScannerClient from "./ScannerClient";
 
@@ -22,15 +24,21 @@ export default async function ScanPage() {
     );
   }
 
+  const events = (await listCheckInEvents()).map((event) => ({
+    id: event.id,
+    title: event.titleRu ?? event.titleKk ?? "Мероприятие",
+    when: formatEventDateTime(event.eventDate),
+  }));
+
   return (
     <div>
       <BackToTickets />
       <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-2">Сканер билетов</h1>
       <p className="text-sm text-ocean/60 mb-6">
-        Наведите камеру на QR-код с экрана зрителя или введите код вручную. Результат показывается на весь экран и
+        Выберите мероприятие, наведите камеру на QR-код с экрана зрителя или введите код вручную. Результат показывается на весь экран и
         сам скрывается — следующий билет можно сканировать сразу.
       </p>
-      <ScannerClient />
+      <ScannerClient events={events} />
     </div>
   );
 }

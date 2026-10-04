@@ -2,16 +2,22 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
-import { checkInTicket, type CheckInResult } from "./actions";
+import { checkInTicket, type CheckInFailure, type CheckInResult } from "./actions";
+
+export type ScanEvent = { id: string; title: string; when: string };
 
 type CameraState = "starting" | "active" | "denied" | "unsupported";
 
 /** Long enough to read at a glance, short enough the queue keeps moving. */
 const RESULT_DISPLAY_MS = 2500;
 
-const RESULT_TEXT: Record<Exclude<CheckInResult, { ok: true }>["reason"], string> = {
+const RESULT_TEXT: Record<CheckInFailure, string> = {
   not_found: "Билет не найден",
   not_confirmed: "Оплата не подтверждена",
+  wrong_event: "Билет на другое мероприятие",
+  cancelled: "Билет отменён",
+  expired: "Срок билета истёк",
+  not_started: "Вход ещё не открыт",
   invalid: "Неверный код",
   failed: "Ошибка проверки",
 };
@@ -24,7 +30,7 @@ const RESULT_TEXT: Record<Exclude<CheckInResult, { ok: true }>["reason"], string
  * support it at all (notably Safari/iOS lacks the native BarcodeDetector,
  * which is why this doesn't rely on it as the only path).
  */
-export default function ScannerClient() {
+export default function ScannerClient({ events }: { events: ScanEvent[] }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -36,6 +42,11 @@ export default function ScannerClient() {
   const [manualCode, setManualCode] = useState("");
   const [result, setResult] = useState<CheckInResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [eventId, setEventId] = useState(events[0]?.id ?? "");
+  // The scan loop is created once; it reads the chosen event through a ref so changing the event
+  // never restarts the camera.
+  const eventIdRef = useRef(eventId);
+  const [checkedAt, setCheckedAt] = useState<Date | null>(null);
 
   const dismissTimer = useRef<number | null>(null);
 
@@ -44,8 +55,9 @@ export default function ScannerClient() {
     pausedRef.current = true;
     setSubmitting(true);
 
-    checkInTicket(code).then((res) => {
+    checkInTicket(code, eventIdRef.current || null).then((res) => {
       setSubmitting(false);
+      setCheckedAt(new Date());
       setResult(res);
       dismissTimer.current = window.setTimeout(() => {
         setResult(null);
@@ -120,6 +132,11 @@ export default function ScannerClient() {
     };
   }, [handleCode]);
 
+  function chooseEvent(id: string) {
+    setEventId(id);
+    eventIdRef.current = id;
+  }
+
   function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!manualCode.trim() || submitting) return;
@@ -127,8 +144,34 @@ export default function ScannerClient() {
     setManualCode("");
   }
 
+  if (events.length === 0) {
+    return (
+      <div className="max-w-md mx-auto bg-cream/40 border border-cream-dark rounded-3xl p-6 text-center text-sm text-ocean/60">
+        Нет мероприятий для проверки. Они появляются здесь за 12 часов до начала и остаются ещё на 12 часов после.
+      </div>
+    );
+  }
+
   return (
     <div>
+      <div className="max-w-md mx-auto mb-4">
+        <label htmlFor="scan_event" className="block text-sm font-medium text-ocean/70 mb-1.5">
+          Мероприятие
+        </label>
+        <select
+          id="scan_event"
+          value={eventId}
+          onChange={(e) => chooseEvent(e.target.value)}
+          className="w-full px-4 py-2.5 border border-cream-dark rounded-2xl bg-cream/30 text-base text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
+        >
+          {events.map((event) => (
+            <option key={event.id} value={event.id}>
+              {event.title} · {event.when}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {(cameraState === "starting" || cameraState === "active") && (
         <div className="relative rounded-3xl overflow-hidden bg-black aspect-square max-w-md mx-auto">
           <video ref={videoRef} muted playsInline className="w-full h-full object-cover" />
@@ -199,7 +242,21 @@ export default function ScannerClient() {
                 {result.eventTitle && <p className="text-sm sm:text-base mt-2 opacity-75">{result.eventTitle}</p>}
               </>
             ) : (
-              <p className="text-4xl sm:text-6xl font-bold">{RESULT_TEXT[result.reason]}</p>
+              <>
+                <p className="text-4xl sm:text-6xl font-bold mb-4">{RESULT_TEXT[result.reason]}</p>
+                {(result.seatRowLabel || result.seatNumber) && (
+                  <p className="text-xl sm:text-2xl opacity-90">
+                    Ряд {result.seatRowLabel}, место {result.seatNumber}
+                  </p>
+                )}
+                {result.eventTitle && <p className="text-sm sm:text-base mt-2 opacity-75">{result.eventTitle}</p>}
+              </>
+            )}
+            {result.orderNumber && <p className="text-sm mt-3 opacity-75">Заказ {result.orderNumber}</p>}
+            {checkedAt && (
+              <p className="text-sm mt-1 opacity-75">
+                Проверено в {checkedAt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </p>
             )}
           </div>
         </div>

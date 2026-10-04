@@ -195,6 +195,25 @@ export async function listAllTicketedCultureEvents(): Promise<{
   };
 }
 
+/**
+ * Published ticketed events a door can be checking right now: not yet started, or started within the
+ * last 12 hours (the same window check_in_ticket allows). Soonest first.
+ */
+export async function listCheckInEvents(): Promise<CultureEventRecord[]> {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("culture_events")
+    .select(COLUMNS)
+    .not("hall_id", "is", null)
+    .eq("status", "published")
+    .gte("event_date", since)
+    .order("event_date", { ascending: true });
+
+  if (error || !data) return [];
+  return (data as unknown as Row[]).map(toRecord);
+}
+
 /** True once the event has started: ticket sales are closed from that moment, as on the public listing. */
 export function hasEventStarted(event: Pick<CultureEventRecord, "eventDate">): boolean {
   return new Date(event.eventDate).getTime() < Date.now();
