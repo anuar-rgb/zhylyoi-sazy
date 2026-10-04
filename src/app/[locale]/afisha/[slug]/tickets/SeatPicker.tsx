@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackProvider";
+import { rememberTicket } from "@/lib/myTickets";
 import { createBooking, type CreateBookingResult } from "@/app/actions/bookings";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 
@@ -206,6 +207,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
         return;
       }
 
+      rememberTicket(result.accessToken);
       feedback.success(t.created);
       router.push(`/my-ticket/${result.accessToken}`);
     });

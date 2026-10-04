@@ -7,6 +7,7 @@ import FadeIn from "@/components/FadeIn";
 import { listPublicTicketedCultureEvents } from "@/lib/cultureEvents";
 import { listPublicEventTicketTypesForEvents, summarizePriceRange, type PriceRange } from "@/lib/eventTicketTypes";
 import { toEventView } from "@/lib/eventView";
+import MyTickets from "./MyTickets";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, Metadata> = {
@@ -71,6 +72,8 @@ export default async function TicketsPage() {
         <FadeIn>
           <SectionTitle title={t.title} subtitle={t.subtitle} />
         </FadeIn>
+
+        <MyTickets />
 
         {events.length === 0 ? (
           <p className="text-center text-ocean/60 py-16">{t.emptyState}</p>

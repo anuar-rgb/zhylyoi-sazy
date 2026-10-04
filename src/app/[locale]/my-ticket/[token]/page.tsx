@@ -8,6 +8,7 @@ import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
 import PayButton from "./PayButton";
+import TicketActions from "./TicketActions";
 import type { Locale } from "@/i18n/routing";
 
 const STATUS_LABEL: Record<string, Record<Locale, string>> = {
@@ -15,6 +16,7 @@ const STATUS_LABEL: Record<string, Record<Locale, string>> = {
   confirmed: { kk: "Расталды", ru: "Подтверждена" },
   cancelled: { kk: "Болдырылмады", ru: "Отменена" },
   expired: { kk: "Мерзімі өтті", ru: "Истекла" },
+  refunded: { kk: "Ақша қайтарылды", ru: "Деньги возвращены" },
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -22,6 +24,7 @@ const STATUS_STYLE: Record<string, string> = {
   confirmed: "bg-gold/15 text-ocean-dark",
   cancelled: "bg-ocean/5 text-ocean/50",
   expired: "bg-ocean/5 text-ocean/40",
+  refunded: "bg-ocean/5 text-ocean/60",
 };
 
 export default async function MyTicketPage({ params }: { params: Promise<{ token: string }> }) {
@@ -177,6 +180,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
         )}
 
         <FadeIn>
+          <TicketActions token={token} />
           <div className="mt-6 text-center">
             <Link href="/afisha" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
               ← {locale === "kk" ? "Афишаға оралу" : "Все мероприятия"}
