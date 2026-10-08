@@ -91,15 +91,16 @@ export default function Header() {
     setMoreOpen(false);
   }
 
+  // Only the mobile menu locks the page: it covers the whole screen. The "⋯" dropdown is a small
+  // panel hanging from the sticky header, so the page keeps scrolling under it.
   useEffect(() => {
-    const locked = menuOpen || moreOpen;
-    document.body.style.overflow = locked ? "hidden" : "";
-    document.documentElement.style.overflow = locked ? "hidden" : "";
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    document.documentElement.style.overflow = menuOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
     };
-  }, [menuOpen, moreOpen]);
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -111,10 +112,10 @@ export default function Header() {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMoreOpen(false);
     };
-    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("pointerdown", handleClick);
     document.addEventListener("keydown", handleKey);
     return () => {
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("pointerdown", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
   }, [moreOpen]);
@@ -221,23 +222,29 @@ export default function Header() {
                 </svg>
               </button>
 
-              {moreOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-3xl border border-cream-dark shadow-lg p-2 z-50">
-                  {t.more.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`block px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                        pathname === link.href
-                          ? "bg-gold text-ocean"
-                          : "text-ocean hover:bg-cream/60"
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {/* Always in the page so it can fade in and out; while closed it is invisible, which
+                  also takes its links out of the Tab order. It hangs from the sticky header, so it
+                  stays in view wherever the page is scrolled. */}
+              <div
+                className={`absolute right-0 top-full mt-2 w-60 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain bg-white rounded-3xl border border-cream-dark shadow-xl p-2 z-50 origin-top-right transition-[opacity,transform,visibility] duration-200 ease-out ${
+                  moreOpen ? "opacity-100 translate-y-0 scale-100 visible" : "opacity-0 -translate-y-1 scale-95 invisible pointer-events-none"
+                }`}
+              >
+                {t.more.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMoreOpen(false)}
+                    className={`block px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                      pathname === link.href
+                        ? "bg-gold text-ocean"
+                        : "text-ocean hover:bg-cream/60"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
             </div>
 
             <button

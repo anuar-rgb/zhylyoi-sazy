@@ -63,15 +63,6 @@ export default function ClubsCarousel({
     el.scrollBy({ left: step * direction, behavior: "smooth" });
   }
 
-  function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
-    const el = trackRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
-      el.scrollLeft += e.deltaY;
-      e.preventDefault();
-    }
-  }
-
   return (
     <div className="relative">
       {/* Nav arrows */}
@@ -100,10 +91,11 @@ export default function ClubsCarousel({
         </button>
       </div>
 
-      {/* Track */}
+      {/* Track. The mouse wheel is left alone and scrolls the page: turning it into a sideways
+          scroll here trapped the page under the cursor (and React's wheel listener is passive, so
+          it moved both at once). Sideways: the arrows, a swipe, a trackpad, or Shift + wheel. */}
       <div
         ref={trackRef}
-        onWheel={handleWheel}
         className="hide-scrollbar flex gap-5 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth scroll-px-4 sm:scroll-px-0 -mx-4 px-4 sm:mx-0 sm:px-0 pb-3"
       >
         {clubs.map((club) => (
