@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
+import { formatDateTime } from "@/lib/timeZone";
 
 /**
  * Reads for the ticket-sales admin pages (orders, payments, check-in journal, statistics).
@@ -33,7 +34,7 @@ function str(value: unknown): string | null {
 /** Timestamps are shown in the institution's time (Atyrau), not the server's. */
 export function formatMoment(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Oral" });
+  return formatDateTime(iso);
 }
 
 export function formatMoney(amount: number, currency = "KZT"): string {

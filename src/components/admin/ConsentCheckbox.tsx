@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateNumeric } from "@/lib/timeZone";
+
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
 /**
@@ -37,7 +39,7 @@ export default function ConsentCheckbox({
       </label>
       <p className="text-xs text-ocean/40 mt-2">
         {givenAt && checked
-          ? `Согласие записано ${new Date(givenAt).toLocaleDateString("ru-RU", { timeZone: "Asia/Oral" })}. `
+          ? `Согласие записано ${formatDateNumeric(givenAt)}. `
           : ""}
         {required
           ? "Пока человек показывается на сайте, без этой отметки сохранить нельзя. Дата отметки сохраняется как подтверждение."

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { readAllApplications, APPLICATION_STATUSES, type ApplicationRecord, type ApplicationStatus } from "@/lib/applications";
 import { telHref } from "@/lib/contactLinks";
 // The server runs on UTC; every date here is shown in the institution's own time.
-import { INSTITUTION_TIME_ZONE } from "@/lib/eventFields";
+import { formatDate, formatDateNumeric, formatDateTime, formatTime } from "@/lib/timeZone";
 import DeleteButton from "../DeleteButton";
 import MarkProcessedButton from "./MarkProcessedButton";
 import MarkSeenOnView from "./MarkSeenOnView";
@@ -63,7 +63,7 @@ function summarizeByClub(applications: ApplicationRecord[]): ClubSummary[] {
 }
 
 function formatDay(iso: string): string {
-  return new Date(iso).toLocaleDateString("ru-RU", { dateStyle: "medium", timeZone: INSTITUTION_TIME_ZONE });
+  return formatDate(iso);
 }
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
@@ -166,7 +166,7 @@ function ApplicationCard({ app }: { app: ApplicationRecord }) {
           {app.parentPhone}
         </a>
         <span>
-          {new Date(app.createdAt).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short", timeZone: INSTITUTION_TIME_ZONE })}
+          {formatDateTime(app.createdAt)}
           {/* processed_at is stamped on any change away from "new", so it is worded by the status. */}
           {app.processedAt && app.status === "completed" && ` · обработана ${formatDay(app.processedAt)}`}
           {app.processedAt && app.status === "rejected" && ` · отклонена ${formatDay(app.processedAt)}`}
@@ -231,9 +231,9 @@ function ApplicationsTable({ list }: { list: ApplicationRecord[] }) {
                   {app.consent ? <span className="text-ocean">Да</span> : <span className="text-red-600 font-semibold">Нет</span>}
                 </td>
                 <td className={`${td} text-ocean/60 whitespace-nowrap tabular-nums leading-tight`}>
-                  {new Date(app.createdAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: INSTITUTION_TIME_ZONE })}
+                  {formatDateNumeric(app.createdAt)}
                   <span className="block text-xs text-ocean/40">
-                    {new Date(app.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: INSTITUTION_TIME_ZONE })}
+                    {formatTime(app.createdAt)}
                   </span>
                 </td>
                 <td className={td}>

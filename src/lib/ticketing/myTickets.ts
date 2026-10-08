@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { orderStatusOf, type OrderStatus } from "@/lib/payments/orderStatus";
+import { INSTITUTION_TIME_ZONE } from "@/lib/timeZone";
 
 /**
  * What the "Мои билеты" list on the Билеты page may show about a booking: only what the buyer's
@@ -27,7 +28,7 @@ export const MAX_LOOKUP = 30;
 
 type Row = Record<string, unknown>;
 
-const ZONE = "Asia/Oral";
+const ZONE = INSTITUTION_TIME_ZONE;
 
 function wording(iso: string | null, tag: "kk-KZ" | "ru-RU"): string {
   if (!iso) return "";

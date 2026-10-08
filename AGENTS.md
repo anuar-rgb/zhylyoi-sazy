@@ -99,6 +99,12 @@ next-intl, и у админки свой корневой layout без пров
 читаются и пишутся через `src/lib/eventFields.ts`; не разбирайте `datetime-local`
 напрямую, иначе афиша сдвинется на пять часов.
 
+Часовой пояс на весь сайт один: `INSTITUTION_TIME_ZONE` в `src/lib/timeZone.ts`.
+Любую дату для человека выводите через `formatDateTime` / `formatDate` /
+`formatTime` оттуда же или с `timeZone: INSTITUTION_TIME_ZONE`. Голый
+`toLocaleString()` на сервере покажет время на пять часов раньше, а в браузере —
+по часам устройства посетителя. Не заводите своих констант вроде `"Asia/Oral"`.
+
 ## Публичные формы: минимум text-base на input/textarea
 
 `<input>`/`<textarea>` в `src/app/[locale]/**` не может быть мельче 16px

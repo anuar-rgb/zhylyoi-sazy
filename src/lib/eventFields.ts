@@ -25,16 +25,9 @@ export {
   type PublishStatus as EventStatus,
 } from "@/lib/publishStatus";
 
-/**
- * The institution's time zone, Asia/Aqtau, as a fixed offset.
- *
- * Kazakhstan has observed a single offset since 2024 and does not use daylight
- * saving, so a fixed value is accurate here and keeps the conversion pure — no
- * dependence on the server's own zone, which on Railway is UTC.
- */
-export const INSTITUTION_OFFSET = "+05:00";
-export const INSTITUTION_TIME_ZONE = "Asia/Aqtau";
-const INSTITUTION_OFFSET_MS = 5 * 60 * 60 * 1000;
+// The site's one time zone lives in timeZone.ts; re-exported for the modules that import it from here.
+import { INSTITUTION_OFFSET, INSTITUTION_OFFSET_MS, INSTITUTION_TIME_ZONE, formatDateTime } from "@/lib/timeZone";
+export { INSTITUTION_OFFSET, INSTITUTION_TIME_ZONE };
 
 /**
  * Turns what `<input type="datetime-local">` submits into a stored instant.
@@ -62,13 +55,7 @@ export function isoToDateTimeInput(iso: string | null): string {
 /** Human-readable date and time in the institution's zone, for lists and cards. */
 export function formatEventDateTime(iso: string | null): string {
   if (!iso) return "—";
-  const parsed = Date.parse(iso);
-  if (Number.isNaN(parsed)) return "—";
-  return new Date(parsed).toLocaleString("ru-RU", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: INSTITUTION_TIME_ZONE,
-  });
+  return formatDateTime(iso);
 }
 
 /**

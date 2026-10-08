@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/storage";
 import { PUBLISH_STATUSES, PUBLISH_STATUS_LABELS } from "@/lib/publishStatus";
 import { isoToDateTimeInput } from "@/lib/eventFields";
+import { institutionToday } from "@/lib/timeZone";
 import type { CultureNewsRecord, NewsImage } from "@/lib/cultureNews";
 import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
@@ -48,11 +49,12 @@ function Field({
   );
 }
 
-/** Today at nine, so a new item starts with a sensible publication date. */
+/**
+ * Today at nine, institution time, so a new item starts with a sensible publication date.
+ * Not setHours(9): that is nine in whatever zone renders the form, and the server's is UTC.
+ */
 function defaultPublishedAt(): string {
-  const now = new Date();
-  now.setHours(9, 0, 0, 0);
-  return isoToDateTimeInput(now.toISOString());
+  return `${institutionToday()}T09:00`;
 }
 
 export default function NewsForm({

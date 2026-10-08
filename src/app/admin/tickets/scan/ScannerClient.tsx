@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
+import { formatTime } from "@/lib/timeZone";
 import { checkInTicket, type CheckInFailure, type CheckInResult } from "./actions";
 
 export type ScanEvent = { id: string; title: string; when: string };
@@ -227,11 +228,7 @@ export default function ScannerClient({ events }: { events: ScanEvent[] }) {
                 </p>
                 {result.status === "already_used" && result.checkedInAt && (
                   <p className="text-xl sm:text-2xl opacity-90 mb-2">
-                    в{" "}
-                    {new Date(result.checkedInAt).toLocaleTimeString("ru-RU", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    в {formatTime(result.checkedInAt)}
                   </p>
                 )}
                 {(result.seatRowLabel || result.seatNumber) && (
@@ -255,7 +252,7 @@ export default function ScannerClient({ events }: { events: ScanEvent[] }) {
             {result.orderNumber && <p className="text-sm mt-3 opacity-75">Заказ {result.orderNumber}</p>}
             {checkedAt && (
               <p className="text-sm mt-1 opacity-75">
-                Проверено в {checkedAt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                Проверено в {formatTime(checkedAt, { seconds: true })}
               </p>
             )}
           </div>

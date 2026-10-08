@@ -3,12 +3,9 @@ import { getSiteOrganizationId } from "@/lib/organization";
 import { listConfirmedBookings, listPendingPaidBookings } from "@/lib/bookingsAdmin";
 import ConfirmPaymentButton from "./ConfirmPaymentButton";
 import BackToTickets from "../BackToTickets";
+import { formatDateTime } from "@/lib/timeZone";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
-}
 
 export default async function PendingBookingsPage() {
   const identity = await getStaffIdentity();

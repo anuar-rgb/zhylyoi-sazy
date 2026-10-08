@@ -2,9 +2,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { buildTicketsPdf, type TicketPdfLabels } from "@/lib/tickets/pdf";
 import { loadTicketFonts } from "@/lib/tickets/fonts";
+import { INSTITUTION_TIME_ZONE } from "@/lib/timeZone";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ZONE = "Asia/Oral";
+const ZONE = INSTITUTION_TIME_ZONE;
 
 const LABELS: Record<"ru" | "kk", TicketPdfLabels> = {
   ru: {
