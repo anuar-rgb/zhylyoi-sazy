@@ -138,7 +138,13 @@ export default async function DashboardPage() {
           secondary={{ metric: stats.newsDraft, label: "Черновиков" }}
           href="/admin/culture-news"
         />
-        <StatCard title="Кружки" primary={stats.clubsActive} label="активных" href="/admin/culture-clubs" />
+        <StatCard
+          title="Кружки"
+          primary={stats.clubsTotal}
+          label="в списке"
+          secondary={stats.clubsHidden.value ? { metric: stats.clubsHidden, label: "скрыто с сайта" } : undefined}
+          href="/admin/culture-clubs"
+        />
         <OrganizationTile organization={stats.organization} />
       </div>
     </div>

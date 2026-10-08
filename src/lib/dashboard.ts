@@ -17,7 +17,10 @@ export type DashboardStats = {
   eventsDraft: Metric;
   newsPublished: Metric;
   newsDraft: Metric;
-  clubsActive: Metric;
+  /** Every club the Кружки list shows (kind = 'club'), hidden ones included, so the two numbers match. */
+  clubsTotal: Metric;
+  /** Of those, the ones hidden from the site. */
+  clubsHidden: Metric;
   organization: OrganizationCard;
 };
 
@@ -99,7 +102,8 @@ export const getDashboardStats = cache(
       eventsDraft,
       newsPublished,
       newsDraft,
-      clubsActive,
+      clubsTotal,
+      clubsHidden,
       organizations,
     ] = await Promise.all([
         countOf("applications"),
@@ -109,7 +113,10 @@ export const getDashboardStats = cache(
         countOf("culture_events").eq("status", "draft").is("hall_id", null),
         countOf("culture_news").eq("status", "published"),
         countOf("culture_news").eq("status", "draft"),
-        countOf("culture_clubs").eq("is_active", true),
+        // culture_clubs holds the collectives (ансамбли, театры) too; the Кружки list shows only
+        // kind = 'club', and counting without that filter put the collectives into this number.
+        countOf("culture_clubs").eq("kind", "club"),
+        countOf("culture_clubs").eq("kind", "club").eq("is_active", false),
         organizationId ? organizationQuery.eq("id", organizationId) : organizationQuery,
       ]);
 
@@ -120,7 +127,8 @@ export const getDashboardStats = cache(
       eventsDraft: metric(eventsDraft),
       newsPublished: metric(newsPublished),
       newsDraft: metric(newsDraft),
-      clubsActive: metric(clubsActive),
+      clubsTotal: metric(clubsTotal),
+      clubsHidden: metric(clubsHidden),
       organization: organizationCard(organizations),
     };
   }
