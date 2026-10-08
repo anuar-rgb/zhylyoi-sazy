@@ -9,9 +9,12 @@ import { createEvent } from "../actions";
 export default async function NewEventPage({
   searchParams,
 }: {
-  searchParams: Promise<{ hallId?: string }>;
+  searchParams: Promise<{ hallId?: string; for?: string }>;
 }) {
-  const { hallId } = await searchParams;
+  const { hallId, for: purpose } = await searchParams;
+  // From «Билеты» (or a hall's page) the form carries the hall and payment method; from
+  // «Афиша» it is informational and leaves them out.
+  const ticketing = purpose === "tickets" || Boolean(hallId);
 
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) redirect("/admin/culture-events");
@@ -22,12 +25,14 @@ export default async function NewEventPage({
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
-  const [halls, paymentMethods] = await Promise.all([
-    listHalls().then((rows) =>
-      rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
-    ),
-    listPublicPaymentMethods(organizationId),
-  ]);
+  const [halls, paymentMethods] = ticketing
+    ? await Promise.all([
+        listHalls().then((rows) =>
+          rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
+        ),
+        listPublicPaymentMethods(organizationId),
+      ])
+    : [[], []];
 
   // Only a hall this person can actually see is honoured. The id comes from the
   // address bar, and preselecting one that is not in the list would show a
@@ -37,11 +42,12 @@ export default async function NewEventPage({
   return (
     <EventForm
       organizationId={organizationId}
+      ticketing={ticketing}
       halls={halls}
       defaultHallId={defaultHallId}
       paymentMethods={paymentMethods}
       action={createEvent}
-      heading="Новое мероприятие"
+      heading={ticketing ? "Новое мероприятие с билетами" : "Новое мероприятие"}
     />
   );
 }

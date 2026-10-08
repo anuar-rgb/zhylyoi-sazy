@@ -91,8 +91,11 @@ function payload(form: FormData) {
     age_limit: field(form, "age_limit"),
     status: parseStatus(form),
     images: parseImages(form),
-    hall_id: field(form, "hall_id"),
-    payment_method_id: field(form, "payment_method_id"),
+    // Only when the form showed them (the «Билеты» form). The Афиша form leaves them out, and
+    // writing null here would quietly take a ticketed event's hall away and stop its sales.
+    ...(form.get("ticket_fields") === "1"
+      ? { hall_id: field(form, "hall_id"), payment_method_id: field(form, "payment_method_id") }
+      : {}),
   };
 }
 
@@ -167,7 +170,7 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   // A platform admin belongs to no institution, so fall back to the site's own.
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение." };
-  if (await isForeignPaymentMethod(data.payment_method_id, organizationId)) return { error: FOREIGN_PAYMENT_METHOD };
+  if (await isForeignPaymentMethod(data.payment_method_id ?? null, organizationId)) return { error: FOREIGN_PAYMENT_METHOD };
 
   const supabase = await createClient();
   const {
@@ -190,7 +193,7 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   }
 
   revalidateEvent(slug);
-  return redirectAfterSave(data.hall_id, "Добавлено");
+  return redirectAfterSave(data.hall_id ?? null, "Добавлено");
 }
 
 export async function updateEvent(_prev: FormState, form: FormData): Promise<FormState> {
@@ -213,7 +216,7 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
 
   // The event’s own institution decides, not the form: the form is just what the browser sent.
   const existing = await getCultureEventById(id);
-  if (existing && (await isForeignPaymentMethod(data.payment_method_id, existing.organizationId))) {
+  if (existing && (await isForeignPaymentMethod(data.payment_method_id ?? null, existing.organizationId))) {
     return { error: FOREIGN_PAYMENT_METHOD };
   }
 
@@ -237,7 +240,8 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   }
 
   revalidateEvent(slug);
-  return redirectAfterSave(data.hall_id, "Изменения сохранены");
+  // Without the ticket fields on the form the hall is whatever it already was.
+  return redirectAfterSave("hall_id" in data ? (data.hall_id ?? null) : (existing?.hallId ?? null), "Изменения сохранены");
 }
 
 export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: string }> {

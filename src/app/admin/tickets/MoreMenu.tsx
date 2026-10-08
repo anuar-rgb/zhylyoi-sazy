@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const LINKS = [
-  { href: "/admin/culture-events/new", label: "Добавить мероприятие", badge: false },
+  { href: "/admin/culture-events/new?for=tickets", label: "Добавить мероприятие", badge: false },
   { href: "/admin/tickets/bookings", label: "Ожидают оплаты", badge: true },
   { href: "/admin/tickets/orders", label: "Заказы", badge: false },
   { href: "/admin/tickets/transactions", label: "Платежи и возвраты", badge: false },

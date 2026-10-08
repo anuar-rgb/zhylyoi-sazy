@@ -58,20 +58,23 @@ function Field({
 export default function EventForm({
   event,
   organizationId,
-  halls,
+  ticketing = false,
+  halls = [],
   defaultHallId,
-  paymentMethods,
+  paymentMethods = [],
   bookingCount = 0,
   action,
   heading,
 }: {
   event?: CultureEventRecord;
   organizationId: string;
-  halls: { id: string; name: string }[];
+  /** Shows the hall and payment method: a new event from «Билеты», or one that already has a hall. */
+  ticketing?: boolean;
+  halls?: { id: string; name: string }[];
   /** Preselects the hall on a new event, e.g. arriving from that hall's own page. Ignored when editing. */
   defaultHallId?: string;
   /** The organization's enabled payment methods, for the optional per-event override below. */
-  paymentMethods: PaymentMethodRecord[];
+  paymentMethods?: PaymentMethodRecord[];
   /** Active bookings against this event, so the delete button can warn before it takes them with it. */
   bookingCount?: number;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
@@ -86,7 +89,7 @@ export default function EventForm({
   // "Билеты" instead), so cancelling out of editing one should return there,
   // not to a list that no longer shows it. A brand new event (no hallId yet,
   // hall picked further down in this same form) still defaults to Афиша.
-  const cancelHref = event?.hallId ? "/admin/tickets" : "/admin/culture-events";
+  const cancelHref = event?.hallId || (!event && ticketing) ? "/admin/tickets" : "/admin/culture-events";
 
   /**
    * Files go straight from the browser to Storage rather than through the server
@@ -169,44 +172,56 @@ export default function EventForm({
             defaultRu={event?.organizerRu}
           />
           <Field name="age_limit" label="Возрастное ограничение" defaultValue={event?.ageLimit} placeholder="например: 6+" />
-          <div>
-            <label className={LABEL} htmlFor="hall_id">
-              Зал
-            </label>
-            <select id="hall_id" name="hall_id" defaultValue={event?.hallId ?? defaultHallId ?? ""} className={INPUT}>
-              <option value="">Без зала</option>
-              {halls.map((hall) => (
-                <option key={hall.id} value={hall.id}>
-                  {hall.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={LABEL} htmlFor="payment_method_id">
-              Способ оплаты
-            </label>
-            <select
-              id="payment_method_id"
-              name="payment_method_id"
-              defaultValue={event?.paymentMethodId ?? ""}
-              className={INPUT}
-            >
-              <option value="">Все включённые способы (по умолчанию)</option>
-              {paymentMethods.map((method) => (
-                <option key={method.id} value={method.id}>
-                  {method.displayNameRu ?? method.displayNameKk ?? method.providerName}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
-        <p className="text-xs text-ocean/40 mt-2">
-          Время указывается по Атырау (UTC+5). Зал нужен только для продажи билетов — без него у мероприятия просто
-          не будет мест и цен. Способ оплаты — необязательно: без выбора покупателю показываются все включённые
-          способы организации, а не только один.
-        </p>
+        <p className="text-xs text-ocean/40 mt-2">Время указывается по Атырау (UTC+5).</p>
       </div>
+
+      {/* Ticket sales only. The Афиша form is informational and leaves these out; the
+          ticket_fields marker tells the save action whether they were on the form at all, so
+          saving an Афиша event can never clear a hall or payment method it does not show. */}
+      {ticketing && (
+        <div className={CARD}>
+          <input type="hidden" name="ticket_fields" value="1" />
+          <p className="text-sm font-semibold text-ocean mb-4">Продажа билетов</p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={LABEL} htmlFor="hall_id">
+                Зал
+              </label>
+              <select id="hall_id" name="hall_id" defaultValue={event?.hallId ?? defaultHallId ?? ""} className={INPUT}>
+                <option value="">Без зала</option>
+                {halls.map((hall) => (
+                  <option key={hall.id} value={hall.id}>
+                    {hall.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={LABEL} htmlFor="payment_method_id">
+                Способ оплаты
+              </label>
+              <select
+                id="payment_method_id"
+                name="payment_method_id"
+                defaultValue={event?.paymentMethodId ?? ""}
+                className={INPUT}
+              >
+                <option value="">Все включённые способы (по умолчанию)</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id}>
+                    {method.displayNameRu ?? method.displayNameKk ?? method.providerName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <p className="text-xs text-ocean/40 mt-2">
+            Зал нужен для продажи билетов: без него у мероприятия не будет мест и цен. Способ оплаты необязателен: без
+            выбора покупателю показываются все включённые способы.
+          </p>
+        </div>
+      )}
 
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Категории</p>

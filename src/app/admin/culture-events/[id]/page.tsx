@@ -23,11 +23,17 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   const organizationId = identity.organizationId ?? event.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
+  // Only an event that sells tickets (has a hall) shows the hall and payment method; an Афиша
+  // event's form is informational, and saving it leaves those two untouched.
+  const ticketing = Boolean(event.hallId);
+
   const [halls, paymentMethods, bookingCount] = await Promise.all([
-    listHalls().then((rows) =>
-      rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
-    ),
-    listPublicPaymentMethods(organizationId),
+    ticketing
+      ? listHalls().then((rows) =>
+          rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
+        )
+      : Promise.resolve([]),
+    ticketing ? listPublicPaymentMethods(organizationId) : Promise.resolve([]),
     countActiveBookingsForEvent(id),
   ]);
 
@@ -35,6 +41,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     <EventForm
       event={event}
       organizationId={organizationId}
+      ticketing={ticketing}
       halls={halls}
       paymentMethods={paymentMethods}
       bookingCount={bookingCount}
