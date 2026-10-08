@@ -57,10 +57,14 @@ export type OrderRow = {
   currency: string;
   createdAt: string;
   confirmedAt: string | null;
+  /** How long the seats of an unpaid order are held. */
+  expiresAt: string | null;
   eventId: string;
   eventTitle: string;
   tickets: number;
   checkedIn: number;
+  /** The order's seats still held, each with when it was used at the door (null: not yet). */
+  seats: { row: string; seat: number; checkedInAt: string | null }[];
   payment: { provider: string; status: string; paidAt: string | null; needsRefund: boolean; note: string | null } | null;
 };
 
@@ -69,8 +73,8 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
   let query = supabase
     .from("bookings")
     .select(
-      "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, event_id, " +
-        "culture_events(title_ru, title_kk), booking_items(checked_in_at), " +
+      "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
+        "culture_events(title_ru, title_kk), booking_items(checked_in_at, released_at, hall_seats(row_label, seat_number)), " +
         "payments(provider_code, status, paid_at, needs_refund, note, created_at)"
     )
     .eq("organization_id", organizationId)
@@ -100,10 +104,22 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       currency: String(row.currency ?? "KZT"),
       createdAt: String(row.created_at),
       confirmedAt: str(row.confirmed_at),
+      expiresAt: str(row.expires_at),
       eventId: String(row.event_id),
       eventTitle: titleOf(row.culture_events),
       tickets: items.length,
       checkedIn: items.filter((item) => item.checked_in_at).length,
+      seats: items
+        .filter((item) => item.released_at === null || item.released_at === undefined)
+        .map((item) => {
+          const seat = (Array.isArray(item.hall_seats) ? item.hall_seats[0] : item.hall_seats) as Row | null;
+          return {
+            row: seat ? String(seat.row_label) : "",
+            seat: seat ? Number(seat.seat_number) : 0,
+            checkedInAt: str(item.checked_in_at),
+          };
+        })
+        .filter((s) => s.row || s.seat),
       payment: last
         ? {
             provider: String(last.provider_code),

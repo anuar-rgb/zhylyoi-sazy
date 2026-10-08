@@ -10,6 +10,7 @@ import {
 } from "@/lib/ticketing/admin";
 import BackToTickets from "../BackToTickets";
 import NoProfile from "../NoProfile";
+import ConfirmPaymentButton from "./ConfirmPaymentButton";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -47,8 +48,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         Заказы <span className="text-ocean/40 font-normal">({orders.length})</span>
       </h1>
       <p className="text-sm text-ocean/60 mb-5">
-        Каждая бронь билетов — это заказ со своим номером. Здесь видно, оплачен ли он, чем и сколько человек уже вошло.
-        Показаны последние 100.
+        Каждая бронь билетов — это заказ со своим номером. Здесь видно, оплачен ли он, чем и сколько человек уже вошло,
+        а неоплаченный можно подтвердить после проверки перевода. Показаны последние 100.
       </p>
 
       <div className="flex flex-wrap gap-2 mb-6">
@@ -90,6 +91,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               </p>
               <p className="text-sm text-ocean/50">{order.eventTitle || "Мероприятие не найдено"}</p>
 
+              {/* A paid order still waiting: staff check the Kaspi/Halyk transfer and confirm it here.
+                  Free orders confirm themselves at creation and never wait. */}
+              {order.status === "pending" && order.amount > 0 && (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-blue-50/60 border border-blue-100 rounded-2xl px-3 py-2.5">
+                  <p className="text-xs text-ocean/70">
+                    Проверьте поступление {formatMoney(order.amount, order.currency)} и подтвердите оплату.
+                    {order.expiresAt && <> Места держатся до {formatMoment(order.expiresAt)}.</>}
+                  </p>
+                  <ConfirmPaymentButton id={order.id} />
+                </div>
+              )}
+
               <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mt-3">
                 <div>
                   <dt className="text-ocean/40">Сумма</dt>
@@ -112,6 +125,23 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   <dd className="text-ocean/80 font-medium">{formatMoment(order.payment?.paidAt ?? order.createdAt)}</dd>
                 </div>
               </dl>
+
+              {/* Seat by seat, for checking someone in by hand when the scanner is not at hand. */}
+              {order.status === "confirmed" && order.seats.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {order.seats.map((s) => (
+                    <span
+                      key={`${s.row}-${s.seat}`}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        s.checkedInAt ? "bg-gold/15 text-ocean-dark" : "bg-ocean/5 text-ocean/50"
+                      }`}
+                    >
+                      Ряд {s.row}, место {s.seat}
+                      {s.checkedInAt ? ` · вход ${formatMoment(s.checkedInAt)}` : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {order.payment?.needsRefund && (
                 <p className="mt-3 text-xs font-semibold text-red-700 bg-red-50 rounded-2xl px-3 py-2">

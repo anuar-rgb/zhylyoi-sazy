@@ -9,8 +9,8 @@ const GROUPS = [
     title: "Мероприятия и продажи",
     links: [
       { href: "/admin/culture-events/new?for=tickets", label: "Добавить мероприятие", badge: false },
-      { href: "/admin/tickets/orders", label: "Заказы", badge: false },
-      { href: "/admin/tickets/bookings", label: "Ожидают оплаты", badge: true },
+      // Unpaid orders are confirmed from Заказы, so it carries their count.
+      { href: "/admin/tickets/orders", label: "Заказы", badge: true },
       { href: "/admin/tickets/transactions", label: "Платежи и возвраты", badge: false },
     ],
   },
@@ -94,7 +94,8 @@ export default function MoreMenu({ pendingCount }: { pendingCount: number }) {
               {group.links.map((link) => (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  // With unpaid orders waiting, open straight on them.
+                  href={link.badge && pendingCount > 0 ? `${link.href}?status=pending` : link.href}
                   onClick={() => setOpen(false)}
                   className="flex items-center justify-between gap-2 px-4 py-2 rounded-full text-sm font-medium text-ocean hover:bg-cream/60 transition-colors"
                 >

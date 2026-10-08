@@ -25,6 +25,8 @@ export async function confirmBookingPayment(id: string): Promise<{ ok: boolean; 
   // unauthorized or already-settled request — say so instead of reading it as success.
   if (count === 0) return { ok: false, error: "Бронь уже не ожидает оплаты, либо недостаточно прав." };
 
-  revalidatePath("/admin/tickets/bookings");
+  revalidatePath("/admin/tickets/orders");
+  // The red count of unpaid orders sits on the «⋯» menu of the Билеты page.
+  revalidatePath("/admin/tickets");
   return { ok: true };
 }
