@@ -3,6 +3,7 @@ import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { buildTicketsPdf, type TicketPdfLabels } from "@/lib/tickets/pdf";
 import { loadTicketFonts } from "@/lib/tickets/fonts";
 import { INSTITUTION_TIME_ZONE } from "@/lib/timeZone";
+import { PARTER, sectionLabel, toSection } from "@/lib/hallSections";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ZONE = INSTITUTION_TIME_ZONE;
@@ -59,16 +60,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   if (!booking) return Response.json({ error: "not_found" }, { status: 404 });
   if (booking.status !== "confirmed") return Response.json({ error: "not_confirmed" }, { status: 409 });
 
-  const [{ data: items }, { data: event }, { data: organization }] = await Promise.all([
+  const readItems = (seatColumns: string) =>
     admin
       .from("booking_items")
-      .select("ticket_code, price_at_booking, hall_seats(row_label, seat_number), event_ticket_types(name_kk, name_ru, category)")
+      .select(`ticket_code, price_at_booking, hall_seats(${seatColumns}), event_ticket_types(name_kk, name_ru, category)`)
       .eq("booking_id", booking.id)
       .is("released_at", null)
-      .order("created_at", { ascending: true }),
+      .order("created_at", { ascending: true });
+  const [itemsResult, { data: event }, { data: organization }] = await Promise.all([
+    readItems("row_label, seat_number, section"),
     admin.from("culture_events").select("title_kk, title_ru, event_date, location_kk, location_ru").eq("id", booking.event_id).maybeSingle(),
     admin.from("organizations").select("name, name_kk, name_ru").eq("id", booking.organization_id).maybeSingle(),
   ]);
+  // A database without the sections migration has no section column; every seat is the parter then.
+  const { data: items } = itemsResult.error?.code === "42703" ? await readItems("row_label, seat_number") : itemsResult;
   if (!items || items.length === 0 || !event) return Response.json({ error: "not_found" }, { status: 404 });
 
   const at = new Date(String(event.event_date));
@@ -92,6 +97,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
         const type = one(item.event_ticket_types);
         return {
           code: String(item.ticket_code),
+          // The parter is not named, so a hall with only the parter prints exactly as before.
+          section: seat && toSection(seat.section) !== PARTER ? sectionLabel(String(seat.section), lang) : null,
           row: seat ? String(seat.row_label) : "",
           seat: seat ? Number(seat.seat_number) : 0,
           type: type ? (pick(type.name_kk, type.name_ru) ?? text(type.category)) : null,

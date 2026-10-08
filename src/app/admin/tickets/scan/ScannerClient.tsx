@@ -233,7 +233,7 @@ export default function ScannerClient({ events }: { events: ScanEvent[] }) {
                 )}
                 {(result.seatRowLabel || result.seatNumber) && (
                   <p className="text-xl sm:text-2xl opacity-90">
-                    Ряд {result.seatRowLabel}, место {result.seatNumber}
+                    {result.seatSection && <>{result.seatSection} · </>}Ряд {result.seatRowLabel}, место {result.seatNumber}
                   </p>
                 )}
                 {result.eventTitle && <p className="text-sm sm:text-base mt-2 opacity-75">{result.eventTitle}</p>}
@@ -243,7 +243,7 @@ export default function ScannerClient({ events }: { events: ScanEvent[] }) {
                 <p className="text-4xl sm:text-6xl font-bold mb-4">{RESULT_TEXT[result.reason]}</p>
                 {(result.seatRowLabel || result.seatNumber) && (
                   <p className="text-xl sm:text-2xl opacity-90">
-                    Ряд {result.seatRowLabel}, место {result.seatNumber}
+                    {result.seatSection && <>{result.seatSection} · </>}Ряд {result.seatRowLabel}, место {result.seatNumber}
                   </p>
                 )}
                 {result.eventTitle && <p className="text-sm sm:text-base mt-2 opacity-75">{result.eventTitle}</p>}

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getHallById, listHallCategoryPrices, listHallSeats } from "@/lib/halls";
 import { categoryOptions } from "@/lib/seatCategories";
+import type { HallSection } from "@/lib/hallSections";
 import HallForm from "../../HallForm";
 import GenerateGridForm from "../../GenerateGridForm";
 import SeatMapEditor from "../../SeatMapEditor";
@@ -30,6 +31,17 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   const [seats, { available: pricesAvailable, prices }] = await Promise.all([listHallSeats(id), listHallCategoryPrices(id)]);
 
   const activeSeats = seats.filter((seat) => seat.isActive);
+
+  // Each section's current shape, for the grid form: how many rows, and the widest row.
+  const shapes: Partial<Record<HallSection, { rows: Set<string>; seats: number }>> = {};
+  for (const seat of activeSeats) {
+    const shape = (shapes[seat.section] ??= { rows: new Set(), seats: 0 });
+    shape.rows.add(seat.rowLabel);
+    shape.seats = Math.max(shape.seats, seat.seatNumber);
+  }
+  const sizes = Object.fromEntries(
+    Object.entries(shapes).map(([section, shape]) => [section, { rows: shape!.rows.size, seats: shape!.seats }])
+  ) as Partial<Record<HallSection, { rows: number; seats: number }>>;
   const seatCounts: Record<string, number> = {};
   for (const seat of activeSeats) seatCounts[seat.category] = (seatCounts[seat.category] ?? 0) + 1;
   // Стандарт always; VIP and custom ones once some seat has them (a price for a category with
@@ -91,9 +103,12 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
       )}
 
       <section className="mt-8">
-        <h2 className="text-lg sm:text-xl font-bold text-ocean mb-4">Сетка мест</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">Сетка мест и сектора</h2>
+        <p className="text-sm text-ocean/60 mb-4">
+          Размер партера, боковых секторов и балкона. Здесь же можно добавить сектор, которого ещё нет.
+        </p>
         <div className={CARD}>
-          <GenerateGridForm hallId={hall.id} />
+          <GenerateGridForm hallId={hall.id} sizes={sizes} />
         </div>
       </section>
     </div>

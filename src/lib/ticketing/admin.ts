@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { formatDateTime } from "@/lib/timeZone";
+import { seatName, toSection, type HallSection } from "@/lib/hallSections";
 
 /**
  * Reads for the ticket-sales admin pages (orders, payments, check-in journal, statistics).
@@ -64,30 +65,35 @@ export type OrderRow = {
   tickets: number;
   checkedIn: number;
   /** The order's seats still held, each with when it was used at the door (null: not yet). */
-  seats: { row: string; seat: number; checkedInAt: string | null }[];
+  seats: { section: HallSection; row: string; seat: number; checkedInAt: string | null }[];
   payment: { provider: string; status: string; paidAt: string | null; needsRefund: boolean; note: string | null } | null;
 };
 
 export async function listOrders(organizationId: string, filter: OrderFilter, eventId: string | null, limit = 100): Promise<OrderRow[]> {
   const supabase = await createClient();
-  let query = supabase
-    .from("bookings")
-    .select(
-      "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
-        "culture_events(title_ru, title_kk), booking_items(checked_in_at, released_at, hall_seats(row_label, seat_number)), " +
-        "payments(provider_code, status, paid_at, needs_refund, note, created_at)"
-    )
-    .eq("organization_id", organizationId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const read = (seatColumns: string) => {
+    let query = supabase
+      .from("bookings")
+      .select(
+        "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
+          `culture_events(title_ru, title_kk), booking_items(checked_in_at, released_at, hall_seats(${seatColumns})), ` +
+          "payments(provider_code, status, paid_at, needs_refund, note, created_at)"
+      )
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-  if (filter === "pending") query = query.eq("status", "pending");
-  else if (filter === "paid") query = query.eq("status", "confirmed");
-  else if (filter === "refunded") query = query.eq("status", "refunded");
-  else if (filter === "closed") query = query.in("status", ["cancelled", "expired"]);
-  if (eventId) query = query.eq("event_id", eventId);
+    if (filter === "pending") query = query.eq("status", "pending");
+    else if (filter === "paid") query = query.eq("status", "confirmed");
+    else if (filter === "refunded") query = query.eq("status", "refunded");
+    else if (filter === "closed") query = query.in("status", ["cancelled", "expired"]);
+    if (eventId) query = query.eq("event_id", eventId);
+    return query;
+  };
 
-  const { data, error } = await query;
+  let { data, error } = await read("row_label, seat_number, section");
+  // Before the sections migration the column does not exist; every seat is the parter then.
+  if (error?.code === "42703") ({ data, error } = await read("row_label, seat_number"));
   if (error || !data) return [];
 
   return (data as unknown as Row[]).map((row) => {
@@ -114,6 +120,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
         .map((item) => {
           const seat = (Array.isArray(item.hall_seats) ? item.hall_seats[0] : item.hall_seats) as Row | null;
           return {
+            section: toSection(seat?.section),
             row: seat ? String(seat.row_label) : "",
             seat: seat ? Number(seat.seat_number) : 0,
             checkedInAt: str(item.checked_in_at),
@@ -232,18 +239,23 @@ export type CheckinRow = {
 
 export async function listCheckins(organizationId: string, eventId: string | null, limit = 100): Promise<CheckinRow[]> {
   const supabase = await createClient();
-  let query = supabase
-    .from("ticket_checkins")
-    .select(
-      "id, result, checked_at, ticket_event_id, bookings(public_order_id), " +
-        "booking_items(hall_seats(row_label, seat_number)), culture_events!ticket_event_id(title_ru, title_kk), profiles(full_name)"
-    )
-    .eq("organization_id", organizationId)
-    .order("checked_at", { ascending: false })
-    .limit(limit);
-  if (eventId) query = query.eq("ticket_event_id", eventId);
+  const read = (seatColumns: string) => {
+    let query = supabase
+      .from("ticket_checkins")
+      .select(
+        "id, result, checked_at, ticket_event_id, bookings(public_order_id), " +
+          `booking_items(hall_seats(${seatColumns})), culture_events!ticket_event_id(title_ru, title_kk), profiles(full_name)`
+      )
+      .eq("organization_id", organizationId)
+      .order("checked_at", { ascending: false })
+      .limit(limit);
+    if (eventId) query = query.eq("ticket_event_id", eventId);
+    return query;
+  };
 
-  const { data, error } = await query;
+  let { data, error } = await read("row_label, seat_number, section");
+  // Before the sections migration the column does not exist; every seat is the parter then.
+  if (error?.code === "42703") ({ data, error } = await read("row_label, seat_number"));
   if (error || !data) return [];
 
   return (data as unknown as Row[]).map((row) => {
@@ -256,7 +268,9 @@ export async function listCheckins(organizationId: string, eventId: string | nul
       result: String(row.result),
       checkedAt: String(row.checked_at),
       orderNumber: booking ? String(booking.public_order_id) : null,
-      seat: seat ? `Ряд ${seat.row_label}, место ${seat.seat_number}` : null,
+      seat: seat
+        ? seatName({ section: str(seat.section), rowLabel: String(seat.row_label), seatNumber: Number(seat.seat_number) })
+        : null,
       eventTitle: titleOf(row.culture_events),
       employee: profile ? str(profile.full_name) : null,
     };

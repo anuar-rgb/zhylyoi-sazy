@@ -1,10 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSeatSections } from "@/lib/halls";
+import { PARTER, sectionOrder, type HallSection } from "@/lib/hallSections";
 
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "expired";
 
 export type BookingItemView = {
   itemId: string;
   seatId: string;
+  /** parter, left, right or balcony. */
+  section: HallSection;
   rowLabel: string;
   seatNumber: number;
   category: string;
@@ -72,6 +76,8 @@ export async function getBookingByToken(token: string): Promise<BookingView | nu
 
   const rows = data as BookingByTokenRow[];
   const first = rows[0];
+  // get_booking_by_token predates sections, so each seat's section is read on its own.
+  const sections = await getSeatSections(rows.map((row) => row.seat_id).filter((id): id is string => id !== null));
 
   const items: BookingItemView[] = rows
     .filter((row): row is BookingByTokenRow & { item_id: string; seat_id: string; row_label: string; seat_number: number; ticket_code: string } =>
@@ -80,6 +86,7 @@ export async function getBookingByToken(token: string): Promise<BookingView | nu
     .map((row) => ({
       itemId: row.item_id,
       seatId: row.seat_id,
+      section: sections.get(row.seat_id) ?? PARTER,
       rowLabel: row.row_label,
       seatNumber: row.seat_number,
       category: row.category ?? "",
@@ -88,7 +95,9 @@ export async function getBookingByToken(token: string): Promise<BookingView | nu
       priceAtBooking: Number(row.price_at_booking) || 0,
       ticketCode: row.ticket_code,
       releasedAt: row.released_at,
-    }));
+    }))
+    // The function orders by row and seat only; the parter comes first, then the other sections.
+    .sort((a, b) => sectionOrder(a.section) - sectionOrder(b.section));
 
   return {
     bookingId: first.booking_id,

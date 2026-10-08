@@ -1,8 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { PARTER, sectionLabel, toSection } from "@/lib/hallSections";
 
 export type CheckInDetails = {
+  /** «Балкон», «Левый сектор»…; null for the parter (and for a hall without sections). */
+  seatSection: string | null;
   seatRowLabel: string | null;
   seatNumber: number | null;
   eventTitle: string | null;
@@ -45,6 +48,20 @@ const FAILURES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The section of a ticket's seat, named for the door («Балкон»), or null for the parter.
+ * check_in_ticket predates sections and returns only row and seat; read after it, and only for a
+ * ticket it found, so a guessed code learns nothing more than before. Any failure reads as the
+ * parter: it only adds a word to the screen, it never decides who goes in.
+ */
+async function sectionOfTicket(supabase: Awaited<ReturnType<typeof createClient>>, code: string): Promise<string | null> {
+  const { data, error } = await supabase.from("booking_items").select("hall_seats(section)").eq("ticket_code", code).maybeSingle();
+  if (error || !data) return null;
+  const seat = (Array.isArray(data.hall_seats) ? data.hall_seats[0] : data.hall_seats) as { section?: string } | null;
+  const section = toSection(seat?.section);
+  return section === PARTER ? null : sectionLabel(section);
+}
+
+/**
  * The one entry point for marking a ticket checked in: a single .rpc() call.
  * check_in_ticket decides everything (same institution, right event, paid, not cancelled, not used,
  * inside the entry window) and writes the journal; this action only translates the answer.
@@ -71,6 +88,7 @@ export async function checkInTicket(code: string, eventId?: string | null): Prom
   if (!row) return { ok: false, reason: "failed" };
 
   const details: CheckInDetails = {
+    seatSection: row.seat_row_label ? await sectionOfTicket(supabase, trimmed) : null,
     seatRowLabel: row.seat_row_label,
     seatNumber: row.seat_number,
     eventTitle: row.event_title_ru ?? row.event_title_kk,

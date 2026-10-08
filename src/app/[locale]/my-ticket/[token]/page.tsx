@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
 import { getBookingByToken } from "@/lib/bookings";
+import { seatName } from "@/lib/hallSections";
 import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
@@ -76,10 +77,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                     <div className="flex items-center gap-3 min-w-0">
                       {isConfirmed && <TicketQr value={item.ticketCode} />}
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-ocean">
-                          {locale === "kk" ? "Қатар" : "Ряд"} {item.rowLabel}, {locale === "kk" ? "орын" : "место"}{" "}
-                          {item.seatNumber}
-                        </p>
+                        <p className="text-sm font-semibold text-ocean">{seatName(item, locale === "kk" ? "kk" : "ru")}</p>
                         <p className="text-xs text-ocean/50">{name}</p>
                       </div>
                     </div>

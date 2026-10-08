@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { setSeatsActive, updateSeatsCategory } from "./actions";
 import type { HallSeatRecord } from "@/lib/halls";
 import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
+import { seatName } from "@/lib/hallSections";
 
 const NEW_CATEGORY_VALUE = "__new__";
 
@@ -40,7 +41,7 @@ export default function SeatBulkPanel({
   const ids = seats.map((seat) => seat.id);
   const label =
     seats.length === 1
-      ? `Ряд ${seats[0].rowLabel}, место ${seats[0].seatNumber}`
+      ? seatName(seats[0])
       : `Выбрано мест: ${seats.length}`;
   // Стандарт and VIP are always offered; custom categories once some seat has one.
   const options = categoryOptions([...(seats.length === 1 ? [seats[0].category] : []), ...existingCategories]);

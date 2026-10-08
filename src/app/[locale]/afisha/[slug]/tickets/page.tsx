@@ -92,11 +92,12 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
 
   const ticketTypeByCategory = new Map(ticketTypes.map((tt) => [tt.category, tt]));
 
-  const rows: { label: string; seats: SeatOption[] }[] = [];
+  const rows: { section: string; label: string; seats: SeatOption[] }[] = [];
   for (const seat of seats) {
     const ticketType = ticketTypeByCategory.get(seat.category);
     const option: SeatOption = {
       id: seat.id,
+      section: seat.section,
       rowLabel: seat.rowLabel,
       seatNumber: seat.seatNumber,
       category: seat.category,
@@ -106,9 +107,10 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
       ticketName: ticketType ? (localizedName(ticketType.nameKk, ticketType.nameRu, locale) ?? seat.category) : seat.category,
     };
 
+    // Rows are numbered within a section: «ряд 1» of the balcony is not «ряд 1» of the parter.
     const current = rows[rows.length - 1];
-    if (current && current.label === seat.rowLabel) current.seats.push(option);
-    else rows.push({ label: seat.rowLabel, seats: [option] });
+    if (current && current.label === seat.rowLabel && current.section === seat.section) current.seats.push(option);
+    else rows.push({ section: seat.section, label: seat.rowLabel, seats: [option] });
   }
 
   const eventTitle = event.titleRu ?? event.titleKk ?? "";

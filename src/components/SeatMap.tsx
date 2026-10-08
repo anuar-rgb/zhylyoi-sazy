@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { sectionLabel } from "@/lib/hallSections";
 
 /**
  * Pure presentation: one row of seats in, one row of circles out. The
@@ -10,6 +11,8 @@ import { useEffect, useRef, useState } from "react";
  */
 export interface SeatMapSeat {
   id: string;
+  /** parter (default), left, right or balcony. */
+  section?: string;
   rowLabel: string;
   seatNumber: number;
   category: string;
@@ -17,8 +20,22 @@ export interface SeatMapSeat {
 }
 
 export interface SeatMapRow {
+  /** Same as its seats' section; rows are numbered within a section. */
+  section?: string;
   label: string;
   seats: SeatMapSeat[];
+}
+
+/** Groups seats, already sorted by section, row and seat, into rows. */
+export function seatsToRows(seats: SeatMapSeat[]): SeatMapRow[] {
+  const rows: SeatMapRow[] = [];
+  for (const seat of seats) {
+    const section = seat.section ?? "parter";
+    const current = rows[rows.length - 1];
+    if (current && current.label === seat.rowLabel && (current.section ?? "parter") === section) current.seats.push(seat);
+    else rows.push({ section, label: seat.rowLabel, seats: [seat] });
+  }
+  return rows;
 }
 
 export interface SeatMapLegendItem {
@@ -39,6 +56,8 @@ export interface SeatMapProps {
   onRowLabelClick?: (row: SeatMapRow) => void;
   /** Shown only when the hall is wider than its box, i.e. on a phone. */
   scrollHint?: string;
+  /** Caption of a section block («Левый сектор», «Балкон»); Russian names by default. */
+  sectionTitle?: (section: string) => string;
 }
 
 const SEAT_SIZE = 28;
@@ -136,6 +155,7 @@ export default function SeatMap({
   className,
   onRowLabelClick,
   scrollHint = "Листайте схему в стороны",
+  sectionTitle = (section) => sectionLabel(section, "ru"),
 }: SeatMapProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -182,16 +202,70 @@ export default function SeatMap({
           </svg>
         </div>
 
+        {(() => {
+          const bySection = new Map<string, SeatMapRow[]>();
+          for (const row of rows) {
+            const section = row.section ?? "parter";
+            bySection.set(section, [...(bySection.get(section) ?? []), row]);
+          }
+          const only = bySection.size === 1 && bySection.has("parter");
+          const block = (section: string, curved: boolean) => {
+            const sectionRows = bySection.get(section);
+            if (!sectionRows) return null;
+            return (
+              <div key={section} className="flex flex-col items-center">
+                {!only && (
+                  <span className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ocean/40">{sectionTitle(section)}</span>
+                )}
+                {renderRows(sectionRows, curved)}
+              </div>
+            );
+          };
+          // Only the parter: drawn exactly as before sections existed.
+          if (only) return renderRows(rows, true);
+          // The parter faces the stage with the side sections beside it; the balcony sits behind.
+          return (
+            <>
+              <div className="flex items-start justify-center gap-8">
+                {block("left", false)}
+                {block("parter", true)}
+                {block("right", false)}
+              </div>
+              {bySection.has("balcony") && (
+                <div className="mt-8 pt-6 border-t border-dashed border-ocean/15">{block("balcony", true)}</div>
+              )}
+            </>
+          );
+        })()}
+
+      </div>
+      </div>
+
+      {/* Outside the scrolling box: the legend must stay in view however far the hall is scrolled. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-6 pt-4 px-2 border-t border-cream-dark text-xs text-ocean/60">
+          {legend.map((item) => (
+            <span key={item.label} className="inline-flex items-center gap-1.5">
+              <span className={`inline-block w-3 h-3 rounded-full ${item.swatchClassName}`} />
+              {item.label}
+            </span>
+          ))}
+      </div>
+    </div>
+  );
+
+  function renderRows(blockRows: SeatMapRow[], curved: boolean) {
+    return (
         <div className="space-y-2">
-          {rows.map((row, rowIndex) => {
+          {blockRows.map((row, rowIndex) => {
             const { slots, width } = layoutRow(row.seats);
             // Row 0 is closest to the stage and stays almost flat; later rows
             // curve more at the edges — an amphitheater, not a true circle.
-            const curvature = rows.length > 1 ? rowIndex / (rows.length - 1) : 0;
+            // Side sections stay straight: they run alongside the parter.
+            const curvature = curved && blockRows.length > 1 ? rowIndex / (blockRows.length - 1) : 0;
             const center = width / 2;
 
             return (
-              <div key={row.label} className="flex items-center gap-2.5">
+              <div key={`${row.section ?? "parter"}:${row.label}`} className="flex items-center gap-2.5">
                 {onRowLabelClick ? (
                   <button
                     type="button"
@@ -255,19 +329,6 @@ export default function SeatMap({
             );
           })}
         </div>
-
-      </div>
-      </div>
-
-      {/* Outside the scrolling box: the legend must stay in view however far the hall is scrolled. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-6 pt-4 px-2 border-t border-cream-dark text-xs text-ocean/60">
-          {legend.map((item) => (
-            <span key={item.label} className="inline-flex items-center gap-1.5">
-              <span className={`inline-block w-3 h-3 rounded-full ${item.swatchClassName}`} />
-              {item.label}
-            </span>
-          ))}
-      </div>
-    </div>
-  );
+    );
+  }
 }

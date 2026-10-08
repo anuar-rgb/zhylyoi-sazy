@@ -8,6 +8,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import { STANDARD } from "@/lib/seatCategories";
+import { PARTER, SECTIONS, sectionLabel, toSection, type HallSection } from "@/lib/hallSections";
 
 export type FormState = { error: string | null };
 
@@ -80,19 +81,33 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
   if (error || !created) return { error: "Не удалось создать зал." };
 
   // The hall row exists before its seats do — a brand new hall_id can never
-  // collide with the (hall_id, row_label, seat_number) unique index, so this
+  // collide with the (hall_id, section, row_label, seat_number) unique index, so this
   // insert only fails on a genuine database error, same risk as any other
   // two-step admin write in this codebase.
-  const seats: { hall_id: string; row_label: string; seat_number: number; category: string }[] = [];
-  for (let r = 1; r <= rows; r++) {
-    const rowLabel = rowFormat === "letter" ? letterLabel(r) : String(r);
-    for (let s = 1; s <= seatsPerRow; s++) {
-      seats.push({ hall_id: created.id, row_label: rowLabel, seat_number: s, category });
+  const seats: SeatInsert[] = gridSeats(created.id, PARTER, rows, seatsPerRow, rowFormat, category);
+  for (const section of SECTIONS) {
+    if (section === PARTER || form.get(`section_${section}`) !== "on") continue;
+    const sectionRows = intField(form, `${section}_rows`);
+    const sectionSeats = intField(form, `${section}_seats`);
+    if (!sectionRows || sectionRows < 1 || sectionRows > 100 || !sectionSeats || sectionSeats < 1 || sectionSeats > 100) {
+      await supabase.from("halls").delete().eq("id", created.id);
+      return { error: `${sectionLabel(section)}: рядов и мест в ряду — от 1 до 100.` };
     }
+    seats.push(...gridSeats(created.id, section, sectionRows, sectionSeats, rowFormat, category));
   }
-  const { error: seatsError } = await supabase.from("hall_seats").insert(seats);
+  // defaultToNull: false — a parter seat has no section key (see gridSeats), and in a batch
+  // supabase-js would otherwise send NULL for it instead of letting the column default apply.
+  const { error: seatsError } = await supabase.from("hall_seats").insert(seats, { defaultToNull: false });
   if (seatsError) {
-    return { error: "Зал создан, но не удалось создать сетку мест. Задайте её на странице зала через «Изменить»." };
+    // No half-made hall left in the list: without its seats it is of no use, and the form still
+    // holds everything to try again.
+    await supabase.from("halls").delete().eq("id", created.id);
+    return {
+      error:
+        seatsError.code === "42703"
+          ? "Сектора ещё не включены в базе: выполните SQL из миграции hall_seats_add_section."
+          : "Не удалось создать места зала. Попробуйте ещё раз.",
+    };
   }
 
   revalidateHalls();
@@ -141,6 +156,31 @@ export async function deleteHall(id: string): Promise<{ ok: boolean; error?: str
 // Seats
 // ---------------------------------------------------------------------
 
+type SeatInsert = { hall_id: string; section?: HallSection; row_label: string; seat_number: number; category: string };
+
+/**
+ * The seats of one section's grid. The parter's seats carry no section key at all: the column
+ * defaults to the parter, and leaving it out keeps a plain hall creatable on a database that
+ * has not had the sections migration yet.
+ */
+function gridSeats(
+  hallId: string,
+  section: HallSection,
+  rows: number,
+  seatsPerRow: number,
+  rowFormat: "letter" | "number",
+  category: string
+): SeatInsert[] {
+  const seats: SeatInsert[] = [];
+  for (let r = 1; r <= rows; r++) {
+    const rowLabel = rowFormat === "letter" ? letterLabel(r) : String(r);
+    for (let s = 1; s <= seatsPerRow; s++) {
+      seats.push({ hall_id: hallId, ...(section === PARTER ? {} : { section }), row_label: rowLabel, seat_number: s, category });
+    }
+  }
+  return seats;
+}
+
 /** 1 → "A", 26 → "Z", 27 → "AA" — spreadsheet-style, for halls with more than 26 rows. */
 function letterLabel(n: number): string {
   let label = "";
@@ -160,6 +200,10 @@ function letterLabel(n: number): string {
  * A seat already inside the new shape is left completely alone (category,
  * active state, everything) — resizing only touches the boundary, never
  * seats staff have already fine-tuned individually.
+ *
+ * Works on one section at a time (the form says which): adding the balcony or resizing the left
+ * side never touches the parter. Rows = 0 hides a whole side section or balcony — the way to
+ * remove one; the parter always keeps at least one row.
  */
 export async function regenerateSeatGrid(_prev: FormState, form: FormData): Promise<FormState> {
   const identity = await getStaffIdentity();
@@ -167,36 +211,51 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
 
   const hallId = field(form, "id");
   if (!hallId) return { error: "Зал не найден." };
+  const section = toSection(field(form, "section"));
 
   const rows = intField(form, "rows");
   const seatsPerRow = intField(form, "seats_per_row");
-  if (!rows && !seatsPerRow) return { error: null }; // both left blank — no grid change requested
-  if (!rows || rows < 1 || rows > 200) return { error: "Число рядов — от 1 до 200." };
-  if (!seatsPerRow || seatsPerRow < 1 || seatsPerRow > 200) return { error: "Число мест в ряду — от 1 до 200." };
+  const removing = section !== PARTER && rows === 0;
+  if (rows === null && seatsPerRow === null) return { error: null }; // both left blank — no grid change requested
+  if (!removing) {
+    if (!rows || rows < 1 || rows > 200) {
+      return { error: section === PARTER ? "Число рядов — от 1 до 200." : "Число рядов — от 1 до 200, или 0, чтобы убрать сектор." };
+    }
+    if (!seatsPerRow || seatsPerRow < 1 || seatsPerRow > 200) return { error: "Число мест в ряду — от 1 до 200." };
+  }
 
   const rowFormat = field(form, "row_format") === "number" ? "number" : "letter";
   const category = STANDARD; // seats added by a resize start as Стандарт too
 
   const supabase = await createClient();
-  const { data: existing, error: fetchError } = await supabase
-    .from("hall_seats")
-    .select("id, row_label, seat_number, is_active")
-    .eq("hall_id", hallId);
-  if (fetchError) return { error: "Не удалось прочитать текущие места." };
+  // Only this section's seats. A database without sections yet has only the parter.
+  const read = (withSection: boolean) => {
+    const query = supabase.from("hall_seats").select("id, row_label, seat_number, is_active").eq("hall_id", hallId);
+    return withSection ? query.eq("section", section) : query;
+  };
+  let { data: existing, error: fetchError } = await read(true);
+  if (fetchError?.code === "42703" && section === PARTER) ({ data: existing, error: fetchError } = await read(false));
+  if (fetchError) {
+    return {
+      error:
+        fetchError.code === "42703"
+          ? "Сектора ещё не включены в базе: выполните SQL из миграции hall_seats_add_section."
+          : "Не удалось прочитать текущие места.",
+    };
+  }
 
   const existingByKey = new Map((existing ?? []).map((s) => [`${s.row_label}#${s.seat_number}`, s]));
   const targetKeys = new Set<string>();
-  const toInsert: { hall_id: string; row_label: string; seat_number: number; category: string }[] = [];
+  const toInsert: SeatInsert[] = [];
   const toReactivate: string[] = [];
 
-  for (let r = 1; r <= rows; r++) {
-    const rowLabel = rowFormat === "letter" ? letterLabel(r) : String(r);
-    for (let s = 1; s <= seatsPerRow; s++) {
-      const key = `${rowLabel}#${s}`;
+  if (!removing) {
+    for (const seat of gridSeats(hallId, section, rows!, seatsPerRow!, rowFormat, category)) {
+      const key = `${seat.row_label}#${seat.seat_number}`;
       targetKeys.add(key);
-      const seat = existingByKey.get(key);
-      if (!seat) toInsert.push({ hall_id: hallId, row_label: rowLabel, seat_number: s, category });
-      else if (!seat.is_active) toReactivate.push(seat.id);
+      const found = existingByKey.get(key);
+      if (!found) toInsert.push(seat);
+      else if (!found.is_active) toReactivate.push(found.id);
     }
   }
 
@@ -205,7 +264,7 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
     .map((s) => s.id);
 
   if (toInsert.length > 0) {
-    const { error } = await supabase.from("hall_seats").insert(toInsert);
+    const { error } = await supabase.from("hall_seats").insert(toInsert, { defaultToNull: false });
     if (error) return { error: "Не удалось добавить новые места." };
   }
   if (toReactivate.length > 0) {

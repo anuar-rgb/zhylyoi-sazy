@@ -56,6 +56,16 @@ describe("buildTicketsPdf", () => {
     expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
   });
 
+  it("prints a seat's section, and keeps a long title clear of the QR code", async () => {
+    const long = "Өте ұзын атау ".repeat(30);
+    const bytes = await buildTicketsPdf(
+      data({ eventTitle: long, place: long, tickets: [{ code: "aabba6c5-ec2b-4c7c-9132-e6bf737e496c", section: "Сол жақ сектор", row: "2", seat: 4, type: "VIP", price: 5000 }] }),
+      labels,
+      fonts
+    );
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+  });
+
   it("works without a place", async () => {
     const bytes = await buildTicketsPdf(data({ place: null }), labels, fonts);
     expect(bytes.length).toBeGreaterThan(1000);

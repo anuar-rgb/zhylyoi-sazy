@@ -11,6 +11,8 @@ import QRCode from "qrcode";
 export type TicketPdfTicket = {
   /** The ticket code: the content of the QR and the thing typed in at the door. */
   code: string;
+  /** «Балкон», «Левый сектор»…; absent for the parter. */
+  section?: string | null;
   row: string;
   seat: number;
   /** The ticket type's name, e.g. "Standard". */
@@ -133,7 +135,9 @@ export async function buildTicketsPdf(
 
     // event
     let y = H - 104;
-    for (const l of wrapText(data.eventTitle, bold, 21, W - 2 * MARGIN, 3)) {
+    // A section line takes room above the seat, so the title gives up its third line to keep
+    // everything clear of the QR code.
+    for (const l of wrapText(data.eventTitle, bold, 21, W - 2 * MARGIN, ticket.section ? 2 : 3)) {
       page.drawText(l, { x: MARGIN, y, size: 21, font: bold, color: INK });
       y -= 26;
     }
@@ -149,6 +153,11 @@ export async function buildTicketsPdf(
 
     // the seat
     y -= 12;
+    if (ticket.section) {
+      // On its own line above row and seat: «Левый сектор» beside them at this size could run off the page.
+      page.drawText(ticket.section.toUpperCase(), { x: MARGIN, y: y + 4, size: 10, font: bold, color: OCEAN });
+      y -= 16;
+    }
     page.drawText(labels.rowSeat(ticket.row, ticket.seat), { x: MARGIN, y, size: 20, font: bold, color: INK });
     y -= 20;
     const price = ticket.price > 0 ? `${ticket.price.toLocaleString("ru-RU")} ${data.currency === "KZT" ? "₸" : data.currency}` : labels.free;

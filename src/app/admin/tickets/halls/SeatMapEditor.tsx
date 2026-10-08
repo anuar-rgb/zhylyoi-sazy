@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
+import SeatMap, { assignCategoryColors, seatsToRows, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import SeatBulkPanel from "./SeatBulkPanel";
 import type { HallSeatRecord } from "@/lib/halls";
 import { categoryLabel } from "@/lib/seatCategories";
+import { seatName } from "@/lib/hallSections";
 
 /**
  * Click-to-edit seat map for a hall. Category colour comes from
@@ -39,22 +40,22 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
 
   const categoryColors = useMemo(() => assignCategoryColors(seats.map((seat) => seat.category)), [seats]);
 
-  const rows: SeatMapRow[] = useMemo(() => {
-    const grouped: SeatMapRow[] = [];
-    for (const seat of seats) {
-      const mapSeat: SeatMapSeat = {
-        id: seat.id,
-        rowLabel: seat.rowLabel,
-        seatNumber: seat.seatNumber,
-        category: seat.category,
-        status: selectedIds.has(seat.id) ? "selected" : seat.isActive ? "active" : "inactive",
-      };
-      const current = grouped[grouped.length - 1];
-      if (current && current.label === seat.rowLabel) current.seats.push(mapSeat);
-      else grouped.push({ label: seat.rowLabel, seats: [mapSeat] });
-    }
-    return grouped;
-  }, [seats, selectedIds]);
+  const rows: SeatMapRow[] = useMemo(
+    () =>
+      seatsToRows(
+        seats.map(
+          (seat): SeatMapSeat => ({
+            id: seat.id,
+            section: seat.section,
+            rowLabel: seat.rowLabel,
+            seatNumber: seat.seatNumber,
+            category: seat.category,
+            status: selectedIds.has(seat.id) ? "selected" : seat.isActive ? "active" : "inactive",
+          })
+        )
+      ),
+    [seats, selectedIds]
+  );
 
   const selectedSeats = seats.filter((seat) => selectedIds.has(seat.id));
 
@@ -98,7 +99,7 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
         onRowLabelClick={toggleRow}
-        seatTooltip={(seat) => `Ряд ${seat.rowLabel}, место ${seat.seatNumber} — ${categoryLabel(seat.category)}`}
+        seatTooltip={(seat) => `${seatName(seat)} — ${categoryLabel(seat.category)}`}
         legend={[
           ...Array.from(categoryColors.entries()).map(([category, color]) => ({
             swatchClassName: color.solid.split(" ")[0],

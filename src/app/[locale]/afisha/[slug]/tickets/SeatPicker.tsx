@@ -7,9 +7,12 @@ import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { rememberTicket } from "@/lib/myTickets";
 import { createBooking, type CreateBookingResult } from "@/app/actions/bookings";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
+import { sectionLabel, seatName } from "@/lib/hallSections";
+import { categoryLabel } from "@/lib/seatCategories";
 
 export type SeatOption = {
   id: string;
+  section: string;
   rowLabel: string;
   seatNumber: number;
   category: string;
@@ -108,10 +111,17 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
  * trusts, only one it displays; the real total comes back from the server on
  * success, and a stale local total never reaches the database.
  */
-export default function SeatPicker({ eventId, rows }: { eventId: string; rows: { label: string; seats: SeatOption[] }[] }) {
+export default function SeatPicker({
+  eventId,
+  rows,
+}: {
+  eventId: string;
+  rows: { section: string; label: string; seats: SeatOption[] }[];
+}) {
   const router = useRouter();
   const feedback = useFeedback();
-  const t = TEXTS[useLocale() === "kk" ? "kk" : "ru"];
+  const lang = useLocale() === "kk" ? "kk" : "ru";
+  const t = TEXTS[lang];
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
@@ -143,9 +153,11 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
   }
 
   const seatMapRows: SeatMapRow[] = rows.map((row) => ({
+    section: row.section,
     label: row.label,
     seats: row.seats.map((seat) => ({
       id: seat.id,
+      section: seat.section,
       rowLabel: seat.rowLabel,
       seatNumber: seat.seatNumber,
       category: seat.category,
@@ -228,11 +240,12 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
           seatTooltip={seatTooltip}
           stageLabel={t.stage}
           scrollHint={t.scrollHint}
+          sectionTitle={(section) => sectionLabel(section, lang)}
           onSeatClick={handleSeatMapClick}
           legend={[
             ...Array.from(categoryColors.entries()).map(([category, color]) => ({
               swatchClassName: color.solid.split(" ")[0],
-              label: category,
+              label: categoryLabel(category, lang),
             })),
             { swatchClassName: "bg-ocean/10", label: t.legendTaken },
           ]}
@@ -248,9 +261,7 @@ export default function SeatPicker({ eventId, rows }: { eventId: string; rows: {
           <ul className="text-sm text-ocean/70 space-y-1 mb-4">
             {selectedSeats.map((seat) => (
               <li key={seat.id} className="flex items-center justify-between gap-2">
-                <span>
-                  {t.row} {seat.rowLabel}, {t.seat} {seat.seatNumber}
-                </span>
+                <span>{seatName(seat, lang)}</span>
                 <span className="shrink-0">{seat.isFree ? t.free : `${seat.price} ₸`}</span>
               </li>
             ))}

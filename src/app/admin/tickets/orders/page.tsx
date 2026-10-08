@@ -11,6 +11,7 @@ import {
 import BackToTickets from "../BackToTickets";
 import NoProfile from "../NoProfile";
 import ConfirmPaymentButton from "./ConfirmPaymentButton";
+import { seatName } from "@/lib/hallSections";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -131,12 +132,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {order.seats.map((s) => (
                     <span
-                      key={`${s.row}-${s.seat}`}
+                      key={`${s.section}-${s.row}-${s.seat}`}
                       className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                         s.checkedInAt ? "bg-gold/15 text-ocean-dark" : "bg-ocean/5 text-ocean/50"
                       }`}
                     >
-                      Ряд {s.row}, место {s.seat}
+                      {seatName({ section: s.section, rowLabel: s.row, seatNumber: s.seat })}
                       {s.checkedInAt ? ` · вход ${formatMoment(s.checkedInAt)}` : ""}
                     </span>
                   ))}

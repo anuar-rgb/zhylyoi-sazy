@@ -14,7 +14,14 @@ const LABEL = "block text-sm font-medium text-ocean/70 mb-1.5";
  * submit button of its own: the caller owns those, since the two use cases
  * submit to different actions.
  */
-export default function GridFieldset({ required = false }: { required?: boolean }) {
+export default function GridFieldset({
+  required = false,
+  allowZeroRows = false,
+}: {
+  required?: boolean;
+  /** 0 rows removes a side section or the balcony; the parter always keeps at least one. */
+  allowZeroRows?: boolean;
+}) {
   return (
     <>
       <div className="grid sm:grid-cols-2 gap-4">
@@ -26,7 +33,7 @@ export default function GridFieldset({ required = false }: { required?: boolean 
             id="rows"
             name="rows"
             type="number"
-            min={1}
+            min={allowZeroRows ? 0 : 1}
             max={200}
             required={required}
             defaultValue={required ? 10 : ""}
@@ -42,7 +49,8 @@ export default function GridFieldset({ required = false }: { required?: boolean 
             id="seats_per_row"
             name="seats_per_row"
             type="number"
-            min={1}
+            // 0 is allowed alongside 0 rows: removing a section, people type 0 in both fields.
+            min={allowZeroRows ? 0 : 1}
             max={200}
             required={required}
             defaultValue={required ? 20 : ""}
