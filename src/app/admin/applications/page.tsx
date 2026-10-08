@@ -7,6 +7,7 @@ import DeleteButton from "../DeleteButton";
 import MarkProcessedButton from "./MarkProcessedButton";
 import MarkSeenOnView from "./MarkSeenOnView";
 import StatusSelect from "./StatusSelect";
+import { ClearHistoryButton, HideButton } from "./HistoryButtons";
 import BackToDashboard from "../BackToDashboard";
 
 /** How many cards the feed under the summary shows at a time. */
@@ -87,12 +88,14 @@ const STATUS_STYLE: Record<ApplicationStatus, string> = {
   rejected: "bg-ocean/5 text-ocean/40",
 };
 
-type View = { club: string | null; status: ApplicationStatus | null; page: number };
+/** hidden: the overview's feed lists the applications hidden from history instead of the rest. */
+type View = { club: string | null; status: ApplicationStatus | null; page: number; hidden?: boolean };
 
 /** The address of a view of this page; defaults are left out so the plain address stays plain. */
 function hrefFor(view: View): string {
   const query = new URLSearchParams();
   if (view.club) query.set("club", view.club);
+  if (view.hidden && !view.club) query.set("hidden", "1");
   if (view.status) query.set("status", view.status);
   if (view.page > 1) query.set("page", String(view.page));
   const qs = query.toString();
@@ -116,7 +119,7 @@ function StatusTabs({ list, view }: { list: ApplicationRecord[]; view: View }) {
         return (
           <Link
             key={tab.status ?? "all"}
-            href={hrefFor({ club: view.club, status: tab.status, page: 1 })}
+            href={hrefFor({ ...view, status: tab.status, page: 1 })}
             aria-current={active ? "page" : undefined}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               active
@@ -156,7 +159,8 @@ function ApplicationCard({ app }: { app: ApplicationRecord }) {
             {STATUS_LABELS[app.status]}
           </span>
           <MarkProcessedButton id={app.id} status={app.status} />
-          <DeleteButton id={app.id} childName={app.childName} />
+          {/* Not a delete: the feed only hides it. Deleting is done from the club's own list. */}
+          <HideButton id={app.id} hidden={app.hiddenFromHistoryAt !== null} />
         </div>
       </div>
 
@@ -286,7 +290,7 @@ function Pager({ view, pages }: { view: View; pages: number }) {
 export default async function ApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ club?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ club?: string; status?: string; page?: string; hidden?: string }>;
 }) {
   const query = await searchParams;
   const applications = await readAllApplications();
@@ -298,7 +302,16 @@ export default async function ApplicationsPage({
   const club = query.club ? (byClub.find((row) => row.key === query.club) ?? null) : null;
   const status = APPLICATION_STATUSES.includes(query.status as ApplicationStatus) ? (query.status as ApplicationStatus) : null;
 
-  const scoped = club ? applications.filter((app) => clubKey(app) === club.key) : applications;
+  // The summary above and a club's own list count every application. Only the overview's feed
+  // («История заявок») leaves out what staff hid from it — or, with ?hidden=1, shows just those.
+  const showingHidden = !club && query.hidden === "1";
+  const hiddenCount = applications.filter((app) => app.hiddenFromHistoryAt !== null).length;
+  const scoped = club
+    ? applications.filter((app) => clubKey(app) === club.key)
+    : applications.filter((app) => (app.hiddenFromHistoryAt !== null) === showingHidden);
+  const clearable = applications.filter(
+    (app) => app.hiddenFromHistoryAt === null && (app.status === "completed" || app.status === "rejected")
+  ).length;
   const shown = status ? scoped.filter((app) => app.status === status) : scoped;
 
   // The overview pages its feed; a club's own screen lists every application of that club.
@@ -307,7 +320,7 @@ export default async function ApplicationsPage({
   // Past the end (say, the last card on the last page was just deleted) shows the last page.
   const page = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), pages) : 1;
   const visible = club ? shown : shown.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const view: View = { club: club?.key ?? null, status, page };
+  const view: View = { club: club?.key ?? null, status, page, hidden: showingHidden };
 
   // Newest first, so the ends of the list are the ends of the period.
   const newest = applications[0];
@@ -403,12 +416,39 @@ export default async function ApplicationsPage({
         <p className="text-ocean/60 bg-white rounded-3xl p-8 border border-cream-dark text-center">Заявок пока нет.</p>
       ) : (
         <section aria-label={club ? `Заявки: ${club.title}` : "История заявок"}>
-          {!club && <h2 className="font-semibold text-ocean mb-3">История заявок</h2>}
+          {!club && (
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 mb-3">
+              <h2 className="font-semibold text-ocean">{showingHidden ? "Скрытые из истории" : "История заявок"}</h2>
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                {showingHidden ? (
+                  <Link href={hrefFor({ club: null, status: null, page: 1 })} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+                    ← К истории
+                  </Link>
+                ) : (
+                  <>
+                    {hiddenCount > 0 && (
+                      <Link
+                        href={hrefFor({ club: null, status: null, page: 1, hidden: true })}
+                        className="text-sm font-semibold text-ocean/60 hover:text-ocean"
+                      >
+                        Скрытые ({hiddenCount})
+                      </Link>
+                    )}
+                    <ClearHistoryButton count={clearable} />
+                  </>
+                )}
+              </div>
+            </div>
+          )}
           <StatusTabs list={scoped} view={view} />
 
           {visible.length === 0 ? (
             <p className="text-ocean/60 bg-white rounded-3xl p-6 border border-cream-dark text-center text-sm">
-              Заявок с таким статусом нет.
+              {scoped.length === 0
+                ? showingHidden
+                  ? "Скрытых заявок нет."
+                  : "История пуста. Все заявки по-прежнему есть в сводке и в списках кружков."
+                : "Заявок с таким статусом нет."}
             </p>
           ) : club ? (
             <ApplicationsTable list={visible} />

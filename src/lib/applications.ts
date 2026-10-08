@@ -38,6 +38,13 @@ export type ApplicationRecord = {
    * what the red dot in the admin navigation tracks, not the work queue.
    */
   seenAt: string | null;
+  /**
+   * When staff hid it from the «История заявок» feed, null while it shows there.
+   *
+   * Hiding touches only that feed: the per-club summary and the club's own list still count
+   * and show the application. Deleting it outright is a separate action, on the club's page.
+   */
+  hiddenFromHistoryAt: string | null;
 };
 
 /** What the public form submits. id and created_at belong to the database. */
@@ -49,9 +56,13 @@ export type NewApplication = {
   comment: string;
 };
 
-const COLUMNS =
+const BASE_COLUMNS =
   "id, created_at, applicant_name, applicant_age, applicant_phone, club_id, club_title, message, " +
   "consent_given, status, processed_at, seen_at";
+const COLUMNS = `${BASE_COLUMNS}, hidden_from_history_at`;
+
+/** Postgres "undefined_column": the database has not had the hidden_from_history_at migration yet. */
+const UNDEFINED_COLUMN = "42703";
 
 type ApplicationRow = {
   id: string;
@@ -66,6 +77,7 @@ type ApplicationRow = {
   status: string;
   processed_at: string | null;
   seen_at: string | null;
+  hidden_from_history_at?: string | null;
 };
 
 /** Keeps the database column names from leaking into the pages that render applications. */
@@ -85,6 +97,7 @@ function toRecord(row: ApplicationRow): ApplicationRecord {
       : "new",
     processedAt: row.processed_at,
     seenAt: row.seen_at,
+    hiddenFromHistoryAt: row.hidden_from_history_at ?? null,
   };
 }
 
@@ -99,10 +112,13 @@ function toRecord(row: ApplicationRow): ApplicationRecord {
  */
 export async function readAllApplications(): Promise<ApplicationRecord[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("applications")
-    .select(COLUMNS)
-    .order("created_at", { ascending: false });
+  const read = (columns: string) =>
+    supabase.from("applications").select(columns).order("created_at", { ascending: false });
+
+  let { data, error } = await read(COLUMNS);
+  // Before the migration has been run the new column does not exist yet; the list must still
+  // load rather than come back empty, with nothing hidden.
+  if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await read(BASE_COLUMNS));
 
   if (error || !data) return [];
   // The long select string makes supabase-js infer a string-error type; the shape
@@ -205,6 +221,37 @@ export async function deleteApplication(id: string): Promise<boolean> {
     .eq("id", id);
 
   return !error && count === 1;
+}
+
+/**
+ * Hides one application from the «История заявок» feed, or brings it back. The application
+ * itself stays: the summary and the club's list still show it.
+ *
+ * Judged by the row count, like every write here.
+ */
+export async function setApplicationHidden(id: string, hidden: boolean): Promise<boolean> {
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("applications")
+    .update({ hidden_from_history_at: hidden ? new Date().toISOString() : null }, { count: "exact" })
+    .eq("id", id);
+  return !error && count === 1;
+}
+
+/**
+ * «Очистить историю»: hides every handled (processed or rejected) application still in the
+ * feed. New ones and those in progress stay, since they still need someone's attention.
+ *
+ * Returns how many were hidden, or null if the update failed.
+ */
+export async function hideHandledFromHistory(): Promise<number | null> {
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("applications")
+    .update({ hidden_from_history_at: new Date().toISOString() }, { count: "exact" })
+    .is("hidden_from_history_at", null)
+    .in("status", ["completed", "rejected"]);
+  return error ? null : (count ?? 0);
 }
 
 /**

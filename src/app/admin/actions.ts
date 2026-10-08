@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   APPLICATION_STATUSES,
   deleteApplication,
+  hideHandledFromHistory,
+  setApplicationHidden,
   setApplicationStatus,
   markApplicationsSeen,
   type ApplicationStatus,
@@ -53,6 +55,33 @@ export async function markApplication(id: string, status: ApplicationStatus): Pr
   if (ok) revalidatePath("/admin", "layout");
 
   return { ok };
+}
+
+/** Hides one application from the history feed, or brings it back. The application itself stays. */
+export async function hideApplication(id: string, hidden: boolean): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const ok = await setApplicationHidden(id, hidden);
+  if (ok) revalidatePath("/admin/applications");
+  return { ok };
+}
+
+/** «Очистить историю»: hides every processed or rejected application still in the feed. */
+export async function clearApplicationHistory(): Promise<{ ok: boolean; hidden: number }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, hidden: 0 };
+
+  const hidden = await hideHandledFromHistory();
+  if (hidden === null) return { ok: false, hidden: 0 };
+  revalidatePath("/admin/applications");
+  return { ok: true, hidden };
 }
 
 /**

@@ -12,7 +12,12 @@ export default function DeleteButton({ id, childName }: { id: string; childName:
   const [failed, setFailed] = useState(false);
 
   async function handleDelete() {
-    const confirmed = await feedback.confirm({ title: `Удалить заявку «${childName}»?`, confirmLabel: "Удалить", danger: true });
+    const confirmed = await feedback.confirm({
+      title: `Удалить заявку «${childName}» навсегда?`,
+      message: "Она пропадёт отовсюду: из сводки, из списка кружка и из истории. Вернуть её будет нельзя.",
+      confirmLabel: "Удалить",
+      danger: true,
+    });
     if (!confirmed) return;
     setBusy(true);
     setFailed(false);
