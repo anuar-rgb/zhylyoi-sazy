@@ -8,6 +8,9 @@ import TicketTypeForm from "./TicketTypeForm";
 import ToggleTicketTypeButton from "./ToggleTicketTypeButton";
 import EventSeatMap from "./EventSeatMap";
 import { createTicketType, updateTicketType } from "./actions";
+import TakeHallDefaultsButton from "./TakeHallDefaultsButton";
+import { getHallById } from "@/lib/halls";
+import { categoryLabel } from "@/lib/seatCategories";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
@@ -22,10 +25,12 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
   const event = await getCultureEventById(id);
   if (!event) notFound();
 
-  const [eventSeats, ticketTypes] = await Promise.all([
+  const [eventSeats, ticketTypes, hall] = await Promise.all([
     event.hallId ? listEventSeatsForAdmin(id, event.hallId) : Promise.resolve([]),
     listEventTicketTypes(id),
+    event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
   ]);
+  const hallName = hall ? (hall.nameRu ?? hall.nameKk ?? "Зал") : "";
 
   // This event's own categories — "standard" for every seat with no override,
   // plus whatever the seat map below marked otherwise. Never the hall's own
@@ -61,10 +66,13 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
           сюда сами. Пока можно задать категорию вручную ниже.
         </p>
       ) : (
-        <p className="text-sm text-ocean/60 mb-6">
-          Все места — «standard», пока вы сами не отметите какие-то как другую категорию ниже. Это касается только
-          этого мероприятия и не трогает базовую раскладку зала.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+          <p className="text-sm text-ocean/60 max-w-2xl">
+            VIP-места и цены пришли из зала «{hallName}». Здесь их можно поменять только для этого мероприятия — зал
+            и другие мероприятия это не затронет.
+          </p>
+          <TakeHallDefaultsButton eventId={id} hallName={hallName} />
+        </div>
       )}
 
       {event.hallId && eventSeats.length > 0 && (
@@ -86,7 +94,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
                 <summary className="flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none list-none">
                   <div className="min-w-0">
                     <span className="text-xs font-semibold text-ocean/40 bg-cream/60 rounded-full px-2.5 py-1 mr-2">
-                      {ticketType.category}
+                      {categoryLabel(ticketType.category)}
                     </span>
                     <span className="font-bold text-ocean">{name}</span>
                     <span className="text-ocean/60 ml-2">

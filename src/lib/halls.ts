@@ -120,6 +120,23 @@ export async function listPublicHallSeats(hallId: string): Promise<HallSeatRecor
 }
 
 /**
+ * The hall's default price per seat category (category -> price, 0 = free).
+ *
+ * available is false when the table cannot be read, typically before the
+ * hall_category_prices migration has been run; the page then says so instead of showing
+ * empty prices that would look like "none set".
+ */
+export async function listHallCategoryPrices(hallId: string): Promise<{ available: boolean; prices: Map<string, number> }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("hall_category_prices").select("category, price").eq("hall_id", hallId);
+  if (error || !data) return { available: false, prices: new Map() };
+  return {
+    available: true,
+    prices: new Map((data as { category: string; price: number | string }[]).map((row) => [row.category, Number(row.price)])),
+  };
+}
+
+/**
  * The distinct seat categories actually present in a hall, sorted.
  *
  * Used by the ticket-type form on an event so staff can only price categories

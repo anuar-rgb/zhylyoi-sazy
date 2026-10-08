@@ -39,7 +39,8 @@ export default async function HallsPage() {
       </div>
 
       <p className="text-sm text-ocean/60 mb-6">
-        Залы и сетка мест — первый шаг продажи билетов. Сами билеты, бронь и оплата появятся отдельно.
+        Создайте зал с сеткой мест, затем в «Изменить» отметьте VIP-места и задайте цены. Мероприятие в этом зале
+        получит их сразу, а поменять их можно уже у самого мероприятия.
       </p>
 
       {halls.length === 0 ? (
@@ -58,7 +59,7 @@ export default async function HallsPage() {
                     (invalid nested <a>), so "Изменить"/"Удалить" sit as normal
                     siblings above this one in stacking order instead. */}
                 <Link
-                  href={`/admin/tickets/halls/${hall.id}`}
+                  href={`/admin/tickets/halls/${hall.id}/edit`}
                   className="absolute inset-0 rounded-3xl"
                   aria-label={`Открыть зал «${name}»`}
                 />

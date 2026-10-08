@@ -17,6 +17,7 @@ import {
 import { MEDIA_BUCKET } from "@/lib/storage";
 import { slugify } from "@/lib/slug";
 import { translateFieldPair } from "@/lib/autoTranslate";
+import { applyHallDefaultsToEvent } from "@/lib/hallDefaults";
 
 export type FormState = { error: string | null };
 
@@ -177,13 +178,20 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("culture_events").insert({
-    ...data,
-    event_date: data.event_date,
-    organization_id: organizationId,
-    created_by: user?.id ?? null,
-    slug,
-  });
+  const { data: created, error } = await supabase
+    .from("culture_events")
+    .insert({
+      ...data,
+      event_date: data.event_date,
+      organization_id: organizationId,
+      created_by: user?.id ?? null,
+      slug,
+    })
+    .select("id")
+    .single();
+
+  // A new event in a hall starts with the hall's VIP seats and default prices.
+  if (!error && created && data.hall_id) await applyHallDefaultsToEvent(created.id, data.hall_id, "fill");
 
   if (error) {
     if (error.code === "23505") return { error: `Адрес «${slug}» уже занят другим мероприятием.` };
@@ -237,6 +245,12 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   // nothing and reports no error. Without this check it would look like success.
   if (count === 0) {
     return { error: PUBLISH_DENIED };
+  }
+
+  // Moved to a different hall: its seats and default prices come along. Prices the event
+  // already set are kept; seat categories are replaced, since the old ones point at the old hall.
+  if ("hall_id" in data && data.hall_id && data.hall_id !== existing?.hallId) {
+    await applyHallDefaultsToEvent(id, data.hall_id, "fill");
   }
 
   revalidateEvent(slug);

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import SeatBulkPanel from "./SeatBulkPanel";
 import type { HallSeatRecord } from "@/lib/halls";
+import { categoryLabel } from "@/lib/seatCategories";
 
 /**
  * Click-to-edit seat map for a hall. Category colour comes from
@@ -97,11 +98,11 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
         onRowLabelClick={toggleRow}
-        seatTooltip={(seat) => `Ряд ${seat.rowLabel}, место ${seat.seatNumber} — ${seat.category}`}
+        seatTooltip={(seat) => `Ряд ${seat.rowLabel}, место ${seat.seatNumber} — ${categoryLabel(seat.category)}`}
         legend={[
           ...Array.from(categoryColors.entries()).map(([category, color]) => ({
             swatchClassName: color.solid.split(" ")[0],
-            label: category,
+            label: categoryLabel(category),
           })),
           { swatchClassName: "bg-ocean/10", label: "Скрыто (приглушено)" },
         ]}

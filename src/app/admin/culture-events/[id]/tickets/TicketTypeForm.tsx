@@ -4,6 +4,7 @@ import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState, useState } from "react";
 import BilingualField from "@/components/admin/BilingualField";
 import type { EventTicketTypeRecord } from "@/lib/eventTicketTypes";
+import { categoryLabel } from "@/lib/seatCategories";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -57,7 +58,7 @@ export default function TicketTypeForm({
           >
             {categories.map((category) => (
               <option key={category} value={category}>
-                {category}
+                {categoryLabel(category)}
               </option>
             ))}
           </select>

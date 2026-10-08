@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setEventSeatCategory } from "./actions";
 import type { HallSeatRecord } from "@/lib/halls";
+import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
 
 const NEW_CATEGORY_VALUE = "__new__";
 
@@ -36,7 +37,8 @@ export default function EventSeatBulkPanel({
     seats.length === 1
       ? `Ряд ${seats[0].rowLabel}, место ${seats[0].seatNumber}`
       : `Выбрано мест: ${seats.length}`;
-  const options = Array.from(new Set([...(seats.length === 1 ? [seats[0].category] : []), ...existingCategories])).sort();
+  // Стандарт and VIP are always offered; custom categories once some seat has one.
+  const options = categoryOptions([...(seats.length === 1 ? [seats[0].category] : []), ...existingCategories]);
   const pendingCategory = (addingNew ? newCategory : category).trim();
 
   function handleCategoryChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -108,7 +110,7 @@ export default function EventSeatBulkPanel({
             </option>
             {options.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {categoryLabel(option)}
               </option>
             ))}
             <option value={NEW_CATEGORY_VALUE}>+ новая категория</option>

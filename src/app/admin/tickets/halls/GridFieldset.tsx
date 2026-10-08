@@ -6,9 +6,11 @@ const INPUT =
 const LABEL = "block text-sm font-medium text-ocean/70 mb-1.5";
 
 /**
- * Rows/seats-per-row/row-format/category inputs shared between creating a hall
+ * Rows/seats-per-row/row-format inputs shared between creating a hall
  * (required — a brand new hall needs an initial layout) and resizing an
- * existing one (optional — blank means "don't touch the grid"). No <form> or
+ * existing one (optional — blank means "don't touch the grid"). No category:
+ * every new seat starts as Стандарт, and VIP is set seat by seat on the hall's
+ * edit page. No <form> or
  * submit button of its own: the caller owns those, since the two use cases
  * submit to different actions.
  */
@@ -62,16 +64,6 @@ export default function GridFieldset({ required = false }: { required?: boolean 
             Числа (1, 2, 3…)
           </label>
         </div>
-      </div>
-
-      <div className="sm:w-1/2 sm:pr-2">
-        <label className={LABEL} htmlFor="category">
-          Категория новых мест
-        </label>
-        <input id="category" name="category" defaultValue="standard" placeholder="standard" className={INPUT} />
-        <p className="text-xs text-ocean/40 mt-1.5">
-          Применяется только к местам, которых ещё не было. Уже существующие места сохраняют свою категорию.
-        </p>
       </div>
     </>
   );

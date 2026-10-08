@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { translateFieldPair } from "@/lib/autoTranslate";
+import { getCultureEventById } from "@/lib/cultureEvents";
+import { applyHallDefaultsToEvent } from "@/lib/hallDefaults";
 
 export type FormState = { error: string | null };
 
@@ -129,6 +131,22 @@ export async function setTicketTypeActive(id: string, eventId: string, isActive:
 
   if (!error && count === 1) revalidateTickets(eventId);
   return { ok: !error && count === 1 };
+}
+
+/**
+ * «Взять места и цены из зала»: the event's seat categories become the hall's again, and the
+ * hall's default prices overwrite the event's for the categories the hall has prices for.
+ */
+export async function takeHallDefaults(eventId: string): Promise<{ ok: boolean; seats: number; prices: number }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, seats: 0, prices: 0 };
+
+  const event = await getCultureEventById(eventId);
+  if (!event?.hallId) return { ok: false, seats: 0, prices: 0 };
+
+  const result = await applyHallDefaultsToEvent(eventId, event.hallId, "replace");
+  if (result.ok) revalidateTickets(eventId);
+  return result;
 }
 
 /**
