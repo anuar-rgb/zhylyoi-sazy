@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { readAllApplications, APPLICATION_STATUSES, type ApplicationRecord, type ApplicationStatus } from "@/lib/applications";
 import { telHref } from "@/lib/contactLinks";
+// The server runs on UTC; every date here is shown in the institution's own time.
+import { INSTITUTION_TIME_ZONE } from "@/lib/eventFields";
 import DeleteButton from "../DeleteButton";
 import MarkProcessedButton from "./MarkProcessedButton";
 import MarkSeenOnView from "./MarkSeenOnView";
+import StatusSelect from "./StatusSelect";
 import BackToDashboard from "../BackToDashboard";
 
 /** How many cards the feed under the summary shows at a time. */
@@ -60,7 +63,7 @@ function summarizeByClub(applications: ApplicationRecord[]): ClubSummary[] {
 }
 
 function formatDay(iso: string): string {
-  return new Date(iso).toLocaleDateString("ru-RU", { dateStyle: "medium" });
+  return new Date(iso).toLocaleDateString("ru-RU", { dateStyle: "medium", timeZone: INSTITUTION_TIME_ZONE });
 }
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
@@ -136,7 +139,7 @@ function StatusTabs({ list, view }: { list: ApplicationRecord[]; view: View }) {
   );
 }
 
-function ApplicationCard({ app, showClub }: { app: ApplicationRecord; showClub: boolean }) {
+function ApplicationCard({ app }: { app: ApplicationRecord }) {
   // A handled application stays in the list but steps back visually, so the new ones are the
   // ones that catch the eye.
   const handled = app.status !== "new";
@@ -158,13 +161,15 @@ function ApplicationCard({ app, showClub }: { app: ApplicationRecord; showClub: 
       </div>
 
       <p className="mt-1.5 text-sm text-ocean/60 flex flex-wrap gap-x-3 gap-y-1">
-        {showClub && <span className="text-ocean font-medium">{app.clubTitle || "Без кружка"}</span>}
+        <span className="text-ocean font-medium">{app.clubTitle || "Без кружка"}</span>
         <a href={telHref(app.parentPhone)} className="text-ocean font-medium hover:text-gold-dark">
           {app.parentPhone}
         </a>
         <span>
-          {new Date(app.createdAt).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" })}
-          {app.processedAt && ` · обработана ${formatDay(app.processedAt)}`}
+          {new Date(app.createdAt).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short", timeZone: INSTITUTION_TIME_ZONE })}
+          {/* processed_at is stamped on any change away from "new", so it is worded by the status. */}
+          {app.processedAt && app.status === "completed" && ` · обработана ${formatDay(app.processedAt)}`}
+          {app.processedAt && app.status === "rejected" && ` · отклонена ${formatDay(app.processedAt)}`}
         </span>
         <span>Согласие: {app.consent ? "да" : "нет"}</span>
       </p>
@@ -175,6 +180,77 @@ function ApplicationCard({ app, showClub }: { app: ApplicationRecord; showClub: 
         </p>
       )}
     </li>
+  );
+}
+
+/**
+ * A club's applications as one compact table.
+ *
+ * On a phone the table scrolls sideways inside its box, with the child's name held at the left
+ * edge, rather than squeezing seven columns into a third of their width each.
+ */
+function ApplicationsTable({ list }: { list: ApplicationRecord[] }) {
+  const th = "px-2.5 py-2.5 text-left text-xs font-medium text-ocean/50 whitespace-nowrap";
+  const td = "px-2.5 py-2.5 align-middle";
+  // The edge of the pinned name column, visible once the rest of the row slides under it.
+  const pinned = "sticky left-0 z-10 bg-white shadow-[6px_0_6px_-6px_rgba(22,35,46,0.18)] lg:shadow-none";
+
+  return (
+    <div className="bg-white rounded-3xl border border-cream-dark shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse min-w-[50rem] lg:min-w-0">
+          <thead>
+            <tr>
+              <th className={`${th} ${pinned} pl-4 sm:pl-5`}>Имя</th>
+              <th className={th}>Возраст</th>
+              <th className={th}>Телефон родителя</th>
+              <th className={th}>Согласие</th>
+              <th className={th}>Подана</th>
+              <th className={th}>Статус</th>
+              <th className={`${th} text-right pr-4 sm:pr-5`}>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((app) => (
+              <tr key={app.id} className="border-t border-cream-dark hover:bg-cream/30 transition-colors">
+                <td className={`${td} ${pinned} pl-4 sm:pl-5 max-w-[14rem]`}>
+                  <span className="font-semibold text-ocean break-words">{app.childName}</span>
+                  {app.comment && (
+                    <span className="block text-xs text-ocean/50 line-clamp-2 mt-0.5" title={app.comment}>
+                      {app.comment}
+                    </span>
+                  )}
+                </td>
+                <td className={`${td} text-ocean tabular-nums`}>{app.age || "—"}</td>
+                <td className={`${td} whitespace-nowrap`}>
+                  <a href={telHref(app.parentPhone)} className="text-ocean font-medium hover:text-gold-dark tabular-nums">
+                    {app.parentPhone}
+                  </a>
+                </td>
+                <td className={td}>
+                  {app.consent ? <span className="text-ocean">Да</span> : <span className="text-red-600 font-semibold">Нет</span>}
+                </td>
+                <td className={`${td} text-ocean/60 whitespace-nowrap tabular-nums leading-tight`}>
+                  {new Date(app.createdAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: INSTITUTION_TIME_ZONE })}
+                  <span className="block text-xs text-ocean/40">
+                    {new Date(app.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: INSTITUTION_TIME_ZONE })}
+                  </span>
+                </td>
+                <td className={td}>
+                  <StatusSelect id={app.id} status={app.status} childName={app.childName} />
+                </td>
+                <td className={`${td} pr-4 sm:pr-5`}>
+                  <div className="flex items-center justify-end gap-3 whitespace-nowrap">
+                    <MarkProcessedButton id={app.id} status={app.status} />
+                    <DeleteButton id={app.id} childName={app.childName} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -334,10 +410,12 @@ export default async function ApplicationsPage({
             <p className="text-ocean/60 bg-white rounded-3xl p-6 border border-cream-dark text-center text-sm">
               Заявок с таким статусом нет.
             </p>
+          ) : club ? (
+            <ApplicationsTable list={visible} />
           ) : (
             <ul className="space-y-3">
               {visible.map((app) => (
-                <ApplicationCard key={app.id} app={app} showClub={!club} />
+                <ApplicationCard key={app.id} app={app} />
               ))}
             </ul>
           )}
