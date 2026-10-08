@@ -8,8 +8,6 @@ import { getPublicCultureEventBySlug } from "@/lib/cultureEvents";
 import { buildIcsDataUri, toEventView } from "@/lib/eventView";
 import type { Locale } from "@/i18n/routing";
 
-const WHATSAPP_PHONE_DIGITS = "77789276387";
-
 const content: Record<
   Locale,
   {
@@ -18,8 +16,6 @@ const content: Record<
     location: string;
     organizer: string;
     addToCalendar: string;
-    register: string;
-    waIntro: string;
     buyTickets: string;
   }
 > = {
@@ -29,8 +25,6 @@ const content: Record<
     location: "Өтетін орны",
     organizer: "Ұйымдастырушы",
     addToCalendar: "Күнтізбеге қосу",
-    register: "Тіркелу",
-    waIntro: "Сәлеметсіз бе! Мына іс-шараға тіркелгім келеді",
     buyTickets: "Билет брондау",
   },
   ru: {
@@ -39,8 +33,6 @@ const content: Record<
     location: "Место проведения",
     organizer: "Организатор",
     addToCalendar: "Добавить в календарь",
-    register: "Записаться",
-    waIntro: "Здравствуйте! Хочу записаться на мероприятие",
     buyTickets: "Забронировать билет",
   },
 };
@@ -76,8 +68,6 @@ export default async function EventDetailPage({
 
   const event = toEventView(record, locale);
 
-  const waMessage = `${t.waIntro} «${event.title}» (${event.date}, ${event.time}).`;
-  const waHref = `https://wa.me/${WHATSAPP_PHONE_DIGITS}?text=${encodeURIComponent(waMessage)}`;
   const icsHref = buildIcsDataUri(event);
 
   return (
@@ -165,22 +155,16 @@ export default async function EventDetailPage({
                     {t.buyTickets}
                   </Link>
                 )}
-                <a
-                  href={waHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={
-                    record.hallId
-                      ? "inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-[20px] border-2 border-ocean/20 text-ocean hover:border-ocean/40 hover:bg-cream/50 transition-colors"
-                      : "btn-primary inline-flex items-center justify-center px-6 py-3 text-sm font-semibold"
-                  }
-                >
-                  {t.register}
-                </a>
+                {/* No sign-up here: concerts and screenings take no registration. Signing up
+                    (age, parent's phone, chosen club) belongs to the clubs section only. */}
                 <a
                   href={icsHref}
                   download={`${event.slug}.ics`}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-[20px] border-2 border-ocean/20 text-ocean hover:border-ocean/40 hover:bg-cream/50 transition-colors"
+                  className={
+                    record.hallId
+                      ? "inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-[20px] border-2 border-ocean/20 text-ocean hover:border-ocean/40 hover:bg-cream/50 transition-colors"
+                      : "btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold"
+                  }
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
