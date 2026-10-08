@@ -7,13 +7,12 @@ import { getSiteOrganizationId } from "@/lib/organization";
 export type ApplicationInput = NewApplication & {
   consent: boolean;
   /**
-   * Which club, as it appears in the page address.
+   * Which club, as it appears in the page address. Required: applications are for clubs
+   * and sections only, never for a collective (ансамбль, театр) — those are a different thing.
    *
    * A slug rather than an id: this arrives from the browser, and a server function is
    * a public endpoint, so an id would have to be checked against the institution
    * anyway. Looking the slug up does that check as part of the lookup.
-   *
-   * Absent for the ensemble card on the home page, which is not a club.
    */
   clubSlug?: string;
 };
@@ -33,20 +32,22 @@ export async function submitClubApplication(input: ApplicationInput): Promise<Su
   const organizationId = await getSiteOrganizationId();
   if (!organizationId) return { ok: false, error: "unavailable" };
 
+  // Resolved, never taken on trust: only an active club (kind = 'club') of this institution
+  // takes applications. A collective, another institution's club, a hidden one or no club at
+  // all is refused rather than stored under whatever title the browser sent.
+  const club = input.clubSlug ? await getPublicCultureClubBySlug(input.clubSlug, "club") : null;
+  if (!club) return { ok: false, error: "unavailable" };
+
   const application: NewApplication = {
     childName: input.childName.trim(),
     age: input.age.trim(),
     parentPhone: input.parentPhone.trim(),
-    clubTitle: input.clubTitle,
+    // The club's own current name (Russian, as the admin reads it), not the one the browser sent.
+    clubTitle: club.nameRu ?? club.nameKk ?? input.clubTitle,
     comment: input.comment.trim(),
   };
 
-  // Resolved, never taken on trust. A club that belongs to another institution, is
-  // hidden, or does not exist comes back as null and the application is still stored
-  // under its title — losing the link is better than losing the application.
-  const club = input.clubSlug ? await getPublicCultureClubBySlug(input.clubSlug) : null;
-
-  const stored = await appendApplication(application, organizationId, club?.id ?? null);
+  const stored = await appendApplication(application, organizationId, club.id);
   if (!stored) return { ok: false, error: "failed" };
 
   // Nothing is sent anywhere. The application waits in the admin panel, where the

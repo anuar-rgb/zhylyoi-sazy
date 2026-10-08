@@ -14,9 +14,9 @@ export type ApplicationRecord = {
   /**
    * The club this application points at, when it points at a real one.
    *
-   * Null for the ensemble card on the home page, which is not a culture_clubs row,
-   * and for anything signed up for before the link was recorded. Grouping falls back
-   * to clubTitle in that case.
+   * Always set on new applications (only clubs take them). Null only on old ones: those
+   * made before the link was recorded, and those from the ensemble card the home page
+   * used to show. Grouping falls back to clubTitle in that case.
    */
   clubId: string | null;
   /**

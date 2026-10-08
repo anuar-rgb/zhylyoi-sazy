@@ -12,8 +12,8 @@ type Club = {
   imagePosition?: string;
   href: string;
   linkLabel: string;
-  /** Absent on the ensemble card, which links to /collectives rather than to a club. */
-  slug?: string;
+  /** Every card is a club (kind = 'club'); the sign-up form sends this, and the server refuses anything else. */
+  slug: string;
   real?: boolean;
 };
 

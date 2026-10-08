@@ -18,15 +18,6 @@ const content: Record<
     prev: string;
     next: string;
     signUp: string;
-    ensemble: {
-      title: string;
-      description: string;
-      image: string;
-      imagePosition?: string;
-      href: string;
-      linkLabel: string;
-      real?: boolean;
-    };
   }
 > = {
   kk: {
@@ -37,16 +28,6 @@ const content: Record<
     prev: "Артқа",
     next: "Алға",
     signUp: "Жазылу",
-    ensemble: {
-      title: "«Жылыой сазы» фольклорлық ансамблі",
-      description:
-        "Домбыра, қобыз, шертер және басқа да ұлттық аспаптарда ойнауды үйретеді. 18 кәсіби өнерпаз құрамында.",
-      image: "/images/gallery/ensemble-photo.jpeg",
-      imagePosition: "top",
-      href: "/collectives",
-      linkLabel: "Ансамбль туралы",
-      real: true,
-    },
   },
   ru: {
     title: "Творческие кружки и секции",
@@ -56,16 +37,6 @@ const content: Record<
     prev: "Назад",
     next: "Вперёд",
     signUp: "Записаться",
-    ensemble: {
-      title: "Фольклорный ансамбль «Жылыой сазы»",
-      description:
-        "Обучение игре на домбре, кобызе, шертере и других национальных инструментах. В составе 18 профессиональных артистов.",
-      image: "/images/gallery/ensemble-photo.jpeg",
-      imagePosition: "top",
-      href: "/collectives",
-      linkLabel: "Об ансамбле",
-      real: true,
-    },
   },
 };
 
@@ -73,10 +44,11 @@ export default async function ClubsSection() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
   const text = await getSiteText(locale);
+  // Clubs and sections only. Collectives (the «Жылыой сазы» ensemble, the theatre) are a
+  // different thing: they have their own section and nobody signs up to them here.
   // A carousel card is a photo with a link, so a club still missing either one is
   // left to the /collectives list, which renders both cases properly.
   const carouselClubs = [
-    { ...t.ensemble, title: text("clubs.ensembleTitle"), description: text("clubs.ensembleDescription") },
     ...(await listPublicCultureClubs("club")).flatMap((club) => {
       const image = club.images[0]?.url;
       if (!image || !club.slug) return [];

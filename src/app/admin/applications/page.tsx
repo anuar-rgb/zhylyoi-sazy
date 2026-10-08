@@ -28,7 +28,7 @@ type ClubSummary = {
  *
  * Grouped by club_id where there is one, because that survives a rename: two spellings of the
  * same club would otherwise show up as two rows and split the count. Applications made before
- * the link was recorded, and the ensemble card, have no id and fall back to the title they were
+ * the link was recorded, and the ensemble card the home page once had, have no id and fall back to the title they were
  * stored with.
  */
 function clubKey(app: ApplicationRecord): string {
