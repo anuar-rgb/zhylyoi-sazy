@@ -26,6 +26,16 @@ function apiKey(): string {
 }
 
 /**
+ * Local names the translator gets wrong, put back after every Russian translation.
+ * «Кең Жылыой» came back as «Кен Жылёй», and that went onto a printed ticket.
+ */
+const RU_FIXES: [RegExp, string][] = [[/Жыл[её]й/g, "Жылыой"]];
+
+function fixNames(text: string, to: TranslateLang): string {
+  return to === "ru" ? RU_FIXES.reduce((result, [wrong, right]) => result.replace(wrong, right), text) : text;
+}
+
+/**
  * Translates several independent texts in one request. Blank entries are passed
  * through as "" without spending any quota on them.
  */
@@ -55,7 +65,7 @@ export async function translateBatch(texts: string[], from: TranslateLang, to: T
   // Re-thread the translated results back into the original positions, since
   // blank entries were stripped out before the request and never sent.
   let cursor = 0;
-  return trimmed.map((t) => (t.length > 0 ? translations[cursor++].translatedText : ""));
+  return trimmed.map((t) => (t.length > 0 ? fixNames(translations[cursor++].translatedText, to) : ""));
 }
 
 /** Translates one piece of text. Returns "" for blank input without a network call. */
