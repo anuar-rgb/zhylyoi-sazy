@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -9,6 +8,7 @@ import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
 import PayButton from "./PayButton";
+import ManualPayment from "./ManualPayment";
 import TicketActions from "./TicketActions";
 import type { Locale } from "@/i18n/routing";
 
@@ -139,36 +139,14 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                       );
                     }
                     return (
-                      <div
+                      <ManualPayment
                         key={method.id}
-                        className="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-cream/30 rounded-2xl p-4"
-                      >
-                        {method.staticQrImageUrl && (
-                          <div className="relative w-36 h-36 shrink-0 rounded-2xl overflow-hidden border border-cream-dark bg-white">
-                            <Image src={method.staticQrImageUrl} alt={name} fill className="object-contain" />
-                          </div>
-                        )}
-                        <div className="text-center sm:text-left">
-                          <p className="text-sm font-semibold text-ocean">
-                            {name}
-                            {method.isDefault && (
-                              <span className="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gold/15 text-ocean-dark">
-                                {locale === "kk" ? "Ұсынылады" : "Рекомендуется"}
-                              </span>
-                            )}
-                          </p>
-                          {method.paymentUrl && (
-                            <a
-                              href={method.paymentUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn-primary inline-block mt-3 px-6 py-2.5 text-sm font-semibold"
-                            >
-                              {locale === "kk" ? "Төлеу" : "Оплатить"}
-                            </a>
-                          )}
-                        </div>
-                      </div>
+                        name={name}
+                        isDefault={method.isDefault}
+                        qrUrl={method.staticQrImageUrl}
+                        paymentUrl={method.paymentUrl}
+                        locale={locale === "kk" ? "kk" : "ru"}
+                      />
                     );
                   })}
                 </div>
