@@ -10,12 +10,13 @@ import type { Locale } from "@/i18n/routing";
 
 const content: Record<
   Locale,
-  { brand: string; tagline: string; nav: { href: string; label: string }[]; more: { href: string; label: string }[]; menuLabel: string; moreLabel: string; loginLabel: string }
+  { brand: string; tagline: string; nav: { href: string; label: string }[]; more: { href: string; label: string }[]; menuLabel: string; closeLabel: string; moreLabel: string; loginLabel: string }
 > = {
   kk: {
     brand: "Кең Жылыой",
     tagline: "Жылыой аудандық мәдениет үйі",
     menuLabel: "Мәзір",
+    closeLabel: "Мәзірді жабу",
     moreLabel: "Тағы да",
     loginLabel: "Кіру",
     nav: [
@@ -37,6 +38,7 @@ const content: Record<
     brand: "Кен Жылыой",
     tagline: "Дом культуры Жылыойского района",
     menuLabel: "Меню",
+    closeLabel: "Закрыть меню",
     moreLabel: "Ещё",
     loginLabel: "Войти",
     nav: [
@@ -274,13 +276,34 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile menu: the whole screen, from its very top, wherever the page is scrolled. It no
+          longer hangs under the header — once the page was scrolled the header could be gone,
+          leaving a strip of the page above the menu — so it carries its own top bar with a
+          close button, the header's own button being underneath it. dvh, not vh: a phone's
+          browser bar grows and shrinks, and 100vh would run under it. */}
       <div
-        className={`lg:hidden fixed left-0 right-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto bg-ocean z-40 transition-transform duration-300 ease-in-out ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
+        className={`lg:hidden fixed inset-0 h-[100dvh] z-50 flex flex-col bg-ocean text-cream transition-[transform,visibility] duration-300 ease-in-out ${
+          menuOpen ? "translate-x-0 visible" : "translate-x-full invisible"
         }`}
+        aria-hidden={!menuOpen}
       >
-        <nav className="px-4 py-6 space-y-1">
+        <div className="shrink-0 flex items-center justify-between gap-3 h-14 sm:h-16 px-4 sm:px-6 border-b border-white/10">
+          <div className="min-w-0">
+            <div className="text-gold font-bold text-sm sm:text-base leading-tight truncate">{t.brand}</div>
+            <div className="text-cream/70 text-[10px] sm:text-[11px] leading-snug truncate">{t.tagline}</div>
+          </div>
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="p-2 -mr-2 rounded-full text-cream hover:bg-ocean-light transition-colors"
+            aria-label={t.closeLabel}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto overscroll-contain px-4 py-6 space-y-1">
           {t.nav.map((link) => (
             <Link
               key={link.href}
