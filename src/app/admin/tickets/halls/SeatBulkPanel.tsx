@@ -11,8 +11,8 @@ import { seatName } from "@/lib/hallSections";
  * One panel for one or many selected seats — a single seat is just the N=1
  * case, not a separate code path. Category is a select over categories
  * already present in this hall, not free text, to avoid near-duplicates from
- * typos ("standard" vs "Standart"). New categories are added in «Категории и
- * цены» below the map, not here. Both actions require an
+ * typos ("standard" vs "Standart"). New categories are added in «Категории
+ * мест» below the map, not here. Both actions require an
  * explicit button click rather than saving on change — fine for one seat, but
  * applying to dozens by accident on a stray click is the kind of mistake this
  * panel exists to make harder, not easier.

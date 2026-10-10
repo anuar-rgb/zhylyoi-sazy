@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { sectionOrder, toSection, type HallSection } from "@/lib/hallSections";
+import { categoryOptions } from "@/lib/seatCategories";
 
 export type HallRecord = {
   id: string;
@@ -148,39 +149,26 @@ export async function getSeatSections(seatIds: string[]): Promise<Map<string, Ha
 }
 
 /**
- * The hall's default price per seat category (category -> price, 0 = free).
+ * Every seat category of each of these halls (hall id -> categories): Стандарт and VIP always,
+ * then the hall's own — on a seat, or added in «Категории мест» and not yet given to any seat.
+ * The hall has no prices; an event prices each of these categories itself.
  *
- * available is false when the table cannot be read, typically before the
- * hall_category_prices migration has been run; the page then says so instead of showing
- * empty prices that would look like "none set".
+ * Before the hall_categories migration only the seats' categories are found.
  */
-export async function listHallCategoryPrices(hallId: string): Promise<{ available: boolean; prices: Map<string, number> }> {
+export async function listHallsCategories(hallIds: string[]): Promise<Map<string, string[]>> {
+  if (hallIds.length === 0) return new Map();
   const supabase = await createClient();
-  const { data, error } = await supabase.from("hall_category_prices").select("category, price").eq("hall_id", hallId);
-  if (error || !data) return { available: false, prices: new Map() };
-  return {
-    available: true,
-    prices: new Map((data as { category: string; price: number | string }[]).map((row) => [row.category, Number(row.price)])),
-  };
+  const [{ data: seats }, { data: added }] = await Promise.all([
+    supabase.from("hall_seats").select("hall_id, category").in("hall_id", hallIds),
+    supabase.from("hall_categories").select("hall_id, category").in("hall_id", hallIds),
+  ]);
+  const byHall = new Map<string, string[]>(hallIds.map((id) => [id, []]));
+  for (const row of [...(seats ?? []), ...(added ?? [])] as { hall_id: string; category: string }[]) {
+    byHall.get(row.hall_id)?.push(row.category);
+  }
+  return new Map([...byHall].map(([id, categories]) => [id, categoryOptions(categories)]));
 }
 
-/**
- * The distinct seat categories actually present in a hall, sorted.
- *
- * Used by the ticket-type form on an event so staff can only price categories
- * that exist in the hall the event is in — category is free text in hall_seats,
- * nothing in the database stops a typo from creating a category the seat map
- * never had.
- */
-export async function listHallSeatCategories(hallId: string): Promise<string[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("hall_seats")
-    .select("category")
-    .eq("hall_id", hallId)
-    .eq("is_active", true);
-
-  if (error || !data) return [];
-  const categories = new Set((data as unknown as { category: string }[]).map((row) => row.category));
-  return [...categories].sort();
+export async function listHallCategories(hallId: string): Promise<string[]> {
+  return (await listHallsCategories([hallId])).get(hallId) ?? categoryOptions([]);
 }

@@ -17,7 +17,8 @@ import {
 import { MEDIA_BUCKET } from "@/lib/storage";
 import { slugify } from "@/lib/slug";
 import { translateFieldPair } from "@/lib/autoTranslate";
-import { applyHallDefaultsToEvent } from "@/lib/hallDefaults";
+import { applyHallSeatsToEvent } from "@/lib/hallDefaults";
+import { parseEventPrices, saveEventPrices } from "@/lib/eventPrices";
 
 export type FormState = { error: string | null };
 
@@ -172,6 +173,8 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение." };
   if (await isForeignPaymentMethod(data.payment_method_id ?? null, organizationId)) return { error: FOREIGN_PAYMENT_METHOD };
+  const { prices, error: pricesError } = parseEventPrices(form);
+  if (pricesError) return { error: pricesError };
 
   const supabase = await createClient();
   const {
@@ -190,8 +193,12 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
     .select("id")
     .single();
 
-  // A new event in a hall starts with the hall's VIP seats and default prices.
-  if (!error && created && data.hall_id) await applyHallDefaultsToEvent(created.id, data.hall_id, "fill");
+  // A new event in a hall starts with the hall's VIP seats, priced by the fields on the form.
+  let pricesSaved = true;
+  if (!error && created && data.hall_id) {
+    await applyHallSeatsToEvent(created.id, data.hall_id);
+    pricesSaved = (await saveEventPrices(created.id, prices)) === null;
+  }
 
   if (error) {
     if (error.code === "23505") return { error: `Адрес «${slug}» уже занят другим мероприятием.` };
@@ -201,7 +208,7 @@ export async function createEvent(_prev: FormState, form: FormData): Promise<For
   }
 
   revalidateEvent(slug);
-  return redirectAfterSave(data.hall_id ?? null, "Добавлено");
+  return redirectAfterSave(data.hall_id ?? null, pricesSaved ? "Добавлено" : "Добавлено, но цены не сохранились — задайте их в «Билеты»");
 }
 
 export async function updateEvent(_prev: FormState, form: FormData): Promise<FormState> {
@@ -227,6 +234,8 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   if (existing && (await isForeignPaymentMethod(data.payment_method_id ?? null, existing.organizationId))) {
     return { error: FOREIGN_PAYMENT_METHOD };
   }
+  const { prices, error: pricesError } = parseEventPrices(form);
+  if (pricesError) return { error: pricesError };
 
   const supabase = await createClient();
   const { error, count } = await supabase
@@ -247,10 +256,14 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
     return { error: PUBLISH_DENIED };
   }
 
-  // Moved to a different hall: its seats and default prices come along. Prices the event
-  // already set are kept; seat categories are replaced, since the old ones point at the old hall.
+  // Moved to a different hall: its seat categories come along, replacing the old ones, which
+  // point at the old hall's seats.
   if ("hall_id" in data && data.hall_id && data.hall_id !== existing?.hallId) {
-    await applyHallDefaultsToEvent(id, data.hall_id, "fill");
+    await applyHallSeatsToEvent(id, data.hall_id);
+  }
+  if ("hall_id" in data && data.hall_id) {
+    const saveError = await saveEventPrices(id, prices);
+    if (saveError) return { error: saveError };
   }
 
   revalidateEvent(slug);

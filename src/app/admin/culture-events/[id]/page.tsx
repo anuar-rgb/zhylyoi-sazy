@@ -2,7 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureEventById } from "@/lib/cultureEvents";
-import { listHalls } from "@/lib/halls";
+import { listHalls, listHallsCategories } from "@/lib/halls";
+import { listEventTicketTypes } from "@/lib/eventTicketTypes";
+import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import { countActiveBookingsForEvent } from "@/lib/bookingsAdmin";
 import EventForm from "../EventForm";
@@ -27,15 +29,24 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   // event's form is informational, and saving it leaves those two untouched.
   const ticketing = Boolean(event.hallId);
 
-  const [halls, paymentMethods, bookingCount] = await Promise.all([
-    ticketing
-      ? listHalls().then((rows) =>
-          rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
-        )
-      : Promise.resolve([]),
+  const [activeHalls, paymentMethods, bookingCount, ticketTypes] = await Promise.all([
+    ticketing ? listHalls().then((rows) => rows.filter((hall) => hall.isActive)) : Promise.resolve([]),
     ticketing ? listPublicPaymentMethods(organizationId) : Promise.resolve([]),
     countActiveBookingsForEvent(id),
+    ticketing ? listEventTicketTypes(id) : Promise.resolve([]),
   ]);
+
+  // Each hall's seat categories for the price fields; the event's own hall also lists the
+  // categories this event marked on its own seat map.
+  const [categories, ownCategories] = await Promise.all([
+    listHallsCategories(activeHalls.map((hall) => hall.id)),
+    event.hallId ? listEventPriceCategories(id, event.hallId, ticketTypes) : Promise.resolve([]),
+  ]);
+  const halls = activeHalls.map((hall) => ({
+    id: hall.id,
+    name: hall.nameRu ?? hall.nameKk ?? "Без названия",
+    categories: hall.id === event.hallId ? ownCategories : (categories.get(hall.id) ?? []),
+  }));
 
   return (
     <EventForm
@@ -43,6 +54,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       organizationId={organizationId}
       ticketing={ticketing}
       halls={halls}
+      prices={pricesOf(ticketTypes)}
       paymentMethods={paymentMethods}
       bookingCount={bookingCount}
       action={updateEvent}

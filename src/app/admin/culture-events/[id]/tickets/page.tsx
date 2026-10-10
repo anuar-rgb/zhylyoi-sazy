@@ -4,13 +4,11 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getCultureEventById } from "@/lib/cultureEvents";
 import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
-import TicketTypeForm from "./TicketTypeForm";
-import ToggleTicketTypeButton from "./ToggleTicketTypeButton";
-import EventSeatMap from "./EventSeatMap";
-import { createTicketType, updateTicketType } from "./actions";
-import TakeHallDefaultsButton from "./TakeHallDefaultsButton";
+import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
 import { getHallById } from "@/lib/halls";
-import { categoryLabel } from "@/lib/seatCategories";
+import EventSeatMap from "./EventSeatMap";
+import EventPricesForm from "./EventPricesForm";
+import TakeHallSeatsButton from "./TakeHallSeatsButton";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
@@ -31,18 +29,8 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
     event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
   ]);
   const hallName = hall ? (hall.nameRu ?? hall.nameKk ?? "Зал") : "";
-
-  // This event's own categories — "standard" for every seat with no override,
-  // plus whatever the seat map below marked otherwise. Never the hall's own
-  // category list: that's just the hall's base layout now, not what this
-  // event actually sells (see event_seat_categories).
-  const eventCategories = [...new Set(eventSeats.map((seat) => seat.category))].sort();
-
-  // Only categories that don't already have a price — the unique (event_id,
-  // category) index would just reject a second one for the same category, and
-  // there is no reason to offer a choice that can only fail.
-  const pricedCategories = new Set(ticketTypes.map((t) => t.category));
-  const availableCategories = eventCategories.filter((category) => !pricedCategories.has(category));
+  // Every category of the hall plus those this event marked itself: one price field each.
+  const categories = event.hallId ? await listEventPriceCategories(id, event.hallId, ticketTypes) : [];
 
   const eventTitle = event.titleRu ?? event.titleKk ?? "Мероприятие";
 
@@ -61,87 +49,44 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
       <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-1">Билеты: {eventTitle}</h1>
 
       {!event.hallId ? (
-        <p className="text-sm text-ocean/60 mb-6">
-          У мероприятия не выбран зал — привяжите зал в карточке мероприятия, чтобы категории мест подставлялись
-          сюда сами. Пока можно задать категорию вручную ниже.
-        </p>
+        <div className={`${CARD} mt-4`}>
+          <p className="text-sm text-ocean/60">
+            У мероприятия не выбран зал. Выберите зал в карточке мероприятия — тогда здесь появятся его места и поле
+            цены для каждой категории.
+          </p>
+        </div>
       ) : (
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
-          <p className="text-sm text-ocean/60 max-w-2xl">
-            VIP-места и цены пришли из зала «{hallName}». Здесь их можно поменять только для этого мероприятия — зал
-            и другие мероприятия это не затронет.
-          </p>
-          <TakeHallDefaultsButton eventId={id} hallName={hallName} />
-        </div>
-      )}
-
-      {event.hallId && eventSeats.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold text-ocean mb-4">Категории мест этого мероприятия</h2>
-          <div className={CARD}>
-            <EventSeatMap eventId={id} seats={eventSeats} />
+        <>
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+            <p className="text-sm text-ocean/60 max-w-2xl">
+              Места и категории пришли из зала «{hallName}». Цены и категории мест здесь — только для этого
+              мероприятия: зал и другие мероприятия это не затронет.
+            </p>
+            <TakeHallSeatsButton eventId={id} hallName={hallName} />
           </div>
-        </section>
-      )}
 
-      {ticketTypes.length > 0 && (
-        <div className="space-y-3 mb-8">
-          {ticketTypes.map((ticketType) => {
-            const name = ticketType.nameRu ?? ticketType.nameKk ?? ticketType.category;
+          <section className="mb-8">
+            <h2 className="text-lg font-bold text-ocean mb-4">Цены билетов</h2>
+            <div className={CARD}>
+              <EventPricesForm eventId={id} categories={categories} prices={pricesOf(ticketTypes)} />
+            </div>
+          </section>
 
-            return (
-              <details key={ticketType.id} className={`${CARD} overflow-hidden`}>
-                <summary className="flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none list-none">
-                  <div className="min-w-0">
-                    <span className="text-xs font-semibold text-ocean/40 bg-cream/60 rounded-full px-2.5 py-1 mr-2">
-                      {categoryLabel(ticketType.category)}
-                    </span>
-                    <span className="font-bold text-ocean">{name}</span>
-                    <span className="text-ocean/60 ml-2">
-                      {ticketType.isFree ? "Бесплатно" : `${ticketType.price} ${ticketType.currency}`}
-                    </span>
-                  </div>
-                  <ToggleTicketTypeButton id={ticketType.id} eventId={id} isActive={ticketType.isActive} />
-                </summary>
-
-                <div className="mt-4 pt-4 border-t border-cream-dark">
-                  <TicketTypeForm
-                    eventId={id}
-                    ticketType={ticketType}
-                    categories={eventCategories}
-                    action={updateTicketType}
-                    submitLabel="Сохранить"
-                  />
-                </div>
-              </details>
-            );
-          })}
-        </div>
-      )}
-
-      {(availableCategories.length > 0 || !event.hallId) && (
-        <div className={CARD}>
-          <p className="text-sm font-semibold text-ocean mb-4">Добавить тип билета</p>
-          <TicketTypeForm
-            eventId={id}
-            categories={availableCategories}
-            action={createTicketType}
-            submitLabel="Добавить"
-          />
-        </div>
-      )}
-
-      {event.hallId && eventSeats.length === 0 && (
-        <div className={`${CARD} text-center`}>
-          <p className="text-ocean/60 text-sm">
-            В привязанном зале ещё нет мест — создайте сетку мест в разделе «Залы», тогда здесь появятся категории
-            для цены.
-          </p>
-        </div>
-      )}
-
-      {event.hallId && eventSeats.length > 0 && availableCategories.length === 0 && (
-        <p className="text-xs text-ocean/40 mt-3 text-center">Цена задана для всех категорий этого зала.</p>
+          {eventSeats.length > 0 ? (
+            <section>
+              <h2 className="text-lg font-bold text-ocean mb-4">Категории мест этого мероприятия</h2>
+              <div className={CARD}>
+                <EventSeatMap eventId={id} seats={eventSeats} />
+              </div>
+            </section>
+          ) : (
+            <div className={`${CARD} text-center`}>
+              <p className="text-ocean/60 text-sm">
+                В зале ещё нет мест — создайте сетку мест в разделе «Залы», тогда здесь появится схема.
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

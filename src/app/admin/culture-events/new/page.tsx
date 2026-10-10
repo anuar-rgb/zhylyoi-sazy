@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { listHalls } from "@/lib/halls";
+import { listHalls, listHallsCategories } from "@/lib/halls";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import EventForm from "../EventForm";
 import { createEvent } from "../actions";
@@ -25,14 +25,16 @@ export default async function NewEventPage({
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
 
-  const [halls, paymentMethods] = ticketing
-    ? await Promise.all([
-        listHalls().then((rows) =>
-          rows.filter((hall) => hall.isActive).map((hall) => ({ id: hall.id, name: hall.nameRu ?? hall.nameKk ?? "Без названия" }))
-        ),
-        listPublicPaymentMethods(organizationId),
-      ])
+  const [activeHalls, paymentMethods] = ticketing
+    ? await Promise.all([listHalls().then((rows) => rows.filter((hall) => hall.isActive)), listPublicPaymentMethods(organizationId)])
     : [[], []];
+  // Each hall's seat categories, so choosing a hall shows a price field for each straight away.
+  const categories = await listHallsCategories(activeHalls.map((hall) => hall.id));
+  const halls = activeHalls.map((hall) => ({
+    id: hall.id,
+    name: hall.nameRu ?? hall.nameKk ?? "Без названия",
+    categories: categories.get(hall.id) ?? [],
+  }));
 
   // Only a hall this person can actually see is honoured. The id comes from the
   // address bar, and preselecting one that is not in the list would show a

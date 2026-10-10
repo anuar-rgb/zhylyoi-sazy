@@ -17,6 +17,7 @@ import type { CultureEventRecord, EventImage } from "@/lib/cultureEvents";
 import type { PaymentMethodRecord } from "@/lib/paymentMethods";
 import BilingualField from "@/components/admin/BilingualField";
 import DeleteEventButton from "./DeleteEventButton";
+import EventPriceFields from "./EventPriceFields";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -61,6 +62,7 @@ export default function EventForm({
   ticketing = false,
   halls = [],
   defaultHallId,
+  prices = {},
   paymentMethods = [],
   bookingCount = 0,
   action,
@@ -70,9 +72,12 @@ export default function EventForm({
   organizationId: string;
   /** Shows the hall and payment method: a new event from «Билеты», or one that already has a hall. */
   ticketing?: boolean;
-  halls?: { id: string; name: string }[];
+  /** Each hall with its seat categories: choosing a hall shows a price field for each of them. */
+  halls?: { id: string; name: string; categories: string[] }[];
   /** Preselects the hall on a new event, e.g. arriving from that hall's own page. Ignored when editing. */
   defaultHallId?: string;
+  /** The event's current prices, category -> price (0 = free). */
+  prices?: Record<string, number>;
   /** The organization's enabled payment methods, for the optional per-event override below. */
   paymentMethods?: PaymentMethodRecord[];
   /** Active bookings against this event, so the delete button can warn before it takes them with it. */
@@ -85,6 +90,8 @@ export default function EventForm({
   const [images, setImages] = useState<EventImage[]>(event?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [hallId, setHallId] = useState(event?.hallId ?? defaultHallId ?? "");
+  const selectedHall = halls.find((hall) => hall.id === hallId);
   // A ticketed event isn't listed under "Афиша" any more (it lives on
   // "Билеты" instead), so cancelling out of editing one should return there,
   // not to a list that no longer shows it. A brand new event (no hallId yet,
@@ -188,7 +195,13 @@ export default function EventForm({
               <label className={LABEL} htmlFor="hall_id">
                 Зал
               </label>
-              <select id="hall_id" name="hall_id" defaultValue={event?.hallId ?? defaultHallId ?? ""} className={INPUT}>
+              <select
+                id="hall_id"
+                name="hall_id"
+                value={hallId}
+                onChange={(e) => setHallId(e.target.value)}
+                className={INPUT}
+              >
                 <option value="">Без зала</option>
                 {halls.map((hall) => (
                   <option key={hall.id} value={hall.id}>
@@ -220,6 +233,14 @@ export default function EventForm({
             Зал нужен для продажи билетов: без него у мероприятия не будет мест и цен. Способ оплаты необязателен: без
             выбора покупателю показываются все включённые способы.
           </p>
+
+          {selectedHall && (
+            <div className="mt-5 pt-5 border-t border-cream-dark">
+              <p className="text-sm font-semibold text-ocean mb-1">Цены билетов</p>
+              <p className="text-xs text-ocean/50 mb-4">Категории мест зала «{selectedHall.name}».</p>
+              <EventPriceFields key={selectedHall.id} categories={selectedHall.categories} prices={prices} />
+            </div>
+          )}
         </div>
       )}
 

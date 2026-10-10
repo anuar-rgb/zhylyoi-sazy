@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
-import { getHallById, listHallCategoryPrices, listHallSeats } from "@/lib/halls";
-import { categoryOptions } from "@/lib/seatCategories";
+import { getHallById, listHallCategories, listHallSeats } from "@/lib/halls";
 import type { HallSection } from "@/lib/hallSections";
 import HallForm from "../../HallForm";
 import GenerateGridForm from "../../GenerateGridForm";
@@ -13,8 +12,8 @@ import { updateHall } from "../../actions";
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
 /**
- * Everything about a hall in one place: its name, which seats are VIP (or another category),
- * the default price of each category, and the grid's size. A new hall lands here right after
+ * Everything about a hall in one place: its name, its seat categories and which seats are VIP
+ * (or another category), and the grid's size. No prices: each event sets its own. A new hall lands here right after
  * it is created.
  */
 export default async function EditHallPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +27,9 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   const hall = await getHallById(id);
   if (!hall) notFound();
 
-  const [seats, { available: pricesAvailable, prices }] = await Promise.all([listHallSeats(id), listHallCategoryPrices(id)]);
+  // Стандарт and VIP always, then every custom one the hall has: on a seat, or added by name and
+  // not yet given to any seat. The seat picker offers the same list.
+  const [seats, categories] = await Promise.all([listHallSeats(id), listHallCategories(id)]);
 
   const activeSeats = seats.filter((seat) => seat.isActive);
 
@@ -44,9 +45,6 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   ) as Partial<Record<HallSection, { rows: number; seats: number }>>;
   const seatCounts: Record<string, number> = {};
   for (const seat of activeSeats) seatCounts[seat.category] = (seatCounts[seat.category] ?? 0) + 1;
-  // Стандарт and VIP always, then every custom one the hall has: on a seat, or added with a price
-  // and not yet given to any seat. The seat picker offers the same list.
-  const categories = categoryOptions([...seats.map((seat) => seat.category), ...prices.keys()]);
 
   return (
     <div>
@@ -82,25 +80,14 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
 
       {seats.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">Категории и цены</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">Категории мест</h2>
           <p className="text-sm text-ocean/60 mb-4">
-            Цена одного места каждой категории в этом зале. Свои категории можно переименовать или удалить — их места
-            станут «Стандарт».
+            Какие категории есть в этом зале. Цену каждой категории задают у мероприятия, так один зал подходит для
+            разных концертов с разными ценами. Свои категории можно переименовать или удалить — их места станут
+            «Стандарт».
           </p>
           <div className={CARD}>
-            {pricesAvailable ? (
-              <HallCategoriesForm
-                hallId={hall.id}
-                categories={categories}
-                prices={Object.fromEntries(prices)}
-                seatCounts={seatCounts}
-              />
-            ) : (
-              <p className="text-sm text-ocean/60">
-                Цены залов ещё не включены в базе. Выполните в Supabase SQL из миграции
-                <code className="mx-1 text-xs">create_hall_category_prices</code>, и здесь появятся поля цен.
-              </p>
-            )}
+            <HallCategoriesForm hallId={hall.id} categories={categories} seatCounts={seatCounts} />
           </div>
         </section>
       )}
