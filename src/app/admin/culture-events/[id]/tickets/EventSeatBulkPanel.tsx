@@ -7,8 +7,6 @@ import type { HallSeatRecord } from "@/lib/halls";
 import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
 import { seatName } from "@/lib/hallSections";
 
-const NEW_CATEGORY_VALUE = "__new__";
-
 /**
  * Same shape as the hall's SeatBulkPanel, but "Скрыть" has no meaning for an
  * event (seats aren't hidden per event, only priced/categorized) — its
@@ -28,8 +26,6 @@ export default function EventSeatBulkPanel({
 }) {
   const router = useRouter();
   const [category, setCategory] = useState(seats.length === 1 ? seats[0].category : "");
-  const [addingNew, setAddingNew] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,24 +34,14 @@ export default function EventSeatBulkPanel({
     seats.length === 1
       ? seatName(seats[0])
       : `Выбрано мест: ${seats.length}`;
-  // Стандарт and VIP are always offered; custom categories once some seat has one.
+  // Only categories that already exist: Стандарт, VIP and the hall's own. New ones are made in the hall.
   const options = categoryOptions([...(seats.length === 1 ? [seats[0].category] : []), ...existingCategories]);
-  const pendingCategory = (addingNew ? newCategory : category).trim();
-
-  function handleCategoryChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (e.target.value === NEW_CATEGORY_VALUE) {
-      setAddingNew(true);
-      setNewCategory("");
-    } else {
-      setCategory(e.target.value);
-    }
-  }
 
   async function applyCategory() {
-    if (!pendingCategory) return;
+    if (!category) return;
     setBusy(true);
     setError(null);
-    const result = await setEventSeatCategory(eventId, ids, pendingCategory);
+    const result = await setEventSeatCategory(eventId, ids, category);
     setBusy(false);
     if (result.ok) {
       router.refresh();
@@ -90,37 +76,25 @@ export default function EventSeatBulkPanel({
       {error && <p className="text-xs text-red-600">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
-        {addingNew ? (
-          <input
-            autoFocus
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            placeholder="Новая категория"
-            disabled={busy}
-            className="w-40 px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
-          />
-        ) : (
-          <select
-            value={category}
-            onChange={handleCategoryChange}
-            disabled={busy}
-            className="px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
-          >
-            <option value="" disabled>
-              Категория…
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          disabled={busy}
+          className="px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
+        >
+          <option value="" disabled>
+            Категория…
+          </option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {categoryLabel(option)}
             </option>
-            {options.map((option) => (
-              <option key={option} value={option}>
-                {categoryLabel(option)}
-              </option>
-            ))}
-            <option value={NEW_CATEGORY_VALUE}>+ новая категория</option>
-          </select>
-        )}
+          ))}
+        </select>
         <button
           type="button"
           onClick={applyCategory}
-          disabled={busy || !pendingCategory}
+          disabled={busy || !category}
           className="btn-primary px-4 py-1.5 text-sm font-semibold disabled:opacity-50"
         >
           Применить категорию

@@ -14,7 +14,16 @@ import { seatName } from "@/lib/hallSections";
  * that base layout, so a hall's vip tables don't follow it into every event
  * held there — see event_seat_categories.
  */
-export default function EventSeatMap({ eventId, seats }: { eventId: string; seats: HallSeatRecord[] }) {
+export default function EventSeatMap({
+  eventId,
+  seats,
+  categories,
+}: {
+  eventId: string;
+  seats: HallSeatRecord[];
+  /** The categories seats can be given here: the hall's (Стандарт, VIP, its own) and this event's. */
+  categories: string[];
+}) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +107,7 @@ export default function EventSeatMap({ eventId, seats }: { eventId: string; seat
           key={selectedSeats.map((seat) => seat.id).sort().join(",")}
           eventId={eventId}
           seats={selectedSeats}
-          existingCategories={Array.from(categoryColors.keys())}
+          existingCategories={categories}
           onDone={() => setSelectedIds(new Set())}
         />
       )}
