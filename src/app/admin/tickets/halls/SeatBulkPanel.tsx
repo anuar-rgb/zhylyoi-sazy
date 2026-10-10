@@ -2,19 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addHallCategory, setSeatsActive, updateSeatsCategory } from "./actions";
+import { setSeatsActive, updateSeatsCategory } from "./actions";
 import type { HallSeatRecord } from "@/lib/halls";
 import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
 import { seatName } from "@/lib/hallSections";
-
-const NEW_CATEGORY_VALUE = "__new__";
 
 /**
  * One panel for one or many selected seats — a single seat is just the N=1
  * case, not a separate code path. Category is a select over categories
  * already present in this hall, not free text, to avoid near-duplicates from
- * typos ("standard" vs "Standart"); "+ новая категория" is the escape hatch
- * for introducing the very first seat of a new one. Both actions require an
+ * typos ("standard" vs "Standart"). New categories are added in «Категории и
+ * цены» below the map, not here. Both actions require an
  * explicit button click rather than saving on change — fine for one seat, but
  * applying to dozens by accident on a stray click is the kind of mistake this
  * panel exists to make harder, not easier.
@@ -33,9 +31,6 @@ export default function SeatBulkPanel({
 }) {
   const router = useRouter();
   const [category, setCategory] = useState(seats.length === 1 ? seats[0].category : "");
-  const [addingNew, setAddingNew] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
-  const [newPrice, setNewPrice] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,33 +41,12 @@ export default function SeatBulkPanel({
       : `Выбрано мест: ${seats.length}`;
   // Стандарт and VIP always, then the hall's own (on seats or added with a price).
   const options = categoryOptions([...(seats.length === 1 ? [seats[0].category] : []), ...existingCategories]);
-  const pendingCategory = (addingNew ? newCategory : category).trim();
-
-  function handleCategoryChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (e.target.value === NEW_CATEGORY_VALUE) {
-      setAddingNew(true);
-      setNewCategory("");
-    } else {
-      setCategory(e.target.value);
-    }
-  }
 
   async function applyCategory() {
-    if (!pendingCategory) return;
+    if (!category) return;
     setBusy(true);
     setError(null);
-    let target = pendingCategory;
-    if (addingNew) {
-      // A new category comes with its default price, then goes onto the selected seats.
-      const added = await addHallCategory(seats[0].hallId, pendingCategory, newPrice);
-      if (!added.ok) {
-        setBusy(false);
-        setError(added.error ?? "Не удалось добавить категорию.");
-        return;
-      }
-      target = added.category!;
-    }
-    const result = await updateSeatsCategory(ids, target);
+    const result = await updateSeatsCategory(ids, category);
     setBusy(false);
     if (result.ok) {
       router.refresh();
@@ -107,64 +81,28 @@ export default function SeatBulkPanel({
       {error && <p className="text-xs text-red-600">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
-        {addingNew ? (
-          <>
-            <input
-              autoFocus
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="Название, например: Ложа"
-              maxLength={40}
-              disabled={busy}
-              aria-label="Название новой категории"
-              className="w-52 px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
-            />
-            <input
-              value={newPrice}
-              onChange={(e) => setNewPrice(e.target.value)}
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step="any"
-              placeholder="Цена, ₸"
-              disabled={busy}
-              aria-label="Цена новой категории, 0 — бесплатно"
-              className="w-28 px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
-            />
-            <button
-              type="button"
-              onClick={() => setAddingNew(false)}
-              disabled={busy}
-              className="text-xs font-semibold text-ocean/40 hover:text-ocean"
-            >
-              Отмена
-            </button>
-          </>
-        ) : (
-          <select
-            value={category}
-            onChange={handleCategoryChange}
-            disabled={busy}
-            className="px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
-          >
-            <option value="" disabled>
-              Категория…
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          disabled={busy}
+          className="px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
+        >
+          <option value="" disabled>
+            Категория…
+          </option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {categoryLabel(option)}
             </option>
-            {options.map((option) => (
-              <option key={option} value={option}>
-                {categoryLabel(option)}
-              </option>
-            ))}
-            <option value={NEW_CATEGORY_VALUE}>+ новая категория</option>
-          </select>
-        )}
+          ))}
+        </select>
         <button
           type="button"
           onClick={applyCategory}
-          disabled={busy || !pendingCategory || (addingNew && newPrice.trim() === "")}
+          disabled={busy || !category}
           className="btn-primary px-4 py-1.5 text-sm font-semibold disabled:opacity-50"
         >
-          {addingNew ? "Добавить и применить" : "Применить категорию"}
+          Применить категорию
         </button>
       </div>
 
