@@ -62,7 +62,15 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
               Места и категории пришли из зала «{hallName}». Цены и категории мест здесь — только для этого
               мероприятия: зал и другие мероприятия это не затронет.
             </p>
-            <TakeHallSeatsButton eventId={id} hallName={hallName} />
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/admin/tickets/stats/${id}`}
+                className="text-sm font-semibold text-cream bg-ocean rounded-full px-4 py-2 hover:bg-ocean-dark transition-colors"
+              >
+                Заполняемость зала
+              </Link>
+              <TakeHallSeatsButton eventId={id} hallName={hallName} />
+            </div>
           </div>
 
           <section className="mb-8">

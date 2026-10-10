@@ -58,15 +58,27 @@ export default async function StatsPage() {
               <section key={event.id} className={`${CARD} p-4 sm:p-5`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="font-bold text-ocean">{event.titleRu ?? event.titleKk}</h2>
+                    <h2 className="font-bold text-ocean">
+                      <Link href={`/admin/tickets/stats/${event.id}`} className="hover:text-gold-dark">
+                        {event.titleRu ?? event.titleKk}
+                      </Link>
+                    </h2>
                     <p className="text-xs text-ocean/50">{formatEventDateTime(event.eventDate)}</p>
                   </div>
-                  <Link
-                    href={`/admin/tickets/orders?event=${event.id}`}
-                    className="text-xs font-semibold text-ocean hover:text-gold-dark shrink-0"
-                  >
-                    Заказы
-                  </Link>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <Link
+                      href={`/admin/tickets/stats/${event.id}`}
+                      className="text-xs font-semibold text-ocean hover:text-gold-dark"
+                    >
+                      Схема зала
+                    </Link>
+                    <Link
+                      href={`/admin/tickets/orders?event=${event.id}`}
+                      className="text-xs font-semibold text-ocean hover:text-gold-dark"
+                    >
+                      Заказы
+                    </Link>
+                  </div>
                 </div>
                 <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                   {tiles.map((tile) => (
