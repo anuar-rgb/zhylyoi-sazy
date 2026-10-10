@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatPhone, isCompletePhone, phoneDigits } from "@/lib/phone";
 
 export type CreateBookingInput = {
   eventId: string;
@@ -14,7 +15,7 @@ export type CreateBookingInput = {
 
 export type CreateBookingResult =
   | { ok: true; accessToken: string }
-  | { ok: false; error: "missing" | "consent" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
+  | { ok: false; error: "missing" | "phone" | "consent" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
 
 /**
  * The only way a booking is ever created. Everything that matters — price,
@@ -25,8 +26,10 @@ export type CreateBookingResult =
  */
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
   const buyerName = input.buyerName.trim();
-  const buyerPhone = input.buyerPhone.trim();
-  if (!buyerName || !buyerPhone) return { ok: false, error: "missing" };
+  if (!buyerName || !input.buyerPhone.trim()) return { ok: false, error: "missing" };
+  // The form's mask already insists on all ten digits; checked again here, where it counts.
+  if (!isCompletePhone(input.buyerPhone)) return { ok: false, error: "phone" };
+  const buyerPhone = formatPhone(phoneDigits(input.buyerPhone));
   if (input.consent !== true) return { ok: false, error: "consent" };
   if (input.seatIds.length === 0) return { ok: false, error: "no_seats" };
 

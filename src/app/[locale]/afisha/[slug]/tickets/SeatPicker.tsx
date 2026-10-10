@@ -9,6 +9,7 @@ import { createBooking, type CreateBookingResult } from "@/app/actions/bookings"
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import { sectionLabel, seatName } from "@/lib/hallSections";
 import { categoryLabel } from "@/lib/seatCategories";
+import { isCompletePhone, nextPhoneValue } from "@/lib/phone";
 
 export type SeatOption = {
   id: string;
@@ -51,6 +52,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
   ru: {
     errors: {
       missing: "Укажите имя и телефон.",
+      phone: "Введите номер телефона полностью: +7 и 10 цифр.",
       consent: "Для брони нужно дать согласие на обработку данных.",
       no_seats: "Выберите хотя бы одно место.",
       unavailable: "Билеты для этого мероприятия сейчас недоступны.",
@@ -78,6 +80,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
   kk: {
     errors: {
       missing: "Аты-жөніңіз бен телефоныңызды көрсетіңіз.",
+      phone: "Телефон нөмірін толық енгізіңіз: +7 және 10 сан.",
       consent: "Броньдау үшін деректерді өңдеуге келісім беру қажет.",
       no_seats: "Кемінде бір орынды таңдаңыз.",
       unavailable: "Бұл іс-шараға билеттер қазір қолжетімсіз.",
@@ -203,6 +206,12 @@ export default function SeatPicker({
       feedback.error(t.errors.no_seats);
       return;
     }
+    if (!isCompletePhone(buyerPhone)) {
+      setError(t.errors.phone);
+      feedback.error(t.errors.phone);
+      document.getElementById("buyer_phone")?.focus();
+      return;
+    }
 
     startTransition(async () => {
       const result = await createBooking({
@@ -293,8 +302,14 @@ export default function SeatPicker({
             <input
               id="buyer_phone"
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              // Only digits are kept; brackets, spaces and dashes are put in as they are typed,
+              // and a pasted «8 701 …» or «+7701…» comes out the same.
               value={buyerPhone}
-              onChange={(e) => setBuyerPhone(e.target.value)}
+              onChange={(e) => setBuyerPhone(nextPhoneValue(buyerPhone, e.target.value))}
+              placeholder="+7 (777) 000-00-00"
+              aria-invalid={buyerPhone !== "" && !isCompletePhone(buyerPhone)}
               required
               className="w-full px-4 py-2.5 border border-cream-dark rounded-full bg-cream/30 text-base text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
             />
