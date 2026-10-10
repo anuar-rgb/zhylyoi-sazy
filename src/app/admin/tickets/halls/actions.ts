@@ -7,7 +7,7 @@ import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { translateFieldPair } from "@/lib/autoTranslate";
-import { STANDARD } from "@/lib/seatCategories";
+import { STANDARD, categoryOptions, isBuiltInCategory, normalizeCategory } from "@/lib/seatCategories";
 import { PARTER, SECTIONS, sectionLabel, toSection, type HallSection } from "@/lib/hallSections";
 
 export type FormState = { error: string | null };
@@ -280,24 +280,136 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
   return { error: null };
 }
 
-/** One seat or many at once — SeatBulkPanel calls this the same way either way. */
+/** Every category this hall knows: the two built-in ones, those its seats have, and those with a price. */
+async function hallCategories(hallId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const [{ data: seats }, { data: prices }] = await Promise.all([
+    supabase.from("hall_seats").select("category").eq("hall_id", hallId),
+    supabase.from("hall_category_prices").select("category").eq("hall_id", hallId),
+  ]);
+  return categoryOptions([...(seats ?? []), ...(prices ?? [])].map((row) => row.category as string));
+}
+
+/**
+ * One seat or many at once — SeatBulkPanel calls this the same way either way. The name is
+ * normalized first, so «вип» lands on VIP and «балкон» on an existing «Балкон».
+ */
 export async function updateSeatsCategory(ids: string[], category: string): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
+  if (ids.length === 0) return { ok: false };
 
-  const trimmed = category.trim();
-  if (!trimmed || ids.length === 0) return { ok: false };
+  const { data: first } = await supabase.from("hall_seats").select("hall_id").eq("id", ids[0]).maybeSingle();
+  const normalized = normalizeCategory(category, first ? await hallCategories(first.hall_id as string) : []);
+  if (!normalized) return { ok: false };
 
   const { error, count } = await supabase
     .from("hall_seats")
-    .update({ category: trimmed }, { count: "exact" })
+    .update({ category: normalized }, { count: "exact" })
     .in("id", ids);
 
   if (!error && count === ids.length) revalidatePath("/admin/tickets/halls", "layout");
   return { ok: !error && count === ids.length };
+}
+
+/** Parses a price field: a number from 0 (free), or null when it is not one. */
+function parsePrice(raw: string): number | null {
+  const value = Number(raw.trim().replace(",", "."));
+  return raw.trim() !== "" && Number.isFinite(value) && value >= 0 ? Math.round(value * 100) / 100 : null;
+}
+
+/**
+ * Adds a category to the hall with its default price (0 = free). It shows in the category list
+ * and the seat picker straight away, before any seat has it. A name that matches an existing
+ * category (VIP, Стандарт, or a custom one in another case) only updates that one's price.
+ */
+export async function addHallCategory(
+  hallId: string,
+  name: string,
+  priceRaw: string
+): Promise<{ ok: boolean; category?: string; error?: string }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, error: "Профиль сотрудника не настроен." };
+
+  const category = normalizeCategory(name, await hallCategories(hallId));
+  if (!category) return { ok: false, error: "Укажите название категории." };
+  if (category.length > 40) return { ok: false, error: "Название — не длиннее 40 символов." };
+  const price = parsePrice(priceRaw);
+  if (price === null) return { ok: false, error: "Укажите цену: число от 0 (0 — бесплатно)." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("hall_category_prices")
+    .upsert({ hall_id: hallId, category, price }, { onConflict: "hall_id,category" });
+  if (error) return { ok: false, error: "Не удалось сохранить категорию." };
+
+  revalidateHalls(hallId);
+  return { ok: true, category };
+}
+
+/**
+ * Renames a custom category everywhere in this hall: its seats and its price. Renaming onto an
+ * existing category merges the two — the seats join it, and the existing price is kept.
+ * Стандарт and VIP cannot be renamed.
+ */
+export async function renameHallCategory(
+  hallId: string,
+  from: string,
+  to: string
+): Promise<{ ok: boolean; error?: string }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, error: "Профиль сотрудника не настроен." };
+  if (isBuiltInCategory(from)) return { ok: false, error: "Стандарт и VIP переименовать нельзя." };
+
+  const target = normalizeCategory(to, (await hallCategories(hallId)).filter((c) => c !== from));
+  if (!target) return { ok: false, error: "Укажите новое название." };
+  if (target.length > 40) return { ok: false, error: "Название — не длиннее 40 символов." };
+  if (target === from) return { ok: true };
+
+  const supabase = await createClient();
+  const { error: seatsError } = await supabase
+    .from("hall_seats")
+    .update({ category: target })
+    .eq("hall_id", hallId)
+    .eq("category", from);
+  if (seatsError) return { ok: false, error: "Не удалось переименовать." };
+
+  const [{ data: fromPrice }, { data: targetPrice }] = await Promise.all([
+    supabase.from("hall_category_prices").select("price").eq("hall_id", hallId).eq("category", from).maybeSingle(),
+    supabase.from("hall_category_prices").select("price").eq("hall_id", hallId).eq("category", target).maybeSingle(),
+  ]);
+  if (fromPrice && !targetPrice) {
+    await supabase.from("hall_category_prices").insert({ hall_id: hallId, category: target, price: fromPrice.price });
+  }
+  await supabase.from("hall_category_prices").delete().eq("hall_id", hallId).eq("category", from);
+
+  revalidateHalls(hallId);
+  return { ok: true };
+}
+
+/**
+ * Removes a custom category from the hall: its seats become Стандарт and its price goes.
+ * Events already made keep their own copy (see applyHallDefaultsToEvent). Стандарт and VIP stay.
+ */
+export async function deleteHallCategory(hallId: string, category: string): Promise<{ ok: boolean; moved: number; error?: string }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, moved: 0, error: "Профиль сотрудника не настроен." };
+  if (isBuiltInCategory(category)) return { ok: false, moved: 0, error: "Стандарт и VIP удалить нельзя." };
+
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("hall_seats")
+    .update({ category: STANDARD }, { count: "exact" })
+    .eq("hall_id", hallId)
+    .eq("category", category);
+  if (error) return { ok: false, moved: 0, error: "Не удалось удалить категорию." };
+  await supabase.from("hall_category_prices").delete().eq("hall_id", hallId).eq("category", category);
+
+  revalidateHalls(hallId);
+  return { ok: true, moved: count ?? 0 };
 }
 
 export async function setSeatsActive(ids: string[], isActive: boolean): Promise<{ ok: boolean }> {

@@ -6,6 +6,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import { getCultureEventById } from "@/lib/cultureEvents";
 import { applyHallDefaultsToEvent } from "@/lib/hallDefaults";
+import { STANDARD, normalizeCategory } from "@/lib/seatCategories";
 
 export type FormState = { error: string | null };
 
@@ -31,7 +32,8 @@ function revalidateTickets(eventId: string) {
 function payload(form: FormData) {
   const nameKk = field(form, "name_kk");
   const nameRu = field(form, "name_ru");
-  const category = field(form, "category");
+  const typed = field(form, "category");
+  const category = typed ? normalizeCategory(typed) : null;
   const isFree = form.get("is_free") === "on";
   const priceRaw = field(form, "price");
   const price = isFree ? 0 : priceRaw !== null ? Number.parseFloat(priceRaw) : null;
@@ -165,6 +167,9 @@ export async function setEventSeatCategory(
 
   const supabase = await createClient();
 
+  // Choosing Стандарт is the same as resetting: no override row means Стандарт.
+  if (category !== null && normalizeCategory(category) === STANDARD) category = null;
+
   if (category === null) {
     const { error } = await supabase
       .from("event_seat_categories")
@@ -175,7 +180,10 @@ export async function setEventSeatCategory(
     return { ok: !error };
   }
 
-  const rows = seatIds.map((seatId) => ({ event_id: eventId, seat_id: seatId, category }));
+  // «вип» and «VIP» are one category; so are «Ложа» and «ложа».
+  const normalized = normalizeCategory(category);
+  if (!normalized) return { ok: false };
+  const rows = seatIds.map((seatId) => ({ event_id: eventId, seat_id: seatId, category: normalized }));
   const { error } = await supabase.from("event_seat_categories").upsert(rows, { onConflict: "event_id,seat_id" });
 
   if (!error) revalidateTickets(eventId);

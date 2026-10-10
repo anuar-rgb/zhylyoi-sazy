@@ -7,7 +7,7 @@ import type { HallSection } from "@/lib/hallSections";
 import HallForm from "../../HallForm";
 import GenerateGridForm from "../../GenerateGridForm";
 import SeatMapEditor from "../../SeatMapEditor";
-import HallPricesForm from "../../HallPricesForm";
+import HallCategoriesForm from "../../HallCategoriesForm";
 import { updateHall } from "../../actions";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
@@ -44,9 +44,9 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   ) as Partial<Record<HallSection, { rows: number; seats: number }>>;
   const seatCounts: Record<string, number> = {};
   for (const seat of activeSeats) seatCounts[seat.category] = (seatCounts[seat.category] ?? 0) + 1;
-  // Стандарт always; VIP and custom ones once some seat has them (a price for a category with
-  // no seats would never be charged).
-  const priceCategories = categoryOptions(Object.keys(seatCounts)).filter((c) => c === "standard" || seatCounts[c]);
+  // Стандарт and VIP always, then every custom one the hall has: on a seat, or added with a price
+  // and not yet given to any seat. The seat picker offers the same list.
+  const categories = categoryOptions([...seats.map((seat) => seat.category), ...prices.keys()]);
 
   return (
     <div>
@@ -75,20 +75,23 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           </div>
         ) : (
           <div className={CARD}>
-            <SeatMapEditor seats={seats} />
+            <SeatMapEditor seats={seats} categories={categories} />
           </div>
         )}
       </section>
 
       {seats.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">Цены по умолчанию</h2>
-          <p className="text-sm text-ocean/60 mb-4">Цена одного места каждой категории в этом зале.</p>
+          <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">Категории и цены</h2>
+          <p className="text-sm text-ocean/60 mb-4">
+            Цена одного места каждой категории в этом зале. Свои категории можно переименовать или удалить — их места
+            станут «Стандарт».
+          </p>
           <div className={CARD}>
             {pricesAvailable ? (
-              <HallPricesForm
+              <HallCategoriesForm
                 hallId={hall.id}
-                categories={priceCategories}
+                categories={categories}
                 prices={Object.fromEntries(prices)}
                 seatCounts={seatCounts}
               />

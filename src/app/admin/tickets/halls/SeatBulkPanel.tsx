@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setSeatsActive, updateSeatsCategory } from "./actions";
+import { addHallCategory, setSeatsActive, updateSeatsCategory } from "./actions";
 import type { HallSeatRecord } from "@/lib/halls";
 import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
 import { seatName } from "@/lib/hallSections";
@@ -35,6 +35,7 @@ export default function SeatBulkPanel({
   const [category, setCategory] = useState(seats.length === 1 ? seats[0].category : "");
   const [addingNew, setAddingNew] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [newPrice, setNewPrice] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +44,7 @@ export default function SeatBulkPanel({
     seats.length === 1
       ? seatName(seats[0])
       : `Выбрано мест: ${seats.length}`;
-  // Стандарт and VIP are always offered; custom categories once some seat has one.
+  // Стандарт and VIP always, then the hall's own (on seats or added with a price).
   const options = categoryOptions([...(seats.length === 1 ? [seats[0].category] : []), ...existingCategories]);
   const pendingCategory = (addingNew ? newCategory : category).trim();
 
@@ -60,7 +61,18 @@ export default function SeatBulkPanel({
     if (!pendingCategory) return;
     setBusy(true);
     setError(null);
-    const result = await updateSeatsCategory(ids, pendingCategory);
+    let target = pendingCategory;
+    if (addingNew) {
+      // A new category comes with its default price, then goes onto the selected seats.
+      const added = await addHallCategory(seats[0].hallId, pendingCategory, newPrice);
+      if (!added.ok) {
+        setBusy(false);
+        setError(added.error ?? "Не удалось добавить категорию.");
+        return;
+      }
+      target = added.category!;
+    }
+    const result = await updateSeatsCategory(ids, target);
     setBusy(false);
     if (result.ok) {
       router.refresh();
@@ -96,14 +108,38 @@ export default function SeatBulkPanel({
 
       <div className="flex flex-wrap items-center gap-2">
         {addingNew ? (
-          <input
-            autoFocus
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            placeholder="Новая категория"
-            disabled={busy}
-            className="w-40 px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
-          />
+          <>
+            <input
+              autoFocus
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="Название, например: Ложа"
+              maxLength={40}
+              disabled={busy}
+              aria-label="Название новой категории"
+              className="w-52 px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
+            />
+            <input
+              value={newPrice}
+              onChange={(e) => setNewPrice(e.target.value)}
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="any"
+              placeholder="Цена, ₸"
+              disabled={busy}
+              aria-label="Цена новой категории, 0 — бесплатно"
+              className="w-28 px-3 py-1.5 text-sm border border-cream-dark rounded-full bg-white text-ocean focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => setAddingNew(false)}
+              disabled={busy}
+              className="text-xs font-semibold text-ocean/40 hover:text-ocean"
+            >
+              Отмена
+            </button>
+          </>
         ) : (
           <select
             value={category}
@@ -125,10 +161,10 @@ export default function SeatBulkPanel({
         <button
           type="button"
           onClick={applyCategory}
-          disabled={busy || !pendingCategory}
+          disabled={busy || !pendingCategory || (addingNew && newPrice.trim() === "")}
           className="btn-primary px-4 py-1.5 text-sm font-semibold disabled:opacity-50"
         >
-          Применить категорию
+          {addingNew ? "Добавить и применить" : "Применить категорию"}
         </button>
       </div>
 

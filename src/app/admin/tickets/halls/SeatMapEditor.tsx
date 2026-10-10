@@ -19,7 +19,14 @@ import { seatName } from "@/lib/hallSections";
  * common case of "make the front two rows VIP" is a couple of row-label clicks
  * instead of one dropdown per seat.
  */
-export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
+export default function SeatMapEditor({
+  seats,
+  categories,
+}: {
+  seats: HallSeatRecord[];
+  /** Every category of the hall, including ones added with a price but on no seat yet. */
+  categories: string[];
+}) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +120,7 @@ export default function SeatMapEditor({ seats }: { seats: HallSeatRecord[] }) {
         <SeatBulkPanel
           key={selectedSeats.map((seat) => seat.id).sort().join(",")}
           seats={selectedSeats}
-          existingCategories={Array.from(categoryColors.keys())}
+          existingCategories={categories}
           onDone={() => setSelectedIds(new Set())}
         />
       )}

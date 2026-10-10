@@ -18,6 +18,37 @@ export function categoryLabel(category: string, locale: "ru" | "kk" = "ru"): str
   return NAMES[category]?.[locale] ?? category;
 }
 
+/** Spellings people type for the two built-in categories, in any case. */
+const ALIASES: Record<string, string> = {
+  vip: VIP,
+  "вип": VIP,
+  "в.и.п.": VIP,
+  standard: STANDARD,
+  standart: STANDARD,
+  "стандарт": STANDARD,
+  "стандартный": STANDARD,
+};
+
+/**
+ * One stored value per category, whatever was typed: «вип», «VIP» and «Vip» are all VIP,
+ * «стандарт» is Стандарт, and a custom name matching an existing one apart from case or spaces
+ * («Балкон» / «балкон ») becomes that existing one. Returns null for an empty name.
+ */
+export function normalizeCategory(raw: string, existing: Iterable<string> = []): string | null {
+  const name = raw.trim().replace(/\s+/g, " ");
+  if (!name) return null;
+  const key = name.toLocaleLowerCase("ru");
+  if (ALIASES[key]) return ALIASES[key];
+  for (const category of existing) {
+    if (category.trim().toLocaleLowerCase("ru") === key) return category;
+  }
+  return name;
+}
+
+export function isBuiltInCategory(category: string): boolean {
+  return category === STANDARD || category === VIP;
+}
+
 /** Стандарт and VIP always first, then the custom categories already in use, alphabetically. */
 export function categoryOptions(inUse: Iterable<string>): string[] {
   const custom = [...new Set(inUse)].filter((c) => c !== STANDARD && c !== VIP).sort((a, b) => a.localeCompare(b, "ru"));
