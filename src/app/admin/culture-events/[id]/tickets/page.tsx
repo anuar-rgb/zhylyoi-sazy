@@ -69,9 +69,24 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
               >
                 Заполняемость зала
               </Link>
-              <TakeHallSeatsButton eventId={id} hallName={hallName} />
+              {/* A draft has just taken its seats from the hall and sold nothing; re-taking them is for later. */}
+              {event.status !== "draft" && <TakeHallSeatsButton eventId={id} hallName={hallName} />}
             </div>
           </div>
+
+          {event.status === "draft" && (
+            <div className="mb-6 bg-gold/10 border border-gold/30 rounded-2xl px-4 py-3 text-sm text-ocean">
+              <p className="font-semibold mb-1">Это черновик</p>
+              <p className="text-ocean/70">
+                Посетители его не видят, билеты пока не продаются. Задайте цены ниже и при необходимости отметьте места
+                на схеме. Когда всё готово, откройте{" "}
+                <Link href={`/admin/culture-events/${id}`} className="font-semibold text-ocean underline underline-offset-2 hover:text-gold-dark">
+                  карточку мероприятия
+                </Link>{" "}
+                и поставьте статус «Опубликовано» — тогда начнётся продажа.
+              </p>
+            </div>
+          )}
 
           <section className="mb-8">
             <h2 className="text-lg font-bold text-ocean mb-4">Цены билетов</h2>
