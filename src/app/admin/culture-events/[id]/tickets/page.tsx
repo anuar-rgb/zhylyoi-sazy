@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
-import { getCultureEventById } from "@/lib/cultureEvents";
+import { getCultureEventById, hasEventStarted } from "@/lib/cultureEvents";
 import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
@@ -33,6 +33,11 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
   const categories = event.hallId ? await listEventPriceCategories(id, event.hallId, ticketTypes) : [];
 
   const eventTitle = event.titleRu ?? event.titleKk ?? "Мероприятие";
+  const isDraft = event.status === "draft";
+  const isPast = !isDraft && hasEventStarted(event);
+  // Only an event on sale right now re-takes its seats from the hall: a draft has just taken
+  // them and sold nothing, a past one sells nothing any more.
+  const onSale = event.status === "published" && !isPast;
 
   return (
     <div>
@@ -69,12 +74,18 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
               >
                 Заполняемость зала
               </Link>
-              {/* A draft has just taken its seats from the hall and sold nothing; re-taking them is for later. */}
-              {event.status !== "draft" && <TakeHallSeatsButton eventId={id} hallName={hallName} />}
+              {onSale && <TakeHallSeatsButton eventId={id} hallName={hallName} />}
             </div>
           </div>
 
-          {event.status === "draft" && (
+          {isPast && (
+            <div className="mb-6 bg-cream/60 border border-cream-dark rounded-2xl px-4 py-3 text-sm text-ocean/70">
+              Мероприятие уже прошло, продажа билетов закрыта. Цены и места здесь можно посмотреть, но покупателям
+              они больше не показываются.
+            </div>
+          )}
+
+          {isDraft && (
             <div className="mb-6 bg-gold/10 border border-gold/30 rounded-2xl px-4 py-3 text-sm text-ocean">
               <p className="font-semibold mb-1">Это черновик</p>
               <p className="text-ocean/70">
