@@ -67,7 +67,11 @@ export default async function TransactionsPage() {
                   <h3 className="font-bold text-ocean">
                     {p.orderNumber} · {formatMoney(p.amount, p.currency)}
                   </h3>
-                  <RefundButton paymentId={p.id} orderNumber={p.orderNumber} />
+                  {p.eventLocked ? (
+                    <p className="text-xs text-ocean/50">Мероприятие прошло или в архиве — отметить возврат здесь нельзя.</p>
+                  ) : (
+                    <RefundButton paymentId={p.id} orderNumber={p.orderNumber} />
+                  )}
                 </div>
                 <p className="text-sm text-ocean/70 mt-1">
                   {p.buyerName} · {p.eventTitle}
@@ -123,7 +127,7 @@ export default async function TransactionsPage() {
                 {(p.note || p.failureReason) && (
                   <p className="text-xs text-ocean/60 mt-3">{p.note ? NOTE_LABEL[p.note] ?? p.note : p.failureReason}</p>
                 )}
-                {p.status === "success" && !p.needsRefund && (
+                {p.status === "success" && !p.needsRefund && !p.eventLocked && (
                   <div className="mt-3">
                     <RefundButton paymentId={p.id} orderNumber={p.orderNumber} />
                   </div>

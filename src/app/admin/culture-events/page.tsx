@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
-import { listCultureEvents } from "@/lib/cultureEvents";
+import { isEventLocked, listCultureEvents } from "@/lib/cultureEvents";
 import { EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS, formatEventDateTime } from "@/lib/eventFields";
 import DeleteEventButton from "./DeleteEventButton";
 import BackToDashboard from "../BackToDashboard";
@@ -87,7 +87,8 @@ export default async function CultureEventsPage() {
                         href={`/admin/culture-events/${event.id}`}
                         className="text-xs font-semibold text-ocean hover:text-gold-dark"
                       >
-                        Изменить
+                        {/* Past or archived: the card opens read-only. */}
+                        {isEventLocked(event) ? "Открыть" : "Изменить"}
                       </Link>
                       <DeleteEventButton id={event.id} title={event.titleRu ?? event.titleKk ?? "мероприятие"} />
                     </div>

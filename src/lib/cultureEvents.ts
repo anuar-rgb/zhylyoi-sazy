@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { EVENT_CATEGORIES, EVENT_STATUSES, type EventCategory, type EventStatus } from "@/lib/eventFields";
 import { translateFieldPair } from "@/lib/autoTranslate";
+import { isEventLocked } from "@/lib/eventLock";
+export { EVENT_LOCKED_MESSAGE, hasEventStarted, isEventLocked } from "@/lib/eventLock";
 
 export * from "@/lib/eventFields";
 
@@ -214,9 +216,19 @@ export async function listCheckInEvents(): Promise<CultureEventRecord[]> {
   return (data as unknown as Row[]).map(toRecord);
 }
 
-/** True once the event has started: ticket sales are closed from that moment, as on the public listing. */
-export function hasEventStarted(event: Pick<CultureEventRecord, "eventDate">): boolean {
-  return new Date(event.eventDate).getTime() < Date.now();
+
+
+/** isEventLocked for an event known only by id, for server actions. A missing event counts as locked. */
+export async function isEventIdLocked(eventId: string): Promise<boolean> {
+  const event = await getCultureEventById(eventId);
+  return !event || isEventLocked(event);
+}
+
+/** isEventIdLocked for the event a booking (order) belongs to. */
+export async function isBookingEventLocked(bookingId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("bookings").select("event_id").eq("id", bookingId).maybeSingle();
+  return !data || isEventIdLocked(String(data.event_id));
 }
 
 /** One event by id, for the edit form. Null when missing or not visible to the caller. */

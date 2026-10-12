@@ -100,7 +100,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     Проверьте поступление {formatMoney(order.amount, order.currency)} и подтвердите оплату.
                     {order.expiresAt && <> Места держатся до {formatMoment(order.expiresAt)}.</>}
                   </p>
-                  <ConfirmPaymentButton id={order.id} />
+                  {/* A past or archived event's orders are history: shown, not confirmed any more. */}
+                  {order.eventLocked ? (
+                    <p className="text-xs text-ocean/50">Мероприятие прошло или в архиве — подтвердить оплату нельзя.</p>
+                  ) : (
+                    <ConfirmPaymentButton id={order.id} />
+                  )}
                 </div>
               )}
 

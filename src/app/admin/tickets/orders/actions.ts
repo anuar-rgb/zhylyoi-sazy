@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { EVENT_LOCKED_MESSAGE, isBookingEventLocked } from "@/lib/cultureEvents";
 
 export async function confirmBookingPayment(id: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
@@ -9,6 +10,7 @@ export async function confirmBookingPayment(id: string): Promise<{ ok: boolean; 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Не авторизовано." };
+  if (await isBookingEventLocked(id)) return { ok: false, error: EVENT_LOCKED_MESSAGE };
 
   const { error, count } = await supabase
     .from("bookings")

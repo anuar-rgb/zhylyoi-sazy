@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
-import { getCultureEventById, hasEventStarted } from "@/lib/cultureEvents";
+import { getCultureEventById, isEventLocked } from "@/lib/cultureEvents";
 import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
@@ -33,11 +33,12 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
   const categories = event.hallId ? await listEventPriceCategories(id, event.hallId, ticketTypes) : [];
 
   const eventTitle = event.titleRu ?? event.titleKk ?? "Мероприятие";
-  const isDraft = event.status === "draft";
-  const isPast = !isDraft && hasEventStarted(event);
+  // Past or archived: shown as it was sold, nothing on this page changes it any more.
+  const locked = isEventLocked(event);
+  const isDraft = !locked && event.status === "draft";
   // Only an event on sale right now re-takes its seats from the hall: a draft has just taken
-  // them and sold nothing, a past one sells nothing any more.
-  const onSale = event.status === "published" && !isPast;
+  // them and sold nothing, a locked one sells nothing any more.
+  const onSale = !locked && event.status === "published";
 
   return (
     <div>
@@ -78,10 +79,11 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
             </div>
           </div>
 
-          {isPast && (
+          {locked && (
             <div className="mb-6 bg-cream/60 border border-cream-dark rounded-2xl px-4 py-3 text-sm text-ocean/70">
-              Мероприятие уже прошло, продажа билетов закрыта. Цены и места здесь можно посмотреть, но покупателям
-              они больше не показываются.
+              <p className="font-semibold text-ocean mb-0.5">Только просмотр</p>
+              Мероприятие уже прошло или в архиве, продажа закрыта. Цены и места показаны такими, какими они были;
+              изменить их нельзя. Проданные места и выручка — в «Заполняемость зала».
             </div>
           )}
 
@@ -102,7 +104,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
           <section className="mb-8">
             <h2 className="text-lg font-bold text-ocean mb-4">Цены билетов</h2>
             <div className={CARD}>
-              <EventPricesForm eventId={id} categories={categories} prices={pricesOf(ticketTypes)} />
+              <EventPricesForm eventId={id} categories={categories} prices={pricesOf(ticketTypes)} readOnly={locked} />
             </div>
           </section>
 
@@ -110,7 +112,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
             <section>
               <h2 className="text-lg font-bold text-ocean mb-4">Категории мест этого мероприятия</h2>
               <div className={CARD}>
-                <EventSeatMap eventId={id} seats={eventSeats} categories={categories} />
+                <EventSeatMap eventId={id} seats={eventSeats} categories={categories} readOnly={locked} />
               </div>
             </section>
           ) : (

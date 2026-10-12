@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { flash } from "@/lib/flash";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { getCultureEventById, type EventImage } from "@/lib/cultureEvents";
+import { EVENT_LOCKED_MESSAGE, getCultureEventById, isEventLocked, type EventImage } from "@/lib/cultureEvents";
 import {
   EVENT_CATEGORIES,
   EVENT_STATUSES,
@@ -231,6 +231,8 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
 
   // The event’s own institution decides, not the form: the form is just what the browser sent.
   const existing = await getCultureEventById(id);
+  // A past or archived event is history: it is looked at and deleted, never changed.
+  if (existing && isEventLocked(existing)) return { error: EVENT_LOCKED_MESSAGE };
   if (existing && (await isForeignPaymentMethod(data.payment_method_id ?? null, existing.organizationId))) {
     return { error: FOREIGN_PAYMENT_METHOD };
   }

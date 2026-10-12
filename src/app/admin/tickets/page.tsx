@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { listPendingPaidBookings, countActiveBookingsForEvents } from "@/lib/bookingsAdmin";
-import { listAllTicketedCultureEvents, type CultureEventRecord } from "@/lib/cultureEvents";
+import { isEventLocked, listAllTicketedCultureEvents, type CultureEventRecord } from "@/lib/cultureEvents";
 import { EVENT_STATUS_LABELS, formatEventDateTime } from "@/lib/eventFields";
 import DeleteEventButton from "../culture-events/DeleteEventButton";
 import MoreMenu from "./MoreMenu";
@@ -19,8 +19,9 @@ export default async function TicketsPage() {
   const bookingCounts = await countActiveBookingsForEvents([...current, ...other].map((event) => event.id));
 
 
-  // A past event is not edited any more, only looked at (or corrected for the archive); a draft still is.
-  function renderEvent(event: CultureEventRecord, note?: string, openLabel = "Изменить") {
+  // A past or archived event opens read-only (isEventLocked); an upcoming one, a draft too, is still edited.
+  function renderEvent(event: CultureEventRecord, note?: string) {
+    const openLabel = isEventLocked(event) ? "Открыть" : "Изменить";
     return (
       <div key={event.id} className={`${CARD} relative p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
         {/* Absolutely-positioned full-card link, not a wrapper around
@@ -92,9 +93,7 @@ export default async function TicketsPage() {
           </p>
           <div className="space-y-2">
             {other.map((event) =>
-              event.status === "published"
-                ? renderEvent(event, "прошло", "Открыть")
-                : renderEvent(event, EVENT_STATUS_LABELS[event.status] ?? event.status)
+              renderEvent(event, event.status === "published" ? "прошло" : (EVENT_STATUS_LABELS[event.status] ?? event.status))
             )}
           </div>
         </>

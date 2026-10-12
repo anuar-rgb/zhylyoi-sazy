@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getStaffIdentity } from "@/lib/profile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { EVENT_LOCKED_MESSAGE, isBookingEventLocked } from "@/lib/cultureEvents";
 
 /**
  * Records that the money for a payment has been returned to the buyer OUTSIDE this site, through
@@ -24,7 +25,7 @@ export async function markPaymentRefunded(paymentId: string): Promise<{ ok: bool
   const supabase = await createClient();
   const { data: payment } = await supabase
     .from("payments")
-    .select("id, organization_id, status")
+    .select("id, booking_id, organization_id, status")
     .eq("id", paymentId)
     .maybeSingle();
   if (!payment) return { ok: false, error: "Платёж не найден." };
@@ -34,6 +35,7 @@ export async function markPaymentRefunded(paymentId: string): Promise<{ ok: bool
   if (payment.status !== "success" && payment.status !== "refund_pending") {
     return { ok: false, error: "Вернуть можно только оплаченный платёж." };
   }
+  if (await isBookingEventLocked(String(payment.booking_id))) return { ok: false, error: EVENT_LOCKED_MESSAGE };
 
   const admin = createAdminClient();
   if (!admin) return { ok: false, error: "На сервере не задан служебный ключ." };

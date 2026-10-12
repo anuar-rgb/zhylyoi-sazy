@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { getCultureEventById } from "@/lib/cultureEvents";
+import { getCultureEventById, isEventLocked } from "@/lib/cultureEvents";
 import { listHalls, listHallsCategories } from "@/lib/halls";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
@@ -57,6 +57,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       prices={pricesOf(ticketTypes)}
       paymentMethods={paymentMethods}
       bookingCount={bookingCount}
+      readOnly={isEventLocked(event)}
       action={updateEvent}
       heading={event.titleRu ?? event.titleKk ?? "Мероприятие"}
     />

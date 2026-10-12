@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
-import { getCultureEventById } from "@/lib/cultureEvents";
+import { EVENT_LOCKED_MESSAGE, getCultureEventById, isEventIdLocked, isEventLocked } from "@/lib/cultureEvents";
 import { applyHallSeatsToEvent } from "@/lib/hallDefaults";
 import { parseEventPrices, saveEventPrices } from "@/lib/eventPrices";
 import { STANDARD, normalizeCategory } from "@/lib/seatCategories";
@@ -21,6 +21,7 @@ export async function updateEventPrices(_prev: FormState, form: FormData): Promi
 
   const eventId = form.get("event_id");
   if (typeof eventId !== "string" || !eventId) return { error: "Мероприятие не найдено." };
+  if (await isEventIdLocked(eventId)) return { error: EVENT_LOCKED_MESSAGE };
 
   const { prices, error } = parseEventPrices(form);
   if (error) return { error };
@@ -38,7 +39,7 @@ export async function takeHallSeats(eventId: string): Promise<{ ok: boolean; sea
   if (!identity?.hasProfile) return { ok: false, seats: 0 };
 
   const event = await getCultureEventById(eventId);
-  if (!event?.hallId) return { ok: false, seats: 0 };
+  if (!event?.hallId || isEventLocked(event)) return { ok: false, seats: 0 };
 
   const result = await applyHallSeatsToEvent(eventId, event.hallId);
   if (result.ok) revalidateTickets(eventId);
@@ -58,6 +59,7 @@ export async function setEventSeatCategory(
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { ok: false };
   if (seatIds.length === 0) return { ok: true };
+  if (await isEventIdLocked(eventId)) return { ok: false };
 
   const supabase = await createClient();
 

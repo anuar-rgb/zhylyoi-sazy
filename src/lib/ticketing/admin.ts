@@ -3,6 +3,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { formatDateTime } from "@/lib/timeZone";
 import { seatName, toSection, type HallSection } from "@/lib/hallSections";
+import { isEventLocked } from "@/lib/eventLock";
 
 /**
  * Reads for the ticket-sales admin pages (orders, payments, check-in journal, statistics).
@@ -26,6 +27,12 @@ export async function getTicketingScope(): Promise<Scope> {
 function titleOf(event: unknown): string {
   const e = (Array.isArray(event) ? event[0] : event) as Row | null | undefined;
   return e ? String(e.title_ru ?? e.title_kk ?? "") : "";
+}
+
+/** Past or archived (isEventLocked): its orders and payments are shown, not changed. */
+function lockedOf(event: unknown): boolean {
+  const e = (Array.isArray(event) ? event[0] : event) as Row | null | undefined;
+  return !e || isEventLocked({ eventDate: String(e.event_date), status: String(e.status) });
 }
 
 function str(value: unknown): string | null {
@@ -62,6 +69,8 @@ export type OrderRow = {
   expiresAt: string | null;
   eventId: string;
   eventTitle: string;
+  /** The event is past or archived: no confirming, no refunds. */
+  eventLocked: boolean;
   tickets: number;
   checkedIn: number;
   /** The order's seats still held, each with when it was used at the door (null: not yet). */
@@ -76,7 +85,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       .from("bookings")
       .select(
         "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
-          `culture_events(title_ru, title_kk), booking_items(checked_in_at, released_at, hall_seats(${seatColumns})), ` +
+          `culture_events(title_ru, title_kk, event_date, status), booking_items(checked_in_at, released_at, hall_seats(${seatColumns})), ` +
           "payments(provider_code, status, paid_at, needs_refund, note, created_at)"
       )
       .eq("organization_id", organizationId)
@@ -113,6 +122,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       expiresAt: str(row.expires_at),
       eventId: String(row.event_id),
       eventTitle: titleOf(row.culture_events),
+      eventLocked: lockedOf(row.culture_events),
       tickets: items.length,
       checkedIn: items.filter((item) => item.checked_in_at).length,
       seats: items
@@ -159,6 +169,8 @@ export type PaymentRow = {
   orderNumber: string;
   buyerName: string;
   eventTitle: string;
+  /** The order's event is past or archived: no refunds from here. */
+  eventLocked: boolean;
 };
 
 export async function listPayments(organizationId: string, limit = 100): Promise<PaymentRow[]> {
@@ -167,7 +179,7 @@ export async function listPayments(organizationId: string, limit = 100): Promise
     .from("payments")
     .select(
       "id, provider_code, provider_payment_id, status, amount, currency, needs_refund, note, failure_reason, paid_at, refunded_at, created_at, " +
-        "bookings(public_order_id, buyer_name, culture_events(title_ru, title_kk))"
+        "bookings(public_order_id, buyer_name, culture_events(title_ru, title_kk, event_date, status))"
     )
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
@@ -192,6 +204,7 @@ export async function listPayments(organizationId: string, limit = 100): Promise
       orderNumber: booking ? String(booking.public_order_id) : "—",
       buyerName: booking ? String(booking.buyer_name) : "",
       eventTitle: booking ? titleOf(booking.culture_events) : "",
+      eventLocked: booking ? lockedOf(booking.culture_events) : true,
     };
   });
 }
