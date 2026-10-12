@@ -19,12 +19,13 @@ export default async function TicketsPage() {
   const bookingCounts = await countActiveBookingsForEvents([...current, ...other].map((event) => event.id));
 
 
-  function renderEvent(event: CultureEventRecord, note?: string) {
+  // A past event is not edited any more, only looked at (or corrected for the archive); a draft still is.
+  function renderEvent(event: CultureEventRecord, note?: string, openLabel = "Изменить") {
     return (
       <div key={event.id} className={`${CARD} relative p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
         {/* Absolutely-positioned full-card link, not a wrapper around
             everything below: a <Link> can't contain another <Link>
-            (invalid nested <a>), so "Изменить" sits as a normal sibling
+            (invalid nested <a>), so "Изменить" / "Открыть" sits as a normal sibling
             above this one in stacking order instead — same pattern as
             the halls list. */}
         <Link
@@ -41,7 +42,7 @@ export default async function TicketsPage() {
         </div>
         <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-2">
           <Link href={`/admin/culture-events/${event.id}`} className="text-xs font-semibold text-ocean hover:text-gold-dark">
-            Изменить
+            {openLabel}
           </Link>
           <DeleteEventButton
             id={event.id}
@@ -91,7 +92,9 @@ export default async function TicketsPage() {
           </p>
           <div className="space-y-2">
             {other.map((event) =>
-              renderEvent(event, event.status === "published" ? "прошло" : (EVENT_STATUS_LABELS[event.status] ?? event.status))
+              event.status === "published"
+                ? renderEvent(event, "прошло", "Открыть")
+                : renderEvent(event, EVENT_STATUS_LABELS[event.status] ?? event.status)
             )}
           </div>
         </>
