@@ -18,12 +18,9 @@ export default function EventSeatMap({
   eventId,
   seats,
   categories,
-  readOnly = false,
 }: {
   eventId: string;
   seats: HallSeatRecord[];
-  /** A past or archived event: the map is shown, no seat can be picked or recategorized. */
-  readOnly?: boolean;
   /** The categories seats can be given here: the hall's (Стандарт, VIP, its own) and this event's. */
   categories: string[];
 }) {
@@ -96,8 +93,8 @@ export default function EventSeatMap({
       <SeatMap
         rows={rows}
         seatVariant={seatVariant}
-        onSeatClick={readOnly ? undefined : toggleSeat}
-        onRowLabelClick={readOnly ? undefined : toggleRow}
+        onSeatClick={toggleSeat}
+        onRowLabelClick={toggleRow}
         seatTooltip={(seat) => `${seatName(seat)} — ${categoryLabel(seat.category)}`}
         legend={Array.from(categoryColors.entries()).map(([category, color]) => ({
           swatchClassName: color.solid.split(" ")[0],
@@ -105,7 +102,7 @@ export default function EventSeatMap({
         }))}
       />
 
-      {!readOnly && selectedSeats.length > 0 && (
+      {selectedSeats.length > 0 && (
         <EventSeatBulkPanel
           key={selectedSeats.map((seat) => seat.id).sort().join(",")}
           eventId={eventId}

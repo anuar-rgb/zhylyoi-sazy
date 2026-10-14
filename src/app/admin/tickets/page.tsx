@@ -21,7 +21,12 @@ export default async function TicketsPage() {
 
   // A past or archived event opens read-only (isEventLocked); an upcoming one, a draft too, is still edited.
   function renderEvent(event: CultureEventRecord, note?: string) {
-    const openLabel = isEventLocked(event) ? "Открыть" : "Изменить";
+    // A past or archived one opens straight on its hall's occupancy: prices, sold seats and takings
+    // are all there, and nothing about it can be changed any more.
+    const locked = isEventLocked(event);
+    const openLabel = locked ? "Открыть" : "Изменить";
+    const cardHref = locked ? `/admin/tickets/stats/${event.id}` : `/admin/culture-events/${event.id}/tickets`;
+    const openHref = locked ? `/admin/tickets/stats/${event.id}` : `/admin/culture-events/${event.id}`;
     return (
       <div key={event.id} className={`${CARD} relative p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
         {/* Absolutely-positioned full-card link, not a wrapper around
@@ -30,9 +35,9 @@ export default async function TicketsPage() {
             above this one in stacking order instead — same pattern as
             the halls list. */}
         <Link
-          href={`/admin/culture-events/${event.id}/tickets`}
+          href={cardHref}
           className="absolute inset-0 rounded-3xl"
-          aria-label={`Билеты: ${event.titleRu ?? event.titleKk}`}
+          aria-label={`${locked ? "Заполняемость зала" : "Билеты"}: ${event.titleRu ?? event.titleKk}`}
         />
         <div className="min-w-0 pointer-events-none">
           <p className="font-semibold text-ocean truncate">{event.titleRu ?? event.titleKk}</p>
@@ -42,7 +47,7 @@ export default async function TicketsPage() {
           </p>
         </div>
         <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <Link href={`/admin/culture-events/${event.id}`} className="text-xs font-semibold text-ocean hover:text-gold-dark">
+          <Link href={openHref} className="text-xs font-semibold text-ocean hover:text-gold-dark">
             {openLabel}
           </Link>
           <DeleteEventButton

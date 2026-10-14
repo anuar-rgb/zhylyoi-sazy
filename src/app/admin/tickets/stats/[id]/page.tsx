@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCultureEventById } from "@/lib/cultureEvents";
+import { getCultureEventById, isEventLocked } from "@/lib/cultureEvents";
 import { formatEventDateTime } from "@/lib/eventFields";
 import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
@@ -75,10 +75,17 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
         Статистика
       </Link>
 
-      <h1 className="text-xl sm:text-2xl font-bold text-ocean">{title}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-ocean">{title}</h1>
+        {/* Description and photos; read-only once the event is over (see isEventLocked). */}
+        <Link href={`/admin/culture-events/${id}`} className="text-sm font-semibold text-ocean/60 hover:text-ocean mt-1">
+          Карточка мероприятия
+        </Link>
+      </div>
       <p className="text-sm text-ocean/60 mb-5">
         {formatEventDateTime(event.eventDate)}
         {hallName && ` · ${hallName}`}
+        {isEventLocked(event) && (event.status === "archived" ? " · в архиве" : " · прошло")}
       </p>
 
       <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">

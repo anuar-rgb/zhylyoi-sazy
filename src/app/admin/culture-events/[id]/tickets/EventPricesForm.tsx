@@ -10,13 +10,10 @@ export default function EventPricesForm({
   eventId,
   categories,
   prices,
-  readOnly = false,
 }: {
   eventId: string;
   categories: string[];
   prices: Record<string, number>;
-  /** A past or archived event: the prices it sold at, shown and not editable. */
-  readOnly?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(updateEventPrices, { error: null });
   useActionToast(state, "Цены сохранены");
@@ -26,21 +23,16 @@ export default function EventPricesForm({
     <form
       key={JSON.stringify([categories, prices])}
       action={formAction}
-      onSubmit={(e) => readOnly && e.preventDefault()}
       className="space-y-4"
     >
       <input type="hidden" name="event_id" value={eventId} />
       {state.error && (
         <p className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl px-4 py-3">{state.error}</p>
       )}
-      <fieldset disabled={readOnly} className="min-w-0 disabled:opacity-75">
-        <EventPriceFields categories={categories} prices={prices} />
-      </fieldset>
-      {!readOnly && (
-        <button type="submit" disabled={pending} className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50">
-          {pending ? "Сохранение…" : "Сохранить цены"}
-        </button>
-      )}
+      <EventPriceFields categories={categories} prices={prices} />
+      <button type="submit" disabled={pending} className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50">
+        {pending ? "Сохранение…" : "Сохранить цены"}
+      </button>
     </form>
   );
 }
