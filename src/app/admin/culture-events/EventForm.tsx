@@ -65,7 +65,6 @@ export default function EventForm({
   prices = {},
   paymentMethods = [],
   bookingCount = 0,
-  readOnly = false,
   action,
   heading,
 }: {
@@ -83,8 +82,6 @@ export default function EventForm({
   paymentMethods?: PaymentMethodRecord[];
   /** Active bookings against this event, so the delete button can warn before it takes them with it. */
   bookingCount?: number;
-  /** A past or archived event (isEventLocked): every field shown but disabled, nothing to save. */
-  readOnly?: boolean;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -137,31 +134,21 @@ export default function EventForm({
   }
 
   return (
-    <form action={formAction} onSubmit={(e) => readOnly && e.preventDefault()} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       {event && <input type="hidden" name="id" value={event.id} />}
       <input type="hidden" name="images" value={JSON.stringify(images)} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{heading}</h1>
         <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-          {readOnly ? "Назад" : "Отмена"}
+          Отмена
         </Link>
       </div>
-
-      {readOnly && (
-        <div className="bg-cream/60 border border-cream-dark rounded-2xl px-4 py-3 text-sm text-ocean/70">
-          <p className="font-semibold text-ocean mb-0.5">Только просмотр</p>
-          Мероприятие уже прошло или в архиве, поэтому изменить его нельзя: это сохраняет историю продаж. Статистику,
-          проданные билеты и выручку смотрите в «Билеты» → «Статистика».
-        </div>
-      )}
 
       {state.error && (
         <p className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl px-4 py-3">{state.error}</p>
       )}
 
-      {/* A disabled fieldset disables every field inside it at once, the hall and price pickers too. */}
-      <fieldset disabled={readOnly} className="space-y-5 min-w-0 disabled:opacity-75">
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Название</p>
         <BilingualField kkName="title_kk" ruName="title_ru" label="Название" defaultKk={event?.titleKk} defaultRu={event?.titleRu} />
@@ -312,7 +299,6 @@ export default function EventForm({
             {images.map((image, index) => (
               <div key={image.url} className="relative aspect-square rounded-2xl overflow-hidden border border-cream-dark">
                 <Image src={image.url} alt="" fill className="object-cover" sizes="180px" unoptimized />
-                {!readOnly && (
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
@@ -320,13 +306,11 @@ export default function EventForm({
                 >
                   Убрать
                 </button>
-                )}
               </div>
             ))}
           </div>
         )}
 
-        {!readOnly && (
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,image/avif"
@@ -335,7 +319,6 @@ export default function EventForm({
           disabled={uploading}
           className="text-sm text-ocean/70 file:mr-3 file:px-4 file:py-2 file:rounded-full file:border-0 file:bg-cream file:text-ocean file:text-sm file:font-semibold"
         />
-        )}
         {uploading && <p className="text-xs text-ocean/50 mt-2">Загрузка…</p>}
         {uploadError && <p className="text-xs text-red-600 mt-2">{uploadError}</p>}
         <p className="text-xs text-ocean/40 mt-2">JPEG, PNG, WebP или AVIF, до 5 МБ. Первая фотография — афиша.</p>
@@ -372,21 +355,18 @@ export default function EventForm({
           </div>
         </details>
       </div>
-      </fieldset>
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          {!readOnly && (
-            <button
-              type="submit"
-              disabled={pending || uploading}
-              className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
-            >
-              {pending ? "Сохранение…" : "Сохранить"}
-            </button>
-          )}
+          <button
+            type="submit"
+            disabled={pending || uploading}
+            className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
+          >
+            {pending ? "Сохранение…" : "Сохранить"}
+          </button>
           <Link href={cancelHref} className="text-sm font-semibold text-ocean/60 hover:text-ocean">
-            {readOnly ? "Назад" : "Отмена"}
+            Отмена
           </Link>
         </div>
         {event && (

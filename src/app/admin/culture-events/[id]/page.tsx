@@ -2,12 +2,13 @@ import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureEventById, isEventLocked } from "@/lib/cultureEvents";
-import { listHalls, listHallsCategories } from "@/lib/halls";
+import { getHallById, listHalls, listHallsCategories } from "@/lib/halls";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import { countActiveBookingsForEvent } from "@/lib/bookingsAdmin";
 import EventForm from "../EventForm";
+import EventSummary from "../EventSummary";
 import { updateEvent } from "../actions";
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +22,17 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   // and that is the point.
   const event = await getCultureEventById(id);
   if (!event) notFound();
+
+  // Past or archived: a plain list of what it was, not its form with every field disabled.
+  if (isEventLocked(event)) {
+    const [hall, bookingCount] = await Promise.all([
+      event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
+      countActiveBookingsForEvent(id),
+    ]);
+    return (
+      <EventSummary event={event} hallName={hall ? (hall.nameRu ?? hall.nameKk ?? "Зал") : null} bookingCount={bookingCount} />
+    );
+  }
 
   const organizationId = identity.organizationId ?? event.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) redirect("/admin/culture-events");
@@ -57,7 +69,6 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       prices={pricesOf(ticketTypes)}
       paymentMethods={paymentMethods}
       bookingCount={bookingCount}
-      readOnly={isEventLocked(event)}
       action={updateEvent}
       heading={event.titleRu ?? event.titleKk ?? "Мероприятие"}
     />
