@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { getCultureEventById, isEventLocked } from "@/lib/cultureEvents";
-import { getHallById, listHalls, listHallsCategories } from "@/lib/halls";
+import { listHalls, listHallsCategories } from "@/lib/halls";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
@@ -23,15 +23,11 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   const event = await getCultureEventById(id);
   if (!event) notFound();
 
-  // Past or archived: a plain list of what it was, not its form with every field disabled.
+  // Past or archived: nothing to edit. One that sold tickets opens on its report (details, figures,
+  // hall map, sold tickets); an Афиша one on a plain list of its details.
   if (isEventLocked(event)) {
-    const [hall, bookingCount] = await Promise.all([
-      event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
-      countActiveBookingsForEvent(id),
-    ]);
-    return (
-      <EventSummary event={event} hallName={hall ? (hall.nameRu ?? hall.nameKk ?? "Зал") : null} bookingCount={bookingCount} />
-    );
+    if (event.hallId) redirect(`/admin/tickets/stats/${id}`);
+    return <EventSummary event={event} bookingCount={await countActiveBookingsForEvent(id)} />;
   }
 
   const organizationId = identity.organizationId ?? event.organizationId ?? (await getSiteOrganizationId());

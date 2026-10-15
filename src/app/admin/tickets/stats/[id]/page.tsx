@@ -8,14 +8,20 @@ import { pricesOf } from "@/lib/eventPrices";
 import { getHallById } from "@/lib/halls";
 import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
 import { formatTime } from "@/lib/timeZone";
-import { listSeatOccupants } from "@/lib/ticketing/occupancy";
+import { listSeatOccupants, listSoldTickets } from "@/lib/ticketing/occupancy";
 import { formatMoney, getEventStats, getTicketingScope } from "@/lib/ticketing/admin";
 import NoProfile from "../../NoProfile";
 import OccupancyMap from "./OccupancyMap";
+import SoldTickets from "./SoldTickets";
+import EventDetails from "../../../culture-events/EventDetails";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
+const SECTION = "text-lg font-bold text-ocean mb-3";
 
-/** One event's hall, seat by seat: which seats are sold, held or still free, and the counts. */
+/**
+ * One event's report, top to bottom: what the event is, its figures, its hall seat by seat (sold,
+ * held, free) and the list of sold tickets. A past or archived event opens here, not on its form.
+ */
 export default async function EventOccupancyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const scope = await getTicketingScope();
@@ -24,13 +30,15 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
   const event = await getCultureEventById(id);
   if (!event) notFound();
 
-  const [seats, occupants, ticketTypes, hall, stats] = await Promise.all([
+  const [seats, occupants, ticketTypes, hall, stats, sold] = await Promise.all([
     event.hallId ? listEventSeatsForAdmin(id, event.hallId) : Promise.resolve([]),
     listSeatOccupants(id),
     listEventTicketTypes(id),
     event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
     getEventStats(scope.organizationId),
+    listSoldTickets(id),
   ]);
+  const locked = isEventLocked(event);
   const prices = pricesOf(ticketTypes);
   // Hidden seats stay off the map, unless a ticket was sold for one before it was hidden.
   const shown = seats.filter((seat) => seat.isActive || occupants.has(seat.id));
@@ -77,18 +85,26 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
 
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{title}</h1>
-        {/* Description and photos; read-only once the event is over (see isEventLocked). */}
-        <Link href={`/admin/culture-events/${id}`} className="text-sm font-semibold text-ocean/60 hover:text-ocean mt-1">
-          Карточка мероприятия
-        </Link>
+        {/* All of a past event is on this page already; an upcoming one is still edited on its form. */}
+        {!locked && (
+          <Link href={`/admin/culture-events/${id}`} className="text-sm font-semibold text-ocean/60 hover:text-ocean mt-1">
+            Изменить мероприятие
+          </Link>
+        )}
       </div>
-      <p className="text-sm text-ocean/60 mb-5">
+      <p className="text-sm text-ocean/60 mb-6">
         {formatEventDateTime(event.eventDate)}
         {hallName && ` · ${hallName}`}
-        {isEventLocked(event) && (event.status === "archived" ? " · в архиве" : " · прошло")}
+        {locked && (event.status === "archived" ? " · в архиве" : " · прошло")}
       </p>
 
-      <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <h2 className={SECTION}>Сведения о мероприятии</h2>
+      <div className="mb-8">
+        <EventDetails event={event} hallName={hallName} />
+      </div>
+
+      <h2 className={SECTION}>Показатели</h2>
+      <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
         {tiles.map((tile) => (
           <div key={tile.label} className="bg-white border border-cream-dark rounded-2xl px-3 py-2.5">
             <dt className="text-xs text-ocean/50">{tile.label}</dt>
@@ -148,6 +164,13 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
           </ul>
         </section>
       )}
+
+      <h2 className={`${SECTION} mt-8`}>
+        Проданные билеты <span className="text-ocean/40 font-normal text-base">({sold.length})</span>
+      </h2>
+      <section className={`${CARD} overflow-hidden`}>
+        <SoldTickets tickets={sold} />
+      </section>
     </div>
   );
 }
