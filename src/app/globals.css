@@ -117,6 +117,8 @@ body {
 .toast-check { stroke-dasharray: 18; animation: toast-check 0.4s ease-out 0.15s both; }
 .dialog-backdrop { animation: dialog-fade 0.18s ease-out both; }
 .dialog-card { animation: dialog-pop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
+/* Rows that appear when a list is expanded («Показать все»). */
+.reveal { animation: dialog-fade 0.3s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
-  .toast-in, .toast-out, .toast-check, .dialog-backdrop, .dialog-card { animation: none; }
+  .toast-in, .toast-out, .toast-check, .dialog-backdrop, .dialog-card, .reveal { animation: none; }
 }
