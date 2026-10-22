@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { ACTIVE_STATUSES, CASHIER_QUEUE_STATUSES } from "@/lib/bookingStatus";
 
 export type PendingPaidBooking = {
   id: string;
@@ -24,7 +25,7 @@ export async function countActiveBookingsForEvent(eventId: string): Promise<numb
     .from("bookings")
     .select("id", { count: "exact", head: true })
     .eq("event_id", eventId)
-    .in("status", ["pending", "confirmed"]);
+    .in("status", ACTIVE_STATUSES);
 
   return error || count === null ? 0 : count;
 }
@@ -39,7 +40,7 @@ export async function countActiveBookingsForEvents(eventIds: string[]): Promise<
     .from("bookings")
     .select("event_id")
     .in("event_id", eventIds)
-    .in("status", ["pending", "confirmed"]);
+    .in("status", ACTIVE_STATUSES);
 
   if (error || !data) return counts;
   for (const row of data as { event_id: string }[]) {
@@ -60,7 +61,7 @@ export async function listPendingPaidBookings(organizationId: string): Promise<P
     .from("bookings")
     .select("id, buyer_name, buyer_phone, total_amount, expires_at, created_at, culture_events(title_kk, title_ru)")
     .eq("organization_id", organizationId)
-    .eq("status", "pending")
+    .in("status", CASHIER_QUEUE_STATUSES)
     .gt("total_amount", 0)
     .order("created_at");
 

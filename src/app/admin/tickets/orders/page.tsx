@@ -10,26 +10,22 @@ import {
 } from "@/lib/ticketing/admin";
 import BackToTickets from "../BackToTickets";
 import NoProfile from "../NoProfile";
-import ConfirmPaymentButton from "./ConfirmPaymentButton";
+import OrderActions from "./OrderActions";
 import { seatName } from "@/lib/hallSections";
+import { BOOKING_STATUS_BADGE, toBookingStatus } from "@/lib/bookingStatus";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
 const FILTERS: { id: OrderFilter; label: string }[] = [
   { id: "all", label: "Все" },
-  { id: "pending", label: "Ожидают оплаты" },
-  { id: "paid", label: "Подтверждённые" },
+  { id: "pending", label: "Ждут проверки" },
+  { id: "paid", label: "Оплаченные" },
   { id: "refunded", label: "Возвраты" },
-  { id: "closed", label: "Отменённые и истёкшие" },
+  { id: "closed", label: "Отклонённые и истёкшие" },
 ];
 
-const BADGE: Record<string, string> = {
-  pending: "bg-blue-50 text-blue-700",
-  confirmed: "bg-gold/15 text-ocean-dark",
-  refunded: "bg-ocean/5 text-ocean/60",
-  cancelled: "bg-ocean/5 text-ocean/40",
-  expired: "bg-ocean/5 text-ocean/40",
-};
+/** In the cashier's queue: the buyer said they paid first, then unpaid holds, then late payments. */
+const QUEUE_ORDER: Record<string, number> = { payment_reported: 0, pending: 1, late_payment: 2 };
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; event?: string }> }) {
   const scope = await getTicketingScope();
@@ -38,7 +34,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const { status, event } = await searchParams;
   const filter = FILTERS.some((f) => f.id === status) ? (status as OrderFilter) : "all";
   const eventId = event && /^[0-9a-f-]{36}$/i.test(event) ? event : null;
-  const orders = await listOrders(scope.organizationId, filter, eventId);
+  const listed = await listOrders(scope.organizationId, filter, eventId);
+  const orders =
+    filter === "pending"
+      ? [...listed].sort((a, b) => (QUEUE_ORDER[a.status] ?? 9) - (QUEUE_ORDER[b.status] ?? 9) || a.createdAt.localeCompare(b.createdAt))
+      : listed;
 
   const href = (f: OrderFilter) => `/admin/tickets/orders?${new URLSearchParams({ ...(f !== "all" ? { status: f } : {}), ...(eventId ? { event: eventId } : {}) })}`;
 
@@ -49,8 +49,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         Заказы <span className="text-ocean/40 font-normal">({orders.length})</span>
       </h1>
       <p className="text-sm text-ocean/60 mb-5">
-        Каждая бронь билетов — это заказ со своим номером. Здесь видно, оплачен ли он, чем и сколько человек уже вошло,
-        а неоплаченный можно подтвердить после проверки перевода. Показаны последние 100.
+        Оплата ручная: найдите поступление в Kaspi Pay (сумма, время, номер заказа) и только тогда нажмите
+        «Подтвердить оплату» — после этого покупатель получит билеты. «Покупатель сообщил об оплате» — это не
+        оплата, а просьба проверить. Показаны последние 100.
       </p>
 
       <div className="flex flex-wrap gap-2 mb-6">
@@ -83,7 +84,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             <div key={order.id} className={`${CARD} p-4 sm:p-5`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-bold text-ocean">{order.orderNumber}</h2>
-                <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${BADGE[order.status] ?? BADGE.cancelled}`}>
+                <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${BOOKING_STATUS_BADGE[toBookingStatus(order.status)]}`}>
                   {order.status === "confirmed" && order.amount === 0 ? "Подтверждён (бесплатно)" : ORDER_STATUS_LABEL[order.status] ?? order.status}
                 </span>
               </div>
@@ -92,19 +93,40 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               </p>
               <p className="text-sm text-ocean/50">{order.eventTitle || "Мероприятие не найдено"}</p>
 
-              {/* A paid order still waiting: staff check the Kaspi/Halyk transfer and confirm it here.
-                  Free orders confirm themselves at creation and never wait. */}
-              {order.status === "pending" && order.amount > 0 && (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-blue-50/60 border border-blue-100 rounded-2xl px-3 py-2.5">
-                  <p className="text-xs text-ocean/70">
-                    Проверьте поступление {formatMoney(order.amount, order.currency)} и подтвердите оплату.
-                    {order.expiresAt && <> Места держатся до {formatMoment(order.expiresAt)}.</>}
-                  </p>
-                  {/* A past or archived event's orders are history: shown, not confirmed any more. */}
+              {/* What the cashier knows before acting: when the buyer said they paid, until when the
+                  seats are held, the Kaspi operation number and any note already written down. */}
+              {(order.paymentReportedAt || order.kaspiOperationId || order.resolutionNote || (order.expiresAt && ["pending", "payment_reported"].includes(order.status))) && (
+                <ul className="mt-2 text-xs text-ocean/70 space-y-0.5">
+                  {order.paymentReportedAt && (
+                    <li className="font-semibold text-orange-800">Покупатель нажал «Я оплатил» в {formatMoment(order.paymentReportedAt)}</li>
+                  )}
+                  {order.expiresAt && ["pending", "payment_reported"].includes(order.status) && (
+                    <li>Места держатся до {formatMoment(order.expiresAt)}</li>
+                  )}
+                  {order.kaspiOperationId && <li>Операция Kaspi: {order.kaspiOperationId}</li>}
+                  {order.resolutionNote && <li>Комментарий: {order.resolutionNote}</li>}
+                </ul>
+              )}
+
+              {/* A paid order's actions. Free orders confirm themselves at creation and never wait;
+                  a past or archived event's orders are history and change no more. */}
+              {order.amount > 0 && ["pending", "payment_reported", "expired", "rejected", "late_payment", "confirmed"].includes(order.status) && (
+                <div className="mt-3 bg-cream/40 border border-cream-dark rounded-2xl px-3 py-3">
                   {order.eventLocked ? (
-                    <p className="text-xs text-ocean/50">Мероприятие прошло или в архиве — подтвердить оплату нельзя.</p>
+                    <p className="text-xs text-ocean/50">Мероприятие прошло или в архиве — действия с оплатой недоступны.</p>
                   ) : (
-                    <ConfirmPaymentButton id={order.id} />
+                    <OrderActions
+                      order={{
+                        id: order.id,
+                        status: toBookingStatus(order.status),
+                        orderNumber: order.orderNumber,
+                        eventTitle: order.eventTitle,
+                        tickets: order.tickets,
+                        amountText: formatMoney(order.amount, order.currency),
+                        buyerName: order.buyerName,
+                        buyerPhone: order.buyerPhone,
+                      }}
+                    />
                   )}
                 </div>
               )}

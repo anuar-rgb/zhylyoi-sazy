@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTakenSeatIds } from "@/lib/bookings";
+import { isHold } from "@/lib/bookingStatus";
 
 /** What is on a seat right now: sold, sold and already through the door, or held while unpaid. */
 export type SeatOccupant = {
@@ -35,9 +36,9 @@ export async function listSeatOccupants(eventId: string): Promise<Map<string, Se
     const booking = (Array.isArray(row.bookings) ? row.bookings[0] : row.bookings) as Row | null;
     if (!booking || !row.seat_id) continue;
     const status = String(booking.status);
-    if (status !== "confirmed" && status !== "pending") continue;
+    if (status !== "confirmed" && !isHold(status)) continue;
     occupants.set(String(row.seat_id), {
-      state: status === "pending" ? "held" : row.checked_in_at ? "entered" : "sold",
+      state: isHold(status) ? "held" : row.checked_in_at ? "entered" : "sold",
       orderNumber: booking.public_order_id ? String(booking.public_order_id) : null,
       buyerName: booking.buyer_name ? String(booking.buyer_name) : null,
       paid: row.price_at_booking === null || row.price_at_booking === undefined ? null : Number(row.price_at_booking),

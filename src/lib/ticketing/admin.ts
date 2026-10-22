@@ -4,6 +4,7 @@ import { getSiteOrganizationId } from "@/lib/organization";
 import { formatDateTime } from "@/lib/timeZone";
 import { seatName, toSection, type HallSection } from "@/lib/hallSections";
 import { isEventLocked } from "@/lib/eventLock";
+import { BOOKING_STATUS_LABEL, CASHIER_QUEUE_STATUSES, isHold } from "@/lib/bookingStatus";
 
 /**
  * Reads for the ticket-sales admin pages (orders, payments, check-in journal, statistics).
@@ -53,6 +54,7 @@ export function formatMoney(amount: number, currency = "KZT"): string {
 // ---------------------------------------------------------------------------------------------
 // Orders
 // ---------------------------------------------------------------------------------------------
+/** pending: the cashier's queue — reported, unpaid and late orders. */
 export type OrderFilter = "all" | "pending" | "paid" | "refunded" | "closed";
 
 export type OrderRow = {
@@ -67,6 +69,11 @@ export type OrderRow = {
   confirmedAt: string | null;
   /** How long the seats of an unpaid order are held. */
   expiresAt: string | null;
+  /** When the buyer pressed «Я оплатил»: a note to the cashier, not proof of payment. */
+  paymentReportedAt: string | null;
+  /** The Kaspi operation number the cashier typed in. */
+  kaspiOperationId: string | null;
+  resolutionNote: string | null;
   eventId: string;
   eventTitle: string;
   /** The event is past or archived: no confirming, no refunds. */
@@ -85,6 +92,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       .from("bookings")
       .select(
         "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
+          "payment_reported_at, kaspi_operation_id, resolution_note, " +
           `culture_events(title_ru, title_kk, event_date, status), booking_items(checked_in_at, released_at, hall_seats(${seatColumns})), ` +
           "payments(provider_code, status, paid_at, needs_refund, note, created_at)"
       )
@@ -92,10 +100,10 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    if (filter === "pending") query = query.eq("status", "pending");
+    if (filter === "pending") query = query.in("status", CASHIER_QUEUE_STATUSES);
     else if (filter === "paid") query = query.eq("status", "confirmed");
     else if (filter === "refunded") query = query.eq("status", "refunded");
-    else if (filter === "closed") query = query.in("status", ["cancelled", "expired"]);
+    else if (filter === "closed") query = query.in("status", ["cancelled", "expired", "rejected"]);
     if (eventId) query = query.eq("event_id", eventId);
     return query;
   };
@@ -120,6 +128,9 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       createdAt: String(row.created_at),
       confirmedAt: str(row.confirmed_at),
       expiresAt: str(row.expires_at),
+      paymentReportedAt: str(row.payment_reported_at),
+      kaspiOperationId: str(row.kaspi_operation_id),
+      resolutionNote: str(row.resolution_note),
       eventId: String(row.event_id),
       eventTitle: titleOf(row.culture_events),
       eventLocked: lockedOf(row.culture_events),
@@ -318,9 +329,9 @@ export function summarizeEvent(
       const entered = booking.items.filter((item) => item.checkedIn).length;
       stats.checkedIn += entered;
       stats.notCame += tickets - entered;
-    } else if (booking.status === "pending") stats.waiting += tickets;
+    } else if (isHold(booking.status)) stats.waiting += tickets;
     else if (booking.status === "refunded") stats.refunded += tickets;
-    else stats.cancelled += tickets; // cancelled and expired holds
+    else stats.cancelled += tickets; // cancelled, expired, rejected and late (no seats held)
   }
   return stats;
 }
@@ -353,13 +364,7 @@ export async function getEventStats(organizationId: string): Promise<Map<string,
 // ---------------------------------------------------------------------------------------------
 // Labels
 // ---------------------------------------------------------------------------------------------
-export const ORDER_STATUS_LABEL: Record<string, string> = {
-  pending: "Ожидает оплаты",
-  confirmed: "Подтверждён",
-  cancelled: "Отменён",
-  expired: "Бронь истекла",
-  refunded: "Возврат",
-};
+export const ORDER_STATUS_LABEL: Record<string, string> = BOOKING_STATUS_LABEL;
 
 export const PAYMENT_STATUS_LABEL: Record<string, string> = {
   pending: "Ожидает",

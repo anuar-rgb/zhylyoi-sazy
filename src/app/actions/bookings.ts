@@ -72,3 +72,21 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 
   return { ok: true, accessToken: row.access_token as string };
 }
+
+export type ReportPaymentResult = { ok: true; already: boolean } | { ok: false; error: "expired" | "not_pending" | "failed" };
+
+/**
+ * «Я оплатил»: tells the cashier the buyer has sent the money. It confirms nothing and never
+ * issues a ticket — only a cashier does, after finding the payment in Kaspi Pay. The secret
+ * order token is the only key, as on the order page itself.
+ */
+export async function reportBookingPayment(token: string): Promise<ReportPaymentResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return { ok: false, error: "failed" };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("report_booking_payment", { p_token: token });
+  if (error) return { ok: false, error: "failed" };
+  if (data === "reported") return { ok: true, already: false };
+  if (data === "already_reported") return { ok: true, already: true };
+  if (data === "expired") return { ok: false, error: "expired" };
+  return { ok: false, error: data === "not_found" ? "failed" : "not_pending" };
+}

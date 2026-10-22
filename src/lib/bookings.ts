@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSeatSections } from "@/lib/halls";
 import { PARTER, sectionOrder, type HallSection } from "@/lib/hallSections";
+import { toBookingStatus, type BookingStatus } from "@/lib/bookingStatus";
 
-export type BookingStatus = "pending" | "confirmed" | "cancelled" | "expired";
+export type { BookingStatus };
 
 export type BookingItemView = {
   itemId: string;
@@ -15,8 +16,8 @@ export type BookingItemView = {
   ticketTypeNameKk: string | null;
   ticketTypeNameRu: string | null;
   priceAtBooking: number;
-  /** Text placeholder for the QR content that a later phase will render as an actual code. */
-  ticketCode: string;
+  /** The QR content; null until a cashier confirms the payment (the code is issued then). */
+  ticketCode: string | null;
   releasedAt: string | null;
 };
 
@@ -31,6 +32,10 @@ export type BookingView = {
   items: BookingItemView[];
   organizationId: string;
   eventId: string;
+  /** DK-000123: what the buyer quotes to the cashier. Null before the migration that returns it. */
+  orderNumber: string | null;
+  /** When the buyer pressed «Я оплатил» — a note to the cashier, not proof of payment. */
+  paymentReportedAt: string | null;
 };
 
 type BookingByTokenRow = {
@@ -53,11 +58,9 @@ type BookingByTokenRow = {
   released_at: string | null;
   organization_id: string;
   event_id: string;
+  public_order_id?: string | null;
+  payment_reported_at?: string | null;
 };
-
-function toStatus(value: string): BookingStatus {
-  return value === "confirmed" || value === "cancelled" || value === "expired" ? value : "pending";
-}
 
 /**
  * A guest's own booking, found only by its access_token — get_booking_by_token is
@@ -80,8 +83,8 @@ export async function getBookingByToken(token: string): Promise<BookingView | nu
   const sections = await getSeatSections(rows.map((row) => row.seat_id).filter((id): id is string => id !== null));
 
   const items: BookingItemView[] = rows
-    .filter((row): row is BookingByTokenRow & { item_id: string; seat_id: string; row_label: string; seat_number: number; ticket_code: string } =>
-      row.item_id !== null && row.seat_id !== null && row.row_label !== null && row.seat_number !== null && row.ticket_code !== null
+    .filter((row): row is BookingByTokenRow & { item_id: string; seat_id: string; row_label: string; seat_number: number } =>
+      row.item_id !== null && row.seat_id !== null && row.row_label !== null && row.seat_number !== null
     )
     .map((row) => ({
       itemId: row.item_id,
@@ -101,7 +104,7 @@ export async function getBookingByToken(token: string): Promise<BookingView | nu
 
   return {
     bookingId: first.booking_id,
-    status: toStatus(first.status),
+    status: toBookingStatus(first.status),
     buyerName: first.buyer_name,
     buyerPhone: first.buyer_phone,
     totalAmount: Number(first.total_amount) || 0,
@@ -110,6 +113,8 @@ export async function getBookingByToken(token: string): Promise<BookingView | nu
     items,
     organizationId: first.organization_id,
     eventId: first.event_id,
+    orderNumber: first.public_order_id ?? null,
+    paymentReportedAt: first.payment_reported_at ?? null,
   };
 }
 
