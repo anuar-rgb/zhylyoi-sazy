@@ -171,11 +171,6 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 </div>
               )}
 
-              {order.payment?.needsRefund && (
-                <p className="mt-3 text-xs font-semibold text-red-700 bg-red-50 rounded-2xl px-3 py-2">
-                  Нужен возврат. Откройте раздел «Платежи и возвраты».
-                </p>
-              )}
             </div>
           ))}
         </div>

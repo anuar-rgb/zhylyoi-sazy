@@ -11,7 +11,6 @@ const GROUPS = [
       { href: "/admin/culture-events/new?for=tickets", label: "Добавить мероприятие", badge: false },
       // Unpaid orders are confirmed from Заказы, so it carries their count.
       { href: "/admin/tickets/orders", label: "Заказы", badge: true },
-      { href: "/admin/tickets/transactions", label: "Платежи и возвраты", badge: false },
     ],
   },
   {
