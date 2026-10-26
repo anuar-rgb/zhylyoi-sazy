@@ -1,11 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getPaymentMethodById } from "@/lib/paymentMethods";
-import { getBankConnection } from "@/lib/payments/keys";
-import { hasProvider } from "@/lib/payments/registry";
 import PaymentMethodForm from "../PaymentMethodForm";
-import BankConnectionForm from "../BankConnectionForm";
-import PaymentModeForm from "../PaymentModeForm";
 import { updatePaymentMethod } from "../actions";
 
 export default async function EditPaymentMethodPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,43 +15,14 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
   const method = await getPaymentMethodById(id);
   if (!method) notFound();
 
-  // Keys are shown only to the institution they belong to (or a platform admin).
-  const ownsMethod = !identity.organizationId || identity.organizationId === method.organizationId;
-  const connection = ownsMethod ? await getBankConnection(method.id) : null;
-
+  // Payment is confirmed by the cashier by hand, so there is no bank connection to set up here.
   return (
-    <>
-      <PaymentMethodForm
-        method={method}
-        providers={[]}
-        organizationId={method.organizationId}
-        action={updatePaymentMethod}
-        heading={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
-      />
-      {connection && (
-        <BankConnectionForm
-          methodId={method.id}
-          providerName={method.providerName}
-          integrationReady={hasProvider(method.providerCode)}
-          serverReady={connection.serverReady}
-          hasSecret={connection.hasSecret}
-          merchantId={connection.merchantId}
-        />
-      )}
-      {connection && (
-        <PaymentModeForm
-          methodId={method.id}
-          mode={method.mode}
-          canUseBank={hasProvider(method.providerCode) && connection.hasSecret}
-          reason={
-            !hasProvider(method.providerCode)
-              ? "Для этого банка автоматическое подтверждение ещё не подключено."
-              : !connection.hasSecret
-                ? "Сначала сохраните данные банка (секретный ключ) выше."
-                : null
-          }
-        />
-      )}
-    </>
+    <PaymentMethodForm
+      method={method}
+      providers={[]}
+      organizationId={method.organizationId}
+      action={updatePaymentMethod}
+      heading={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
+    />
   );
 }
