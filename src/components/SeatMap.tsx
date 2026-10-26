@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sectionLabel } from "@/lib/hallSections";
+import { rowLayoutKey, type RowPlacements } from "@/lib/hallRowLayout";
 
 /**
  * Pure presentation: one row of seats in, one row of circles out. The
@@ -60,6 +61,8 @@ export interface SeatMapProps {
   sectionTitle?: (section: string) => string;
   /** The hall's row shape: an arc (default) or straight parallel rows under a straight stage. */
   rowShape?: "curved" | "straight";
+  /** Rows set up on their own (shorter, aligned left/right or shifted); the rest are centred. */
+  rowLayouts?: RowPlacements;
 }
 
 const SEAT_SIZE = 28;
@@ -159,6 +162,7 @@ export default function SeatMap({
   scrollHint = "Листайте схему в стороны",
   sectionTitle = (section) => sectionLabel(section, "ru"),
   rowShape = "curved",
+  rowLayouts = {},
 }: SeatMapProps) {
   const arc = rowShape !== "straight";
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -258,15 +262,32 @@ export default function SeatMap({
   );
 
   function renderRows(blockRows: SeatMapRow[], curved: boolean) {
+    // Every row of a section is placed within the section's full width, so a shorter row can stand
+    // centred, at the left, at the right or shifted by a number of seat places.
+    const laid = blockRows.map((row) => {
+      const { slots, width } = layoutRow(row.seats);
+      const placement = rowLayouts[rowLayoutKey(row.section ?? "parter", row.label)];
+      const shift = placement?.alignment === "custom" ? placement.offsetStart * (SEAT_SIZE + SEAT_GAP) : 0;
+      return { row, slots, width, placement, shift };
+    });
+    const blockWidth = Math.max(0, ...laid.map((r) => r.width + r.shift));
+    const blockCenter = blockWidth / 2;
+
     return (
         <div className="space-y-2">
-          {blockRows.map((row, rowIndex) => {
-            const { slots, width } = layoutRow(row.seats);
+          {laid.map(({ row, slots, width, placement, shift }, rowIndex) => {
+            const offset =
+              placement?.alignment === "left"
+                ? 0
+                : placement?.alignment === "right"
+                  ? blockWidth - width
+                  : placement?.alignment === "custom"
+                    ? shift
+                    : (blockWidth - width) / 2;
             // Row 0 is closest to the stage and stays almost flat; later rows
             // curve more at the edges — an amphitheater, not a true circle.
             // Side sections stay straight: they run alongside the parter.
             const curvature = curved && blockRows.length > 1 ? rowIndex / (blockRows.length - 1) : 0;
-            const center = width / 2;
 
             return (
               <div key={`${row.section ?? "parter"}:${row.label}`} className="flex items-center gap-2.5">
@@ -285,14 +306,14 @@ export default function SeatMap({
                   </span>
                 )}
 
-                <div className="flex items-end gap-2 py-1">
+                <div className="flex items-end gap-2 py-1" style={{ width: blockWidth, paddingLeft: offset }}>
                   {slots.map((slot) => {
                     if (slot.kind === "aisle") {
                       return <span key={slot.key} style={{ width: AISLE_WIDTH }} className="shrink-0" />;
                     }
 
                     const seat = slot.seat;
-                    const dist = center > 0 ? Math.abs(slot.x + SEAT_SIZE / 2 - center) / center : 0;
+                    const dist = blockCenter > 0 ? Math.abs(offset + slot.x + SEAT_SIZE / 2 - blockCenter) / blockCenter : 0;
                     const lift = MAX_LIFT * curvature * dist * dist;
                     const variant = seatVariant(seat);
 

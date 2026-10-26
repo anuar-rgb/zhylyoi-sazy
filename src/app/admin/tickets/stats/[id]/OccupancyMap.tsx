@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { RowPlacements } from "@/lib/hallRowLayout";
 import SeatMap, { assignCategoryColors, seatsToRows, type SeatMapSeat } from "@/components/SeatMap";
 import { categoryLabel } from "@/lib/seatCategories";
 import { seatName } from "@/lib/hallSections";
@@ -41,9 +42,12 @@ export default function OccupancyMap({
   prices,
   ordersHref,
   rowShape,
+  rowLayouts,
 }: {
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
+  /** Rows set up on their own: where each one stands within its section. */
+  rowLayouts?: RowPlacements;
   seats: OccupancySeat[];
   occupants: Record<string, SeatOccupant>;
   /** category -> price for this event; a category missing here is not on sale. */
@@ -113,6 +117,7 @@ export default function OccupancyMap({
       <SeatMap
         rows={rows}
         rowShape={rowShape}
+        rowLayouts={rowLayouts}
         seatVariant={seatVariant}
         onSeatClick={(seat) => setSelectedId((current) => (current === seat.id ? null : seat.id))}
         seatTooltip={tooltip}

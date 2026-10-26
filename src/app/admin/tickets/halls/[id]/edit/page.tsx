@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
-import { getHallById, listHallCategories, listHallSeats } from "@/lib/halls";
+import { getHallById, listHallCategories, listHallRowLayouts, listHallSeats, rowLayoutsForMap } from "@/lib/halls";
+import { rowLayoutKey } from "@/lib/hallRowLayout";
 import type { HallSection } from "@/lib/hallSections";
 import HallForm from "../../HallForm";
+import RowLayoutForm, { type RowLayoutRow } from "../../RowLayoutForm";
 import GenerateGridForm from "../../GenerateGridForm";
 import SeatMapEditor from "../../SeatMapEditor";
 import HallCategoriesForm from "../../HallCategoriesForm";
@@ -29,7 +31,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
 
   // Стандарт and VIP always, then every custom one the hall has: on a seat, or added by name and
   // not yet given to any seat. The seat picker offers the same list.
-  const [seats, categories] = await Promise.all([listHallSeats(id), listHallCategories(id)]);
+  const [seats, categories, rowLayouts] = await Promise.all([listHallSeats(id), listHallCategories(id), listHallRowLayouts(id)]);
 
   const activeSeats = seats.filter((seat) => seat.isActive);
 
@@ -43,6 +45,36 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
   const sizes = Object.fromEntries(
     Object.entries(shapes).map(([section, shape]) => [section, { rows: shape!.rows.size, seats: shape!.seats }])
   ) as Partial<Record<HallSection, { rows: number; seats: number }>>;
+  // Every row with seats, for «Настроить ряд»: its own setting, or else where its seats end.
+  const layoutByRow = new Map(rowLayouts.map((layout) => [rowLayoutKey(layout.section, layout.rowLabel), layout]));
+  const layoutRows: RowLayoutRow[] = [];
+  for (const seat of activeSeats) {
+    const key = rowLayoutKey(seat.section, seat.rowLabel);
+    const last = layoutRows[layoutRows.length - 1];
+    if (last && rowLayoutKey(last.section, last.label) === key) {
+      if (!layoutByRow.get(key)?.seatCount) last.seatCount = Math.max(last.seatCount, seat.seatNumber);
+      continue;
+    }
+    const layout = layoutByRow.get(key);
+    layoutRows.push({
+      section: seat.section,
+      label: seat.rowLabel,
+      seatCount: layout?.seatCount ?? seat.seatNumber,
+      alignment: layout?.alignment ?? "center",
+      offsetStart: layout?.offsetStart ?? 0,
+      custom: !!layout,
+    });
+  }
+  // A full row of each section: the widest row that has no setting of its own, so a row made
+  // longer or shorter does not change what «Сбросить» brings the others back to.
+  const fullWidths: Partial<Record<HallSection, number>> = {};
+  for (const row of layoutRows) {
+    if (!row.custom) fullWidths[row.section] = Math.max(fullWidths[row.section] ?? 0, row.seatCount);
+  }
+  for (const [section, size] of Object.entries(sizes) as [HallSection, { rows: number; seats: number }][]) {
+    fullWidths[section] ??= size.seats;
+  }
+
   const seatCounts: Record<string, number> = {};
   for (const seat of activeSeats) seatCounts[seat.category] = (seatCounts[seat.category] ?? 0) + 1;
 
@@ -73,7 +105,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           </div>
         ) : (
           <div className={CARD}>
-            <SeatMapEditor seats={seats} categories={categories} rowShape={hall.rowShape} />
+            <SeatMapEditor seats={seats} categories={categories} rowShape={hall.rowShape} rowLayouts={rowLayoutsForMap(rowLayouts)} />
           </div>
         )}
       </section>
@@ -101,6 +133,19 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           <GenerateGridForm hallId={hall.id} sizes={sizes} rowShape={hall.rowShape} />
         </div>
       </section>
+
+      {layoutRows.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">Отдельные ряды</h2>
+          <p className="text-sm text-ocean/60 mb-4">
+            Для неполных рядов и смещения мест: сколько мест в ряду и где он стоит — по центру, слева, справа или со
+            сдвигом.
+          </p>
+          <div className={CARD}>
+            <RowLayoutForm hallId={hall.id} rows={layoutRows} fullWidths={fullWidths} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

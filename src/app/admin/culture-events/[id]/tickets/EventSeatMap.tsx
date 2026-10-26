@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { RowPlacements } from "@/lib/hallRowLayout";
 import SeatMap, { assignCategoryColors, seatsToRows, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import EventSeatBulkPanel from "./EventSeatBulkPanel";
 import type { HallSeatRecord } from "@/lib/halls";
@@ -19,10 +20,13 @@ export default function EventSeatMap({
   seats,
   categories,
   rowShape,
+  rowLayouts,
 }: {
   eventId: string;
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
+  /** Rows set up on their own: where each one stands within its section. */
+  rowLayouts?: RowPlacements;
   seats: HallSeatRecord[];
   /** The categories seats can be given here: the hall's (Стандарт, VIP, its own) and this event's. */
   categories: string[];
@@ -96,6 +100,7 @@ export default function EventSeatMap({
       <SeatMap
         rows={rows}
         rowShape={rowShape}
+        rowLayouts={rowLayouts}
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
         onRowLabelClick={toggleRow}

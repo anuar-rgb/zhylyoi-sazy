@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { RowPlacements } from "@/lib/hallRowLayout";
 import SeatMap, { assignCategoryColors, seatsToRows, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import SeatBulkPanel from "./SeatBulkPanel";
 import type { HallSeatRecord } from "@/lib/halls";
@@ -23,10 +24,13 @@ export default function SeatMapEditor({
   seats,
   categories,
   rowShape,
+  rowLayouts,
 }: {
   seats: HallSeatRecord[];
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
+  /** Rows set up on their own: where each one stands within its section. */
+  rowLayouts?: RowPlacements;
   /** Every category of the hall, including ones added with a price but on no seat yet. */
   categories: string[];
 }) {
@@ -107,6 +111,7 @@ export default function SeatMapEditor({
       <SeatMap
         rows={rows}
         rowShape={rowShape}
+        rowLayouts={rowLayouts}
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
         onRowLabelClick={toggleRow}

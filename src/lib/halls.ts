@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { sectionOrder, toSection, type HallSection } from "@/lib/hallSections";
 import { categoryOptions } from "@/lib/seatCategories";
+import { rowLayoutKey, toRowAlignment, type RowAlignment, type RowPlacements } from "@/lib/hallRowLayout";
 
 /** How the seat map draws the rows: in an arc, or as straight parallel rows. */
 export type RowShape = "curved" | "straight";
@@ -130,9 +131,63 @@ async function readSeats(hallId: string, activeOnly: boolean): Promise<HallSeatR
  * a section with no active seat at all: that section has been removed from the hall.
  */
 export async function listHallSeats(hallId: string): Promise<HallSeatRecord[]> {
-  const seats = await readSeats(hallId, false);
+  const [seats, layouts] = await Promise.all([readSeats(hallId, false), listHallRowLayouts(hallId)]);
   const liveSections = new Set(seats.filter((seat) => seat.isActive).map((seat) => seat.section));
-  return seats.filter((seat) => liveSections.has(seat.section));
+  // A row set to fewer seats keeps its tail in the table, hidden; it is not drawn at all here,
+  // otherwise the shortened row would still show at full length, half of it grey.
+  const seatCounts = new Map(layouts.map((layout) => [rowLayoutKey(layout.section, layout.rowLabel), layout.seatCount]));
+  // Nor is a hidden seat past the section's widest row (one left over from a row made longer and
+  // then reset, or from a grid made narrower): it would only widen the map with grey circles.
+  const widest = new Map<HallSection, number>();
+  for (const seat of seats) {
+    if (seat.isActive) widest.set(seat.section, Math.max(widest.get(seat.section) ?? 0, seat.seatNumber));
+  }
+  return seats.filter((seat) => {
+    if (!liveSections.has(seat.section)) return false;
+    if (seat.isActive) return true;
+    if (seat.seatNumber > (widest.get(seat.section) ?? 0)) return false;
+    const count = seatCounts.get(rowLayoutKey(seat.section, seat.rowLabel));
+    return !count || seat.seatNumber <= count;
+  });
+}
+
+/** A row set up on its own: fewer seats than the section, and where those seats stand. */
+export type HallRowLayout = {
+  section: HallSection;
+  rowLabel: string;
+  /** Seats in this row, when set; the rest of the row is hidden. */
+  seatCount: number | null;
+  alignment: RowAlignment;
+  /** With alignment "custom": how many seat places to leave empty on the left. */
+  offsetStart: number;
+};
+
+/**
+ * The rows of a hall that have their own layout. Readable by anyone who can see the hall, since
+ * the public seat map draws them too. An empty list when the table does not exist yet (its
+ * migration has not been run) or on any error: every row is then drawn centred, as before.
+ */
+export async function listHallRowLayouts(hallId: string): Promise<HallRowLayout[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("hall_row_layouts")
+    .select("section, row_label, seat_count, alignment, offset_start")
+    .eq("hall_id", hallId);
+  if (error || !data) return [];
+  return (data as Row[]).map((row) => ({
+    section: toSection(row.section),
+    rowLabel: String(row.row_label),
+    seatCount: typeof row.seat_count === "number" ? row.seat_count : null,
+    alignment: toRowAlignment(row.alignment),
+    offsetStart: typeof row.offset_start === "number" ? row.offset_start : 0,
+  }));
+}
+
+/** Row layouts keyed for the seat maps: only what drawing needs. */
+export function rowLayoutsForMap(layouts: HallRowLayout[]): RowPlacements {
+  return Object.fromEntries(
+    layouts.map((layout) => [rowLayoutKey(layout.section, layout.rowLabel), { alignment: layout.alignment, offsetStart: layout.offsetStart }])
+  );
 }
 
 /**

@@ -10,6 +10,7 @@ import { translateFieldPair } from "@/lib/autoTranslate";
 import { STANDARD, categoryLabel, isBuiltInCategory, normalizeCategory } from "@/lib/seatCategories";
 import { listHallCategories } from "@/lib/halls";
 import { PARTER, SECTIONS, sectionLabel, toSection, type HallSection } from "@/lib/hallSections";
+import { toRowAlignment } from "@/lib/hallRowLayout";
 
 export type FormState = { error: string | null };
 
@@ -276,8 +277,123 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
     if (error) return { error: "Не удалось скрыть лишние места." };
   }
 
+  // The new grid has just set every row of this section to its full width, so the section's own
+  // row settings no longer describe it. A missing table (migration not run) is nothing to clear.
+  await supabase.from("hall_row_layouts").delete().eq("hall_id", hallId).eq("section", section);
+
   revalidateHalls(hallId);
   return { error: null };
+}
+
+// ---------------------------------------------------------------------
+// One row on its own
+// ---------------------------------------------------------------------
+
+/** Postgres "undefined_table" / PostgREST "no such table": the hall_row_layouts migration has not been run. */
+const NO_ROW_LAYOUT_TABLE = new Set(["42P01", "PGRST205"]);
+const NO_ROW_LAYOUT_MESSAGE =
+  "Настройка рядов ещё не включена в базе: выполните SQL из миграции 20261026150000_hall_row_layouts.sql.";
+
+export type RowLayoutInput = {
+  hallId: string;
+  section: string;
+  rowLabel: string;
+  seatCount: number;
+  alignment: string;
+  offsetStart: number;
+  /** «Сбросить»: the row goes back to seatCount seats, centred, with no setting of its own. */
+  reset?: boolean;
+};
+
+/**
+ * Sets one row's number of seats and where it stands in its section. Seats are never deleted (a
+ * ticket may point at one): past the new count they are hidden, and a row made longer again
+ * gets back the seats it hid before, plus new ones where it never had any. Seats inside the row
+ * that staff hid one by one stay hidden.
+ */
+export async function saveRowLayout(input: RowLayoutInput): Promise<{ ok: boolean; error?: string }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, error: "Профиль сотрудника не настроен." };
+
+  const section = toSection(input.section);
+  const seatCount = Math.trunc(input.seatCount);
+  if (!Number.isFinite(seatCount) || seatCount < 1 || seatCount > 200) return { ok: false, error: "Мест в ряду — от 1 до 200." };
+  const alignment = toRowAlignment(input.alignment);
+  const offsetStart = alignment === "custom" ? Math.trunc(input.offsetStart) : 0;
+  if (!Number.isFinite(offsetStart) || offsetStart < 0 || offsetStart > 200) return { ok: false, error: "Сдвиг — от 0 до 200 мест." };
+
+  const supabase = await createClient();
+  const [{ data: seats, error: seatsError }, { data: layout, error: layoutError }] = await Promise.all([
+    supabase
+      .from("hall_seats")
+      .select("id, seat_number, is_active, category")
+      .eq("hall_id", input.hallId)
+      .eq("section", section)
+      .eq("row_label", input.rowLabel),
+    supabase
+      .from("hall_row_layouts")
+      .select("seat_count")
+      .eq("hall_id", input.hallId)
+      .eq("section", section)
+      .eq("row_label", input.rowLabel)
+      .maybeSingle(),
+  ]);
+  if (layoutError) return { ok: false, error: NO_ROW_LAYOUT_TABLE.has(layoutError.code) ? NO_ROW_LAYOUT_MESSAGE : "Не удалось прочитать настройку ряда." };
+  if (seatsError || !seats || seats.length === 0) return { ok: false, error: "Такого ряда в зале нет." };
+
+  // Where the row used to end: its own setting, or else its last active seat.
+  const activeNumbers = seats.filter((s) => s.is_active).map((s) => s.seat_number as number);
+  const previousCount = (layout?.seat_count as number | null | undefined) ?? Math.max(0, ...activeNumbers);
+  const byNumber = new Map(seats.map((s) => [s.seat_number as number, s]));
+
+  const toDeactivate = seats.filter((s) => s.is_active && (s.seat_number as number) > seatCount).map((s) => s.id as string);
+  const toReactivate = seats
+    .filter((s) => !s.is_active && (s.seat_number as number) > previousCount && (s.seat_number as number) <= seatCount)
+    .map((s) => s.id as string);
+  const toInsert: SeatInsert[] = [];
+  for (let n = 1; n <= seatCount; n++) {
+    if (!byNumber.has(n)) {
+      toInsert.push({ hall_id: input.hallId, ...(section === PARTER ? {} : { section }), row_label: input.rowLabel, seat_number: n, category: STANDARD });
+    }
+  }
+
+  // The setting first: if it cannot be stored, no seat has changed yet.
+  if (input.reset) {
+    const { error } = await supabase
+      .from("hall_row_layouts")
+      .delete()
+      .eq("hall_id", input.hallId)
+      .eq("section", section)
+      .eq("row_label", input.rowLabel);
+    if (error) return { ok: false, error: NO_ROW_LAYOUT_TABLE.has(error.code) ? NO_ROW_LAYOUT_MESSAGE : "Не удалось сбросить настройку ряда." };
+  } else {
+    const { error } = await supabase.from("hall_row_layouts").upsert({
+      hall_id: input.hallId,
+      section,
+      row_label: input.rowLabel,
+      seat_count: seatCount,
+      alignment,
+      offset_start: offsetStart,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) return { ok: false, error: NO_ROW_LAYOUT_TABLE.has(error.code) ? NO_ROW_LAYOUT_MESSAGE : "Не удалось сохранить настройку ряда." };
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from("hall_seats").insert(toInsert, { defaultToNull: false });
+    if (error) return { ok: false, error: "Не удалось добавить места в ряд." };
+  }
+  if (toReactivate.length > 0) {
+    const { error } = await supabase.from("hall_seats").update({ is_active: true }).in("id", toReactivate);
+    if (error) return { ok: false, error: "Не удалось вернуть места ряда." };
+  }
+  if (toDeactivate.length > 0) {
+    const { error } = await supabase.from("hall_seats").update({ is_active: false }).in("id", toDeactivate);
+    if (error) return { ok: false, error: "Не удалось скрыть лишние места ряда." };
+  }
+
+  revalidatePath("/admin/tickets/halls", "layout");
+  return { ok: true };
 }
 
 /** Every category this hall knows: the two built-in ones, those its seats have, and those added by name. */

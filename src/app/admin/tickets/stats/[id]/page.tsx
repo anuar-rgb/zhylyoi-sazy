@@ -5,7 +5,7 @@ import { formatEventDateTime } from "@/lib/eventFields";
 import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { pricesOf } from "@/lib/eventPrices";
-import { getHallById } from "@/lib/halls";
+import { getHallById, listHallRowLayouts, rowLayoutsForMap } from "@/lib/halls";
 import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
 import { formatTime } from "@/lib/timeZone";
 import { listSeatOccupants, listSoldTickets } from "@/lib/ticketing/occupancy";
@@ -30,13 +30,14 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
   const event = await getCultureEventById(id);
   if (!event) notFound();
 
-  const [seats, occupants, ticketTypes, hall, stats, sold] = await Promise.all([
+  const [seats, occupants, ticketTypes, hall, stats, sold, rowLayouts] = await Promise.all([
     event.hallId ? listEventSeatsForAdmin(id, event.hallId) : Promise.resolve([]),
     listSeatOccupants(id),
     listEventTicketTypes(id),
     event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
     getEventStats(scope.organizationId),
     listSoldTickets(id),
+    event.hallId ? listHallRowLayouts(event.hallId) : Promise.resolve([]),
   ]);
   const locked = isEventLocked(event);
   const prices = pricesOf(ticketTypes);
@@ -140,6 +141,7 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
             prices={prices}
             ordersHref={`/admin/tickets/orders?event=${id}`}
             rowShape={hall?.rowShape}
+            rowLayouts={rowLayoutsForMap(rowLayouts)}
           />
 
           <ul className="mt-5 pt-4 border-t border-cream-dark grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">

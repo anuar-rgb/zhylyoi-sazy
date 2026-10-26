@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { rememberTicket } from "@/lib/myTickets";
 import { createBooking, type CreateBookingResult } from "@/app/actions/bookings";
+import type { RowPlacements } from "@/lib/hallRowLayout";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import { sectionLabel, seatName } from "@/lib/hallSections";
 import { categoryLabel } from "@/lib/seatCategories";
@@ -118,10 +119,13 @@ export default function SeatPicker({
   eventId,
   rows,
   rowShape,
+  rowLayouts,
 }: {
   eventId: string;
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
+  /** Rows set up on their own: where each one stands within its section. */
+  rowLayouts?: RowPlacements;
   rows: { section: string; label: string; seats: SeatOption[] }[];
 }) {
   const router = useRouter();
@@ -249,6 +253,7 @@ export default function SeatPicker({
         <SeatMap
           rows={seatMapRows}
           rowShape={rowShape}
+          rowLayouts={rowLayouts}
           seatVariant={seatVariant}
           seatTooltip={seatTooltip}
           stageLabel={t.stage}

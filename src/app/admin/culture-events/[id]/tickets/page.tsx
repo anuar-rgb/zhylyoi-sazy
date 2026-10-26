@@ -5,7 +5,7 @@ import { getCultureEventById, isEventLocked } from "@/lib/cultureEvents";
 import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
-import { getHallById } from "@/lib/halls";
+import { getHallById, listHallRowLayouts, rowLayoutsForMap } from "@/lib/halls";
 import EventSeatMap from "./EventSeatMap";
 import EventPricesForm from "./EventPricesForm";
 import TakeHallSeatsButton from "./TakeHallSeatsButton";
@@ -26,10 +26,11 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
   // on the occupancy page, so that is where it opens.
   if (isEventLocked(event)) redirect(`/admin/tickets/stats/${id}`);
 
-  const [eventSeats, ticketTypes, hall] = await Promise.all([
+  const [eventSeats, ticketTypes, hall, rowLayouts] = await Promise.all([
     event.hallId ? listEventSeatsForAdmin(id, event.hallId) : Promise.resolve([]),
     listEventTicketTypes(id),
     event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
+    event.hallId ? listHallRowLayouts(event.hallId) : Promise.resolve([]),
   ]);
   const hallName = hall ? (hall.nameRu ?? hall.nameKk ?? "Зал") : "";
   // Every category of the hall plus those this event marked itself: one price field each.
@@ -104,7 +105,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
             <section>
               <h2 className="text-lg font-bold text-ocean mb-4">Категории мест этого мероприятия</h2>
               <div className={CARD}>
-                <EventSeatMap eventId={id} seats={eventSeats} categories={categories} rowShape={hall?.rowShape} />
+                <EventSeatMap eventId={id} seats={eventSeats} categories={categories} rowShape={hall?.rowShape} rowLayouts={rowLayoutsForMap(rowLayouts)} />
               </div>
             </section>
           ) : (
