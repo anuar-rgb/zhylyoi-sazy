@@ -119,9 +119,15 @@ async function readSeats(hallId: string, activeOnly: boolean): Promise<HallSeatR
   return (data as unknown as Row[]).map(toSeat).sort(byRowThenSeat);
 }
 
-/** A hall's seats, ordered by section, then row, then seat number. */
+/**
+ * A hall's seats for the admin seat maps, ordered by section, then row, then seat number.
+ * Hidden seats stay in (they show grey, and can be brought back one by one), except those of
+ * a section with no active seat at all: that section has been removed from the hall.
+ */
 export async function listHallSeats(hallId: string): Promise<HallSeatRecord[]> {
-  return readSeats(hallId, false);
+  const seats = await readSeats(hallId, false);
+  const liveSections = new Set(seats.filter((seat) => seat.isActive).map((seat) => seat.section));
+  return seats.filter((seat) => liveSections.has(seat.section));
 }
 
 /**

@@ -65,7 +65,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           Места и категории <span className="text-ocean/40 font-normal text-base">({hall.totalCapacity})</span>
         </h2>
         <p className="text-sm text-ocean/60 mb-4">
-          Нажмите на места (или на букву ряда, чтобы выбрать весь ряд) и назначьте категорию: Стандарт, VIP или свою.
+          Нажмите на места (или на номер ряда, чтобы выбрать весь ряд) и назначьте категорию: Стандарт, VIP или свою.
         </p>
         {seats.length === 0 ? (
           <div className={CARD}>
