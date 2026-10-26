@@ -52,9 +52,11 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
 
   // Every method goes through the bank: the order confirms itself when the bank reports the payment.
   const bankOnly = paymentMethods.length > 0 && paymentMethods.every((method) => method.mode === "api");
-  // A manual method is usable only with the institution's own link or QR; without one there is
+  // A manual method is usable only with the institution's own payment link; without one there is
   // nothing to pay by yet, and the buyer is told not to pay.
-  const manualMethods = paymentMethods.filter((method) => method.mode !== "api" && (method.paymentUrl || method.staticQrImageUrl));
+  const manualMethods = paymentMethods.flatMap((method) =>
+    method.mode !== "api" && method.paymentUrl ? [{ ...method, paymentUrl: method.paymentUrl }] : []
+  );
   const canPay = bankOnly || manualMethods.length > 0;
   const eventTitle = event ? (lang === "kk" ? (event.titleKk ?? event.titleRu) : (event.titleRu ?? event.titleKk)) : null;
   const sum = `${booking.totalAmount} ₸`;
@@ -177,7 +179,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                     {lang === "kk" ? (
                       <>
                         <li>
-                          Дәл <b className="text-ocean">{sum}</b> соманы төмендегі сілтеме немесе QR арқылы төлеңіз.
+                          Дәл <b className="text-ocean">{sum}</b> соманы төмендегі «Төлемге өту» түймесі арқылы банк қосымшасында төлеңіз.
                         </li>
                         <li>Бронь уақыты біткенше «Мен төледім» түймесін басыңыз.</li>
                         <li>Кассир түсімді тексереді — билеттер осы бетте пайда болады.</li>
@@ -185,7 +187,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                     ) : (
                       <>
                         <li>
-                          Оплатите ровно <b className="text-ocean">{sum}</b> по ссылке или QR ниже.
+                          Оплатите ровно <b className="text-ocean">{sum}</b> кнопкой «Перейти к оплате» ниже — откроется приложение банка.
                         </li>
                         <li>До конца брони нажмите «Я оплатил».</li>
                         <li>Кассир проверит поступление — билеты появятся на этой странице.</li>
@@ -198,7 +200,6 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                         key={method.id}
                         name={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
                         isDefault={method.isDefault}
-                        qrUrl={method.staticQrImageUrl}
                         paymentUrl={method.paymentUrl}
                         locale={lang}
                       />

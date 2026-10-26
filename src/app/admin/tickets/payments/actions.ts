@@ -56,18 +56,6 @@ async function fillPaymentTranslations(
   return filled;
 }
 
-/** Parses the hidden qr_image field: "" means no image, otherwise {url, path} JSON. */
-function parseQrImage(form: FormData): { url: string | null; path: string | null } {
-  const raw = field(form, "qr_image");
-  if (!raw) return { url: null, path: null };
-  try {
-    const parsed = JSON.parse(raw) as { url?: string; path?: string };
-    return { url: parsed.url ?? null, path: parsed.path ?? null };
-  } catch {
-    return { url: null, path: null };
-  }
-}
-
 export async function createPaymentMethod(_prev: FormState, form: FormData): Promise<FormState> {
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
@@ -81,8 +69,6 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
   const link = parsePaymentUrl(form);
   if (link.error) return { error: link.error };
 
-  const { url, path } = parseQrImage(form);
-
   const supabase = await createClient();
   const { data: created, error } = await supabase
     .from("organization_payment_methods")
@@ -92,8 +78,6 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
       display_name_kk: data.display_name_kk,
       display_name_ru: data.display_name_ru,
       is_default: data.is_default,
-      static_qr_image_url: url,
-      static_qr_image_path: path,
       payment_url: link.url,
     })
     .select("id")
@@ -124,8 +108,6 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
   const link = parsePaymentUrl(form);
   if (link.error) return { error: link.error };
 
-  const { url, path } = parseQrImage(form);
-
   const supabase = await createClient();
   const { error, count } = await supabase
     .from("organization_payment_methods")
@@ -133,8 +115,6 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
       {
         display_name_kk: data.display_name_kk,
         display_name_ru: data.display_name_ru,
-        static_qr_image_url: url,
-        static_qr_image_path: path,
         payment_url: link.url,
       },
       { count: "exact" }

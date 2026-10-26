@@ -20,7 +20,6 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
     <PaymentMethodForm
       method={method}
       providers={[]}
-      organizationId={method.organizationId}
       action={updatePaymentMethod}
       heading={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
     />

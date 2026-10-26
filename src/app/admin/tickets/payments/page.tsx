@@ -41,7 +41,7 @@ export default async function PaymentsPage() {
       </div>
 
       <p className="text-sm text-ocean/60 mb-6">
-        Покупатель платит по QR-коду или ссылке и ждёт, пока сотрудник подтвердит оплату вручную.
+        Покупатель платит по ссылке банка и ждёт, пока сотрудник подтвердит оплату вручную.
       </p>
 
       {methods.length === 0 ? (

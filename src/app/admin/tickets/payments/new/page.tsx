@@ -23,7 +23,6 @@ export default async function NewPaymentMethodPage() {
   return (
     <PaymentMethodForm
       providers={availableProviders}
-      organizationId={organizationId}
       action={createPaymentMethod}
       heading="Новый способ оплаты"
     />
