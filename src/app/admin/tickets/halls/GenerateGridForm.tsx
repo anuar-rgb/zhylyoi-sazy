@@ -1,15 +1,15 @@
 "use client";
 
-import { useActionToast } from "@/components/feedback/FeedbackProvider";
-import { useActionState, useState } from "react";
+import { useActionToast, useFeedback } from "@/components/feedback/FeedbackProvider";
+import { useActionState, useState, useTransition } from "react";
 import { regenerateSeatGrid } from "./actions";
 import GridFieldset from "./GridFieldset";
 import { PARTER, SECTIONS, sectionLabel, type HallSection } from "@/lib/hallSections";
 
 /**
  * Resizes one section of an existing hall's grid — or adds a section the hall did not have
- * yet, or removes one (rows = 0, side sections and balcony only). rows/seats-per-row are
- * optional here (blank means "leave the grid as it is"), unlike the required fields on hall
+ * yet, or removes one (side sections and balcony only, with their own button). rows/seats-per-row
+ * are optional here (blank means "leave the grid as it is"), unlike the required fields on hall
  * creation. Growing adds missing seats; shrinking hides (never deletes) whatever falls outside
  * the new shape, since a booking may already reference it — see regenerateSeatGrid's own
  * comment for the full rule.
@@ -24,11 +24,52 @@ export default function GenerateGridForm({
 }) {
   const [state, formAction, pending] = useActionState(regenerateSeatGrid, { error: null });
   useActionToast(state, "Схема зала обновлена");
+  const feedback = useFeedback();
+  const [removing, startRemoving] = useTransition();
   const [section, setSection] = useState<HallSection>(PARTER);
   const current = sizes[section];
+  const canRemove = section !== PARTER && !!current;
+
+  // Submitted by hand rather than through <form action>: a form action resets the form when it
+  // finishes, which put the section list back on «Партер» while the hint below still described
+  // the section chosen before.
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startRemoving(() => formAction(data));
+  }
+
+  async function handleRemove() {
+    const name = sectionLabel(section);
+    const confirmed = await feedback.confirm({
+      title: `Удалить «${name}»?`,
+      message:
+        `Места сектора (${current!.rows} × ${current!.seats}) перестанут продаваться на мероприятиях этого зала. ` +
+        "Уже купленные на них билеты остаются действительными.",
+      confirmLabel: "Удалить сектор",
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    const data = new FormData();
+    data.set("id", hallId);
+    data.set("section", section);
+    data.set("rows", "0");
+    data.set("seats_per_row", "0");
+    startRemoving(async () => {
+      const result = await regenerateSeatGrid({ error: null }, data);
+      if (result.error) feedback.error(result.error);
+      else {
+        feedback.success(`«${name}» удалён`);
+        setSection(PARTER);
+      }
+    });
+  }
+
+  const busy = pending || removing;
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <input type="hidden" name="id" value={hallId} />
 
       <div className="flex flex-wrap gap-2">
@@ -61,8 +102,20 @@ export default function GenerateGridForm({
           {current
             ? `Сейчас ${current.rows} рядов по ${current.seats} мест.`
             : "Такого сектора в зале ещё нет — укажите размер, и он появится."}
-          {section !== PARTER && current && " Чтобы убрать сектор, укажите 0 рядов."}
         </p>
+        {canRemove && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={busy}
+            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 7h12M9 7V5h6v2m-7 4v6m4-6v6m4-10l-1 12H8L7 7" />
+            </svg>
+            Удалить {sectionLabel(section).toLowerCase()}
+          </button>
+        )}
       </div>
 
       <p className="bg-gold/10 border border-gold/30 text-ocean-dark text-sm rounded-2xl px-4 py-3">
@@ -79,7 +132,7 @@ export default function GenerateGridForm({
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={busy}
         className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50"
       >
         {pending ? "Применение…" : "Применить изменение сетки"}
