@@ -58,6 +58,8 @@ export interface SeatMapProps {
   scrollHint?: string;
   /** Caption of a section block («Левый сектор», «Балкон»); Russian names by default. */
   sectionTitle?: (section: string) => string;
+  /** The hall's row shape: an arc (default) or straight parallel rows under a straight stage. */
+  rowShape?: "curved" | "straight";
 }
 
 const SEAT_SIZE = 28;
@@ -156,7 +158,9 @@ export default function SeatMap({
   onRowLabelClick,
   scrollHint = "Листайте схему в стороны",
   sectionTitle = (section) => sectionLabel(section, "ru"),
+  rowShape = "curved",
 }: SeatMapProps) {
+  const arc = rowShape !== "straight";
   const scrollRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [overflowing, setOverflowing] = useState(false);
@@ -198,7 +202,7 @@ export default function SeatMap({
             {stageLabel}
           </span>
           <svg width="240" height="18" viewBox="0 0 240 18" className="text-ocean/20">
-            <path d="M4 16 Q120 -8 236 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path d={arc ? "M4 16 Q120 -8 236 16" : "M4 9 L236 9"} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </div>
 
@@ -222,17 +226,17 @@ export default function SeatMap({
             );
           };
           // Only the parter: drawn exactly as before sections existed.
-          if (only) return renderRows(rows, true);
+          if (only) return renderRows(rows, arc);
           // The parter faces the stage with the side sections beside it; the balcony sits behind.
           return (
             <>
               <div className="flex items-start justify-center gap-8">
                 {block("left", false)}
-                {block("parter", true)}
+                {block("parter", arc)}
                 {block("right", false)}
               </div>
               {bySection.has("balcony") && (
-                <div className="mt-8 pt-6 border-t border-dashed border-ocean/15">{block("balcony", true)}</div>
+                <div className="mt-8 pt-6 border-t border-dashed border-ocean/15">{block("balcony", arc)}</div>
               )}
             </>
           );

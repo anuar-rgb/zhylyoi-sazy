@@ -2,12 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { sectionOrder, toSection, type HallSection } from "@/lib/hallSections";
 import { categoryOptions } from "@/lib/seatCategories";
 
+/** How the seat map draws the rows: in an arc, or as straight parallel rows. */
+export type RowShape = "curved" | "straight";
+
 export type HallRecord = {
   id: string;
   organizationId: string;
   nameKk: string | null;
   nameRu: string | null;
   totalCapacity: number;
+  rowShape: RowShape;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -25,7 +29,7 @@ export type HallSeatRecord = {
   createdAt: string;
 };
 
-const HALL_COLUMNS = "id, organization_id, name_kk, name_ru, total_capacity, is_active, created_at, updated_at";
+const HALL_COLUMNS = "id, organization_id, name_kk, name_ru, total_capacity, row_shape, is_active, created_at, updated_at";
 const BASE_SEAT_COLUMNS = "id, hall_id, row_label, seat_number, category, is_active, created_at";
 const SEAT_COLUMNS = `${BASE_SEAT_COLUMNS}, section`;
 /** Postgres "undefined_column": the hall_seats.section migration has not been run yet. */
@@ -44,6 +48,7 @@ function toHall(row: Row): HallRecord {
     nameKk: str(row.name_kk),
     nameRu: str(row.name_ru),
     totalCapacity: typeof row.total_capacity === "number" ? row.total_capacity : 0,
+    rowShape: row.row_shape === "straight" ? "straight" : "curved",
     isActive: row.is_active === true,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),

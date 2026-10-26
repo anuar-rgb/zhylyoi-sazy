@@ -139,6 +139,7 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
             occupants={Object.fromEntries(occupants)}
             prices={prices}
             ordersHref={`/admin/tickets/orders?event=${id}`}
+            rowShape={hall?.rowShape}
           />
 
           <ul className="mt-5 pt-4 border-t border-cream-dark grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">

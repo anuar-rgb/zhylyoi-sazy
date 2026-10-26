@@ -104,7 +104,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ i
             <section>
               <h2 className="text-lg font-bold text-ocean mb-4">Категории мест этого мероприятия</h2>
               <div className={CARD}>
-                <EventSeatMap eventId={id} seats={eventSeats} categories={categories} />
+                <EventSeatMap eventId={id} seats={eventSeats} categories={categories} rowShape={hall?.rowShape} />
               </div>
             </section>
           ) : (

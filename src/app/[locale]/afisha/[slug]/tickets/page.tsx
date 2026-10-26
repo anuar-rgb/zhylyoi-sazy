@@ -8,6 +8,7 @@ import { getPublicCultureEventBySlug, hasEventStarted } from "@/lib/cultureEvent
 import { listPublicEventSeats } from "@/lib/eventSeatCategories";
 import { listPublicEventTicketTypes } from "@/lib/eventTicketTypes";
 import { getTakenSeatIds } from "@/lib/bookings";
+import { getHallById } from "@/lib/halls";
 import SeatPicker, { type SeatOption } from "./SeatPicker";
 import type { Locale } from "@/i18n/routing";
 
@@ -84,10 +85,11 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
     );
   }
 
-  const [seats, ticketTypes, takenSeatIds] = await Promise.all([
+  const [seats, ticketTypes, takenSeatIds, hall] = await Promise.all([
     listPublicEventSeats(event.id, event.hallId),
     listPublicEventTicketTypes(event.id),
     getTakenSeatIds(event.id),
+    getHallById(event.hallId),
   ]);
 
   const ticketTypeByCategory = new Map(ticketTypes.map((tt) => [tt.category, tt]));
@@ -136,7 +138,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
             </p>
           </div>
         ) : (
-          <SeatPicker eventId={event.id} rows={rows} />
+          <SeatPicker eventId={event.id} rows={rows} rowShape={hall?.rowShape} />
         )}
       </div>
     </section>

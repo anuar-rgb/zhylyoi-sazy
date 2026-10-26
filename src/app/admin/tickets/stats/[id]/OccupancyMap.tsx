@@ -40,7 +40,10 @@ export default function OccupancyMap({
   occupants,
   prices,
   ordersHref,
+  rowShape,
 }: {
+  /** The hall's row shape, so the map is drawn as the hall is set up. */
+  rowShape?: "curved" | "straight";
   seats: OccupancySeat[];
   occupants: Record<string, SeatOccupant>;
   /** category -> price for this event; a category missing here is not on sale. */
@@ -109,6 +112,7 @@ export default function OccupancyMap({
     <div>
       <SeatMap
         rows={rows}
+        rowShape={rowShape}
         seatVariant={seatVariant}
         onSeatClick={(seat) => setSelectedId((current) => (current === seat.id ? null : seat.id))}
         seatTooltip={tooltip}

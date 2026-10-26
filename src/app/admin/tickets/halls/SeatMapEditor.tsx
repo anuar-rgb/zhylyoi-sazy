@@ -22,8 +22,11 @@ import { seatName } from "@/lib/hallSections";
 export default function SeatMapEditor({
   seats,
   categories,
+  rowShape,
 }: {
   seats: HallSeatRecord[];
+  /** The hall's row shape, so the map is drawn as the hall is set up. */
+  rowShape?: "curved" | "straight";
   /** Every category of the hall, including ones added with a price but on no seat yet. */
   categories: string[];
 }) {
@@ -103,6 +106,7 @@ export default function SeatMapEditor({
     <div ref={containerRef}>
       <SeatMap
         rows={rows}
+        rowShape={rowShape}
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
         onRowLabelClick={toggleRow}

@@ -117,8 +117,11 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
 export default function SeatPicker({
   eventId,
   rows,
+  rowShape,
 }: {
   eventId: string;
+  /** The hall's row shape, so the map is drawn as the hall is set up. */
+  rowShape?: "curved" | "straight";
   rows: { section: string; label: string; seats: SeatOption[] }[];
 }) {
   const router = useRouter();
@@ -245,6 +248,7 @@ export default function SeatPicker({
       <div className="min-w-0 bg-white rounded-3xl border border-cream-dark shadow-sm p-4 sm:p-5">
         <SeatMap
           rows={seatMapRows}
+          rowShape={rowShape}
           seatVariant={seatVariant}
           seatTooltip={seatTooltip}
           stageLabel={t.stage}

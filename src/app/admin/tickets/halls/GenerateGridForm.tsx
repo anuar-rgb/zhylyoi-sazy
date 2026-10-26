@@ -6,6 +6,11 @@ import { regenerateSeatGrid } from "./actions";
 import GridFieldset from "./GridFieldset";
 import { PARTER, SECTIONS, sectionLabel, type HallSection } from "@/lib/hallSections";
 
+const ROW_SHAPES = [
+  { value: "curved", title: "Изогнутые ряды", hint: "дугой к сцене", rows: [4, 12] },
+  { value: "straight", title: "Прямые ряды", hint: "ровная сетка", rows: [4, 12] },
+] as const;
+
 /**
  * Resizes one section of an existing hall's grid — or adds a section the hall did not have
  * yet, or removes one (side sections and balcony only, with their own button). rows/seats-per-row
@@ -17,8 +22,11 @@ import { PARTER, SECTIONS, sectionLabel, type HallSection } from "@/lib/hallSect
 export default function GenerateGridForm({
   hallId,
   sizes,
+  rowShape,
 }: {
   hallId: string;
+  /** How the hall's seat maps draw the rows; saved with «Применить изменение сетки». */
+  rowShape: "curved" | "straight";
   /** Current shape of each section that has active seats: rows × widest row. */
   sizes: Partial<Record<HallSection, { rows: number; seats: number }>>;
 }) {
@@ -129,6 +137,30 @@ export default function GenerateGridForm({
       )}
 
       <GridFieldset allowZeroRows={section !== PARTER} />
+
+      <fieldset>
+        <legend className="block text-sm font-medium text-ocean/70 mb-1.5">Геометрия рядов</legend>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {ROW_SHAPES.map((shape) => (
+            <label
+              key={shape.value}
+              className="flex items-center gap-3 p-3 rounded-2xl border border-cream-dark bg-cream/30 cursor-pointer has-[:checked]:border-ocean has-[:checked]:bg-ocean/5"
+            >
+              <input type="radio" name="row_shape" value={shape.value} defaultChecked={rowShape === shape.value} className="accent-ocean shrink-0" />
+              <svg width="44" height="26" viewBox="0 0 44 26" className="shrink-0 text-ocean/60" aria-hidden>
+                {shape.rows.map((y, i) => (
+                  <path key={i} d={shape.value === "curved" ? `M4 ${y} Q22 ${y + 7} 40 ${y}` : `M4 ${y + 3} L40 ${y + 3}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="0.1 5" />
+                ))}
+              </svg>
+              <span className="text-sm text-ocean">
+                <span className="font-semibold block">{shape.title}</span>
+                <span className="text-xs text-ocean/50">{shape.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-ocean/40 mt-1.5">Для всего зала: так схема выглядит в админке и у покупателя. Места и билеты не меняются.</p>
+      </fieldset>
 
       <button
         type="submit"

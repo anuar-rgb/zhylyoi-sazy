@@ -203,7 +203,21 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
   const rows = intField(form, "rows");
   const seatsPerRow = intField(form, "seats_per_row");
   const removing = section !== PARTER && rows === 0;
-  if (rows === null && seatsPerRow === null) return { error: null }; // both left blank — no grid change requested
+
+  // The row shape belongs to the whole hall and is saved even when the grid itself is left as it is.
+  const rowShape = field(form, "row_shape");
+  if (rowShape === "curved" || rowShape === "straight") {
+    const supabase = await createClient();
+    const { error, count } = await supabase.from("halls").update({ row_shape: rowShape }, { count: "exact" }).eq("id", hallId);
+    if (error) return { error: "Не удалось сохранить геометрию рядов." };
+    if (count === 0) return { error: "Недостаточно прав для редактирования этого зала." };
+  }
+
+  if (rows === null && seatsPerRow === null) {
+    // Both left blank — no grid change requested; only the row shape may have changed.
+    if (rowShape) revalidateHalls(hallId);
+    return { error: null };
+  }
   if (!removing) {
     if (!rows || rows < 1 || rows > 200) {
       return { error: section === PARTER ? "Число рядов — от 1 до 200." : "Число рядов — от 1 до 200, или 0, чтобы убрать сектор." };

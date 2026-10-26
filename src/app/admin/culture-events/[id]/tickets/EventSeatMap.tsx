@@ -18,8 +18,11 @@ export default function EventSeatMap({
   eventId,
   seats,
   categories,
+  rowShape,
 }: {
   eventId: string;
+  /** The hall's row shape, so the map is drawn as the hall is set up. */
+  rowShape?: "curved" | "straight";
   seats: HallSeatRecord[];
   /** The categories seats can be given here: the hall's (Стандарт, VIP, its own) and this event's. */
   categories: string[];
@@ -92,6 +95,7 @@ export default function EventSeatMap({
     <div ref={containerRef}>
       <SeatMap
         rows={rows}
+        rowShape={rowShape}
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
         onRowLabelClick={toggleRow}
