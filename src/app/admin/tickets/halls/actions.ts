@@ -64,7 +64,6 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
   const seatsPerRow = intField(form, "seats_per_row");
   if (!rows || rows < 1 || rows > 200) return { error: "Число рядов — от 1 до 200." };
   if (!seatsPerRow || seatsPerRow < 1 || seatsPerRow > 200) return { error: "Число мест в ряду — от 1 до 200." };
-  const rowFormat = field(form, "row_format") === "number" ? "number" : "letter";
   // Every new seat starts as Стандарт; VIP and other categories are set seat by seat on the
   // hall's edit page.
   const category = STANDARD;
@@ -85,7 +84,7 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
   // collide with the (hall_id, section, row_label, seat_number) unique index, so this
   // insert only fails on a genuine database error, same risk as any other
   // two-step admin write in this codebase.
-  const seats: SeatInsert[] = gridSeats(created.id, PARTER, rows, seatsPerRow, rowFormat, category);
+  const seats: SeatInsert[] = gridSeats(created.id, PARTER, rows, seatsPerRow, category);
   for (const section of SECTIONS) {
     if (section === PARTER || form.get(`section_${section}`) !== "on") continue;
     const sectionRows = intField(form, `${section}_rows`);
@@ -94,7 +93,7 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
       await supabase.from("halls").delete().eq("id", created.id);
       return { error: `${sectionLabel(section)}: рядов и мест в ряду — от 1 до 100.` };
     }
-    seats.push(...gridSeats(created.id, section, sectionRows, sectionSeats, rowFormat, category));
+    seats.push(...gridSeats(created.id, section, sectionRows, sectionSeats, category));
   }
   // defaultToNull: false — a parter seat has no section key (see gridSeats), and in a batch
   // supabase-js would otherwise send NULL for it instead of letting the column default apply.
@@ -160,7 +159,7 @@ export async function deleteHall(id: string): Promise<{ ok: boolean; error?: str
 type SeatInsert = { hall_id: string; section?: HallSection; row_label: string; seat_number: number; category: string };
 
 /**
- * The seats of one section's grid. The parter's seats carry no section key at all: the column
+ * The seats of one section's grid, rows numbered 1, 2, 3… The parter's seats carry no section key at all: the column
  * defaults to the parter, and leaving it out keeps a plain hall creatable on a database that
  * has not had the sections migration yet.
  */
@@ -169,29 +168,16 @@ function gridSeats(
   section: HallSection,
   rows: number,
   seatsPerRow: number,
-  rowFormat: "letter" | "number",
   category: string
 ): SeatInsert[] {
   const seats: SeatInsert[] = [];
   for (let r = 1; r <= rows; r++) {
-    const rowLabel = rowFormat === "letter" ? letterLabel(r) : String(r);
+    const rowLabel = String(r);
     for (let s = 1; s <= seatsPerRow; s++) {
       seats.push({ hall_id: hallId, ...(section === PARTER ? {} : { section }), row_label: rowLabel, seat_number: s, category });
     }
   }
   return seats;
-}
-
-/** 1 → "A", 26 → "Z", 27 → "AA" — spreadsheet-style, for halls with more than 26 rows. */
-function letterLabel(n: number): string {
-  let label = "";
-  let value = n;
-  while (value > 0) {
-    const remainder = (value - 1) % 26;
-    label = String.fromCharCode(65 + remainder) + label;
-    value = Math.floor((value - 1) / 26);
-  }
-  return label;
 }
 
 /**
@@ -225,7 +211,6 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
     if (!seatsPerRow || seatsPerRow < 1 || seatsPerRow > 200) return { error: "Число мест в ряду — от 1 до 200." };
   }
 
-  const rowFormat = field(form, "row_format") === "number" ? "number" : "letter";
   const category = STANDARD; // seats added by a resize start as Стандарт too
 
   const supabase = await createClient();
@@ -251,7 +236,7 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
   const toReactivate: string[] = [];
 
   if (!removing) {
-    for (const seat of gridSeats(hallId, section, rows!, seatsPerRow!, rowFormat, category)) {
+    for (const seat of gridSeats(hallId, section, rows!, seatsPerRow!, category)) {
       const key = `${seat.row_label}#${seat.seat_number}`;
       targetKeys.add(key);
       const found = existingByKey.get(key);

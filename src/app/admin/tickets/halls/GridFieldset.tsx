@@ -6,7 +6,7 @@ const INPUT =
 const LABEL = "block text-sm font-medium text-ocean/70 mb-1.5";
 
 /**
- * Rows/seats-per-row/row-format inputs shared between creating a hall
+ * Rows and seats-per-row inputs (rows are always numbered 1, 2, 3…) shared between creating a hall
  * (required — a brand new hall needs an initial layout) and resizing an
  * existing one (optional — blank means "don't touch the grid"). No category:
  * every new seat starts as Стандарт, and VIP is set seat by seat on the hall's
@@ -57,20 +57,6 @@ export default function GridFieldset({
             placeholder={required ? undefined : "не менять"}
             className={INPUT}
           />
-        </div>
-      </div>
-
-      <div>
-        <p className={LABEL}>Обозначение ряда</p>
-        <div className="flex gap-4 text-sm text-ocean/80">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="row_format" value="letter" defaultChecked className="accent-ocean" />
-            Буквы (A, B, C…)
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="row_format" value="number" className="accent-ocean" />
-            Числа (1, 2, 3…)
-          </label>
         </div>
       </div>
     </>
