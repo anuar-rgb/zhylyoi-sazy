@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { countUnseenApplications } from "@/lib/applications";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
+import ScrollTopButton from "@/components/ScrollTopButton";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
 import "../globals.css";
@@ -74,6 +75,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </aside>
           <main className="min-w-0">{children}</main>
         </div>
+        <ScrollTopButton label="Наверх" />
         </FeedbackProvider>
       </body>
     </html>

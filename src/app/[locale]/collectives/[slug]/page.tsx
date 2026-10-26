@@ -7,7 +7,6 @@ import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import MemberCard from "@/components/MemberCard";
 import VideoCard from "@/components/VideoCard";
-import FloatingBackLink from "@/components/FloatingBackLink";
 import { getSiteText } from "@/lib/orgContent";
 import { getPublicCultureClubBySlug, localized, paragraphs } from "@/lib/cultureClubs";
 import { listPublicMembersOfClub } from "@/lib/cultureMembers";
@@ -94,7 +93,6 @@ export default async function CollectivePage({ params }: { params: Promise<{ slu
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
-      <FloatingBackLink href="/collectives" label={t.backLink} />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionTitle title={title} subtitle={description ?? ""} />

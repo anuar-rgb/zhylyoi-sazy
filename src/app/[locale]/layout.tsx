@@ -6,6 +6,7 @@ import { routing } from "@/i18n/routing";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
+import ScrollTopButton from "@/components/ScrollTopButton";
 import "../globals.css";
 
 const montserrat = Montserrat({
@@ -92,6 +93,7 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <ScrollTopButton label={locale === "kk" ? "Жоғары" : "Наверх"} />
           </FeedbackProvider>
         </NextIntlClientProvider>
       </body>
