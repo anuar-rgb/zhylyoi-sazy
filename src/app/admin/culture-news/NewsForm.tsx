@@ -10,6 +10,7 @@ import { PUBLISH_STATUSES, PUBLISH_STATUS_LABELS } from "@/lib/publishStatus";
 import { isoToDateTimeInput } from "@/lib/eventFields";
 import { institutionToday } from "@/lib/timeZone";
 import type { CultureNewsRecord, NewsImage } from "@/lib/cultureNews";
+import DateTimeField from "@/components/admin/DateTimeField";
 import BilingualField from "@/components/admin/BilingualField";
 import type { FormState } from "./actions";
 
@@ -205,10 +206,9 @@ export default function NewsForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Публикация</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field
+          <DateTimeField
             name="published_at"
             label="Дата публикации"
-            type="datetime-local"
             defaultValue={item ? isoToDateTimeInput(item.publishedAt) : defaultPublishedAt()}
           />
           <div>

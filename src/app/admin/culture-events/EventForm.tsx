@@ -15,6 +15,7 @@ import {
 } from "@/lib/eventFields";
 import type { CultureEventRecord, EventImage } from "@/lib/cultureEvents";
 import type { PaymentMethodRecord } from "@/lib/paymentMethods";
+import DateTimeField from "@/components/admin/DateTimeField";
 import BilingualField from "@/components/admin/BilingualField";
 import DeleteEventButton from "./DeleteEventButton";
 import EventPriceFields from "./EventPriceFields";
@@ -157,19 +158,8 @@ export default function EventForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Когда и где</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field
-            name="event_date"
-            label="Начало"
-            type="datetime-local"
-            required
-            defaultValue={isoToDateTimeInput(event?.eventDate ?? null)}
-          />
-          <Field
-            name="end_date"
-            label="Окончание (необязательно)"
-            type="datetime-local"
-            defaultValue={isoToDateTimeInput(event?.endDate ?? null)}
-          />
+          <DateTimeField name="event_date" label="Начало" required defaultValue={isoToDateTimeInput(event?.eventDate ?? null)} />
+          <DateTimeField name="end_date" label="Окончание (необязательно)" defaultValue={isoToDateTimeInput(event?.endDate ?? null)} />
           <BilingualField kkName="location_kk" ruName="location_ru" label="Место" defaultKk={event?.locationKk} defaultRu={event?.locationRu} />
           <BilingualField
             kkName="organizer_kk"
