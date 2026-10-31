@@ -85,9 +85,12 @@ export default function SeatMapEditor({
       ? selectedSeats[0]
       : null;
   const rowKey = oneRow ? rowLayoutKey(oneRow.section, oneRow.rowLabel) : null;
-  const rowSeatCount = oneRow
-    ? Math.max(0, ...seats.filter((seat) => seat.section === oneRow.section && seat.rowLabel === oneRow.rowLabel && seat.isActive).map((seat) => seat.seatNumber))
-    : 0;
+  // The row's span of seat numbers: 1…14, or 8…14 for a short row that carries the full row's numbers.
+  const rowNumbers = oneRow
+    ? seats.filter((seat) => seat.section === oneRow.section && seat.rowLabel === oneRow.rowLabel && seat.isActive).map((seat) => seat.seatNumber)
+    : [];
+  const rowFirstSeat = rowNumbers.length > 0 ? Math.min(...rowNumbers) : 1;
+  const rowSeatCount = rowNumbers.length > 0 ? Math.max(...rowNumbers) - rowFirstSeat + 1 : 0;
   const shownLayouts = preview && preview.key === rowKey ? { ...rowLayouts, [preview.key]: preview.placement } : rowLayouts;
 
   function toggleSeat(seat: SeatMapSeat) {
@@ -157,6 +160,7 @@ export default function SeatMapEditor({
               section={oneRow.section}
               rowLabel={oneRow.rowLabel}
               seatCount={rowSeatCount}
+              firstSeat={rowFirstSeat}
               placement={rowLayouts?.[rowKey] ?? { alignment: "center", offsetStart: 0 }}
               rowShape={rowShape ?? "curved"}
               hallNumbering={numbering ?? "ltr"}

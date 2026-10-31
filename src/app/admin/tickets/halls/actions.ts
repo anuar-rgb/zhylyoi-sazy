@@ -306,6 +306,11 @@ export type RowLayoutInput = {
   offsetStart: number;
   /** «Сбросить»: the row goes back to seatCount seats, centred, with no setting of its own. */
   reset?: boolean;
+  /**
+   * The number of the row's first seat (1 by default): a short row may carry the numbers of the
+   * part of the full row it stands under — 7 seats numbered 8…14, not 1…7.
+   */
+  firstSeat?: number;
   /** This row's own numbering direction; undefined leaves it as it is, null follows the hall. */
   numbering?: "ltr" | "rtl" | null;
 };
@@ -326,6 +331,9 @@ export async function saveRowLayout(input: RowLayoutInput): Promise<{ ok: boolea
   const alignment = toRowAlignment(input.alignment);
   const offsetStart = alignment === "custom" ? Math.trunc(input.offsetStart) : 0;
   if (!Number.isFinite(offsetStart) || offsetStart < 0 || offsetStart > 200) return { ok: false, error: "Сдвиг — от 0 до 200 мест." };
+  const firstSeat = Math.trunc(input.firstSeat ?? 1);
+  const lastSeat = firstSeat + seatCount - 1;
+  if (!Number.isFinite(firstSeat) || firstSeat < 1 || lastSeat > 200) return { ok: false, error: "Номера мест — от 1 до 200." };
 
   const supabase = await createClient();
   const [{ data: seats, error: seatsError }, { data: layout, error: layoutError }] = await Promise.all([
@@ -346,17 +354,22 @@ export async function saveRowLayout(input: RowLayoutInput): Promise<{ ok: boolea
   if (layoutError) return { ok: false, error: NO_ROW_LAYOUT_TABLE.has(layoutError.code) ? NO_ROW_LAYOUT_MESSAGE : "Не удалось прочитать настройку ряда." };
   if (seatsError || !seats || seats.length === 0) return { ok: false, error: "Такого ряда в зале нет." };
 
-  // Where the row used to end: its own setting, or else its last active seat.
+  // Which numbers the row used to have: from its first active seat, its own count (or else up to its
+  // last active seat). Seats hidden one by one inside that span stay hidden.
   const activeNumbers = seats.filter((s) => s.is_active).map((s) => s.seat_number as number);
-  const previousCount = (layout?.seat_count as number | null | undefined) ?? Math.max(0, ...activeNumbers);
+  const previousFirst = activeNumbers.length > 0 ? Math.min(...activeNumbers) : 1;
+  const previousLast =
+    layout?.seat_count != null ? previousFirst + (layout.seat_count as number) - 1 : Math.max(0, ...activeNumbers);
+  const inPrevious = (n: number) => n >= previousFirst && n <= previousLast;
+  const inNew = (n: number) => n >= firstSeat && n <= lastSeat;
   const byNumber = new Map(seats.map((s) => [s.seat_number as number, s]));
 
-  const toDeactivate = seats.filter((s) => s.is_active && (s.seat_number as number) > seatCount).map((s) => s.id as string);
+  const toDeactivate = seats.filter((s) => s.is_active && !inNew(s.seat_number as number)).map((s) => s.id as string);
   const toReactivate = seats
-    .filter((s) => !s.is_active && (s.seat_number as number) > previousCount && (s.seat_number as number) <= seatCount)
+    .filter((s) => !s.is_active && inNew(s.seat_number as number) && !inPrevious(s.seat_number as number))
     .map((s) => s.id as string);
   const toInsert: SeatInsert[] = [];
-  for (let n = 1; n <= seatCount; n++) {
+  for (let n = firstSeat; n <= lastSeat; n++) {
     if (!byNumber.has(n)) {
       toInsert.push({ hall_id: input.hallId, ...(section === PARTER ? {} : { section }), row_label: input.rowLabel, seat_number: n, category: STANDARD });
     }

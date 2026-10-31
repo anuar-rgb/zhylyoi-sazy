@@ -28,6 +28,7 @@ export default function RowGeometryPanel({
   section,
   rowLabel,
   seatCount,
+  firstSeat,
   placement,
   rowShape,
   hallNumbering,
@@ -40,6 +41,8 @@ export default function RowGeometryPanel({
   rowLabel: string;
   /** Seats the row has now; kept as is — only where it stands changes here. */
   seatCount: number;
+  /** The number of the row's first seat (1, or e.g. 8 for a short row numbered 8…14). */
+  firstSeat: number;
   placement: RowPlacement;
   rowShape: "curved" | "straight";
   /** Shows a placement on the map before it is saved; null drops the preview. */
@@ -52,10 +55,13 @@ export default function RowGeometryPanel({
   const [offset, setOffset] = useState(String(placement.offsetStart));
   const savedRtl = (placement.numbering ?? hallNumbering) === "rtl";
   const [rtl, setRtl] = useState(savedRtl);
+  const [first, setFirst] = useState(String(firstSeat));
+  const firstChanged = (Number.parseInt(first, 10) || 1) !== firstSeat;
   const changed =
     alignment !== placement.alignment ||
     (alignment === "custom" && (Number.parseInt(offset, 10) || 0) !== placement.offsetStart) ||
-    rtl !== savedRtl;
+    rtl !== savedRtl ||
+    firstChanged;
   // Stored only when it differs from the hall; the same as the hall means «follow the hall».
   const rowNumbering = (value: boolean): "ltr" | "rtl" | null => ((value ? "rtl" : "ltr") === hallNumbering ? null : value ? "rtl" : "ltr");
 
@@ -77,6 +83,7 @@ export default function RowGeometryPanel({
         alignment,
         offsetStart: Number.parseInt(offset, 10) || 0,
         numbering: rowNumbering(rtl),
+        firstSeat: Number.parseInt(first, 10) || 1,
       });
       if (result.ok) {
         feedback.success(`Ряд ${rowLabel} сохранён`);
@@ -101,7 +108,10 @@ export default function RowGeometryPanel({
       <p className="text-sm font-semibold text-ocean">
         Ряд {rowLabel}
         {section !== "parter" && <span className="font-normal text-ocean/60"> · {sectionLabel(section)}</span>}
-        <span className="font-normal text-ocean/60"> · {seatCount} мест</span>
+        <span className="font-normal text-ocean/60">
+          {" "}
+          · {seatCount} мест{firstSeat > 1 ? `, № ${firstSeat}–${firstSeat + seatCount - 1}` : ""}
+        </span>
       </p>
 
       <div>
@@ -141,6 +151,23 @@ export default function RowGeometryPanel({
         </label>
       )}
 
+      <label className="flex flex-wrap items-center gap-2 text-sm text-ocean/70">
+        Нумерация с места №
+        <input
+          type="number"
+          min={1}
+          max={200}
+          value={first}
+          onChange={(e) => setFirst(e.target.value)}
+          className="w-20 px-3 py-1.5 border border-cream-dark rounded-xl bg-white text-sm text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
+        />
+        <span className="text-xs text-ocean/50">
+          {(Number.parseInt(first, 10) || 1) > 1
+            ? `места будут № ${Number.parseInt(first, 10)}–${(Number.parseInt(first, 10) || 1) + seatCount - 1}`
+            : "обычно 1"}
+        </span>
+      </label>
+
       <label className="flex items-center gap-2.5 text-sm text-ocean cursor-pointer">
         <input
           type="checkbox"
@@ -165,6 +192,7 @@ export default function RowGeometryPanel({
               setAlignment(placement.alignment);
               setOffset(String(placement.offsetStart));
               setRtl(savedRtl);
+              setFirst(String(firstSeat));
               onPreview(null);
             }}
             className="text-sm font-semibold text-ocean/60 hover:text-ocean"

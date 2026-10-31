@@ -23,6 +23,8 @@ export type RowLayoutRow = {
   label: string;
   /** Seats the row has now: its own setting, or its last active seat. */
   seatCount: number;
+  /** The number of the row's first seat. */
+  firstSeat: number;
   alignment: RowAlignment;
   offsetStart: number;
   /** The row has a setting of its own (and so can be reset). */
@@ -91,7 +93,7 @@ export default function RowLayoutForm({
       {/* Keyed by the row and its saved values: another row, or the page coming back after a save,
           starts the fields over from what is stored. */}
       <RowEditor
-        key={`${row.section}:${row.label}:${row.seatCount}:${row.alignment}:${row.offsetStart}`}
+        key={`${row.section}:${row.label}:${row.seatCount}:${row.firstSeat}:${row.alignment}:${row.offsetStart}`}
         hallId={hallId}
         row={row}
         fullWidth={fullWidths[row.section] ?? row.seatCount}
@@ -104,6 +106,7 @@ function RowEditor({ hallId, row, fullWidth }: { hallId: string; row: RowLayoutR
   const feedback = useFeedback();
   const [pending, startTransition] = useTransition();
   const [seatCount, setSeatCount] = useState(String(row.seatCount));
+  const [firstSeat, setFirstSeat] = useState(String(row.firstSeat));
   const [alignment, setAlignment] = useState<RowAlignment>(row.alignment);
   const [offset, setOffset] = useState(String(row.offsetStart));
 
@@ -115,6 +118,7 @@ function RowEditor({ hallId, row, fullWidth }: { hallId: string; row: RowLayoutR
         section: row.section,
         rowLabel: row.label,
         seatCount: count,
+        firstSeat: reset ? 1 : Number.parseInt(firstSeat, 10) || 1,
         alignment: reset ? "center" : alignment,
         offsetStart: Number.parseInt(offset, 10) || 0,
         reset,
@@ -140,7 +144,24 @@ function RowEditor({ hallId, row, fullWidth }: { hallId: string; row: RowLayoutR
             onChange={(e) => setSeatCount(e.target.value)}
             className={INPUT}
           />
-          <p className="text-xs text-ocean/40 mt-1.5">Полный ряд в этом секторе — {fullWidth} мест. Места нумеруются 1, 2, 3…</p>
+          <p className="text-xs text-ocean/40 mt-1.5">Полный ряд в этом секторе — {fullWidth} мест.</p>
+        </div>
+        <div>
+          <label className={LABEL} htmlFor="row-layout-first">
+            Нумерация с места №
+          </label>
+          <input
+            id="row-layout-first"
+            type="number"
+            min={1}
+            max={200}
+            value={firstSeat}
+            onChange={(e) => setFirstSeat(e.target.value)}
+            className={INPUT}
+          />
+          <p className="text-xs text-ocean/40 mt-1.5">
+            Например, 8: ряд из 7 мест получит номера 8–14. Обычно 1.
+          </p>
         </div>
         {alignment === "custom" && (
           <div>

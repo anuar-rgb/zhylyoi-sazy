@@ -148,15 +148,23 @@ export async function listHallSeats(hallId: string): Promise<HallSeatRecord[]> {
   // Nor is a hidden seat past the section's widest row (one left over from a row made longer and
   // then reset, or from a grid made narrower): it would only widen the map with grey circles.
   const widest = new Map<HallSection, number>();
+  // Where each row's own seats begin: a short row may start at seat 8, with 1…7 hidden.
+  const firstActive = new Map<string, number>();
   for (const seat of seats) {
-    if (seat.isActive) widest.set(seat.section, Math.max(widest.get(seat.section) ?? 0, seat.seatNumber));
+    if (!seat.isActive) continue;
+    widest.set(seat.section, Math.max(widest.get(seat.section) ?? 0, seat.seatNumber));
+    const key = rowLayoutKey(seat.section, seat.rowLabel);
+    firstActive.set(key, Math.min(firstActive.get(key) ?? Infinity, seat.seatNumber));
   }
   return seats.filter((seat) => {
     if (!liveSections.has(seat.section)) return false;
     if (seat.isActive) return true;
     if (seat.seatNumber > (widest.get(seat.section) ?? 0)) return false;
-    const count = seatCounts.get(rowLayoutKey(seat.section, seat.rowLabel));
-    return !count || seat.seatNumber <= count;
+    const key = rowLayoutKey(seat.section, seat.rowLabel);
+    const count = seatCounts.get(key);
+    if (!count) return true;
+    const first = firstActive.get(key) ?? 1;
+    return seat.seatNumber >= first && seat.seatNumber < first + count;
   });
 }
 

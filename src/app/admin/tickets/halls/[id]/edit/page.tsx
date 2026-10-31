@@ -52,14 +52,16 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
     const key = rowLayoutKey(seat.section, seat.rowLabel);
     const last = layoutRows[layoutRows.length - 1];
     if (last && rowLayoutKey(last.section, last.label) === key) {
-      if (!layoutByRow.get(key)?.seatCount) last.seatCount = Math.max(last.seatCount, seat.seatNumber);
+      if (!layoutByRow.get(key)?.seatCount) last.seatCount = Math.max(last.seatCount, seat.seatNumber - last.firstSeat + 1);
       continue;
     }
     const layout = layoutByRow.get(key);
     layoutRows.push({
       section: seat.section,
       label: seat.rowLabel,
-      seatCount: layout?.seatCount ?? seat.seatNumber,
+      // Seats come sorted, so this is the row's first seat: 1, or e.g. 8 for a short row numbered 8…14.
+      firstSeat: seat.seatNumber,
+      seatCount: layout?.seatCount ?? 1,
       alignment: layout?.alignment ?? "center",
       offsetStart: layout?.offsetStart ?? 0,
       custom: !!layout,
