@@ -108,3 +108,22 @@ export async function listSoldTickets(eventId: string): Promise<SoldTicket[]> {
         a.seatNumber - b.seatNumber
     );
 }
+
+/** A seat closed from sale for one event: kept for a guest, or out of order. */
+export type SeatBlock = { kind: "reserved" | "broken"; note: string | null };
+
+/**
+ * The seats closed for this event, seat id -> why. Empty when there are none, or when the
+ * event_seat_blocks migration has not been run yet (the table is missing): nothing is closed then.
+ */
+export async function listSeatBlocks(eventId: string): Promise<Map<string, SeatBlock>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("event_seat_blocks").select("seat_id, kind, note").eq("event_id", eventId);
+  if (error || !data) return new Map();
+  return new Map(
+    (data as Row[]).map((row) => [
+      String(row.seat_id),
+      { kind: row.kind === "broken" ? "broken" : "reserved", note: row.note ? String(row.note) : null } satisfies SeatBlock,
+    ])
+  );
+}

@@ -6,7 +6,7 @@ import type { RowPlacements } from "@/lib/hallRowLayout";
 import SeatMap, { assignCategoryColors, seatsToRows, type SeatMapSeat } from "@/components/SeatMap";
 import { categoryLabel } from "@/lib/seatCategories";
 import { seatName } from "@/lib/hallSections";
-import type { SeatOccupant } from "@/lib/ticketing/occupancy";
+import type { SeatBlock, SeatOccupant } from "@/lib/ticketing/occupancy";
 
 export type OccupancySeat = {
   id: string;
@@ -25,6 +25,10 @@ const STATE_STYLE: Record<SeatOccupant["state"], { className: string; label: str
   held: { className: "bg-orange-200 text-orange-900 ring-1 ring-inset ring-orange-400", label: "Ожидает оплаты" },
 };
 const OFF_SALE = "bg-ocean/10 text-ocean/30";
+const BLOCK_STYLE: Record<SeatBlock["kind"], { className: string; label: string }> = {
+  reserved: { className: "bg-purple-500 text-white", label: "Бронь" },
+  broken: { className: "bg-gray-300 text-gray-600 line-through", label: "Неисправно" },
+};
 
 function money(amount: number): string {
   return amount === 0 ? "бесплатно" : `${new Intl.NumberFormat("ru-RU").format(amount)} ₸`;
@@ -43,7 +47,10 @@ export default function OccupancyMap({
   ordersHref,
   rowShape,
   rowLayouts,
+  blocks = {},
 }: {
+  /** Seats closed from sale for this event (kept for a guest, or out of order). */
+  blocks?: Record<string, SeatBlock>;
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
   /** Rows set up on their own: where each one stands within its section. */
@@ -75,23 +82,25 @@ export default function OccupancyMap({
             rowLabel: seat.rowLabel,
             seatNumber: seat.seatNumber,
             category: seat.category,
-            status: occupants[seat.id]?.state ?? (seat.category in prices ? "free" : "off"),
+            status: occupants[seat.id]?.state ?? blocks[seat.id]?.kind ?? (seat.category in prices ? "free" : "off"),
           })
         )
       ),
-    [seats, occupants, prices]
+    [seats, occupants, blocks, prices]
   );
 
   function seatVariant(seat: SeatMapSeat) {
     const ring = seat.id === selectedId ? " ring-2 ring-offset-2 ring-ocean-dark" : "";
     if (seat.status === "free") return { className: (colors.get(seat.category)?.solid ?? "bg-ocean text-cream") + ring };
     if (seat.status === "off") return { className: OFF_SALE + ring };
+    if (seat.status === "reserved" || seat.status === "broken") return { className: BLOCK_STYLE[seat.status].className + ring };
     return { className: STATE_STYLE[seat.status as SeatOccupant["state"]].className + ring };
   }
 
   function tooltip(seat: SeatMapSeat): string {
     const occupant = occupants[seat.id];
-    const state = occupant ? STATE_STYLE[occupant.state].label : seat.status === "free" ? "Свободно" : "Не продаётся";
+    const block = blocks[seat.id];
+    const state = occupant ? STATE_STYLE[occupant.state].label : block ? BLOCK_STYLE[block.kind].label : seat.status === "free" ? "Свободно" : "Не продаётся";
     return `${seatName(seat)} — ${categoryLabel(seat.category)} — ${state}`;
   }
 
@@ -105,6 +114,8 @@ export default function OccupancyMap({
     { swatchClassName: "bg-red-500", label: STATE_STYLE.sold.label },
     { swatchClassName: "bg-gray-500", label: "Вошёл" },
     { swatchClassName: "bg-orange-200", label: STATE_STYLE.held.label },
+    ...(Object.values(blocks).some((b) => b.kind === "reserved") ? [{ swatchClassName: "bg-purple-500", label: "Бронь" }] : []),
+    ...(Object.values(blocks).some((b) => b.kind === "broken") ? [{ swatchClassName: "bg-gray-300", label: "Неисправно" }] : []),
     ...(seats.some((seat) => !(seat.category in prices)) ? [{ swatchClassName: "bg-ocean/10", label: "Не продаётся" }] : []),
   ];
 
@@ -143,7 +154,7 @@ export default function OccupancyMap({
             </button>
           </div>
           <p className="text-sm text-ocean mt-2">
-            {occupant ? STATE_STYLE[occupant.state].label : price === undefined ? "Не продаётся" : "Свободно"}
+            {occupant ? STATE_STYLE[occupant.state].label : blocks[selected.id] ? BLOCK_STYLE[blocks[selected.id].kind].label + (blocks[selected.id].note ? ` · ${blocks[selected.id].note}` : "") : price === undefined ? "Не продаётся" : "Свободно"}
             {occupant?.orderNumber && (
               <>
                 {" · "}

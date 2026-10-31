@@ -98,3 +98,53 @@ export async function issueLateOrder(bookingId: string) {
 export async function markOrderRefunded(bookingId: string, note?: string) {
   return run(bookingId, "mark_booking_refunded", { p_note: text(note, 500) });
 }
+
+/** Postgres "undefined_function" / PostgREST "no such function": the event_seat_blocks migration has not been run. */
+const NO_BLOCKS = new Set(["42883", "PGRST202"]);
+const NO_BLOCKS_MESSAGE = "Закрытие мест ещё не включено в базе: выполните SQL из миграции 20261031150000_event_seat_blocks.sql.";
+
+/**
+ * Closes free seats of one event from sale: «Бронь» (kept for a guest) or «Неисправно». Sold and
+ * held seats are left alone by the database function itself.
+ */
+export async function blockSeats(eventId: string, seatIds: string[], kind: "reserved" | "broken", note?: string): Promise<OrderActionResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(eventId) || seatIds.length === 0) return { ok: false, message: "Выберите места." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("block_event_seats", {
+    p_event_id: eventId,
+    p_seat_ids: seatIds,
+    p_kind: kind,
+    p_note: text(note, 200),
+  });
+  if (error) {
+    if (NO_BLOCKS.has(error.code)) return { ok: false, message: NO_BLOCKS_MESSAGE };
+    if (error.message?.includes("event_finished")) return { ok: false, message: EVENT_LOCKED_MESSAGE };
+    return { ok: false, message: "Не удалось закрыть места." };
+  }
+  revalidatePath("/admin/tickets/orders");
+  revalidatePath("/admin/tickets/stats", "layout");
+  const count = Number(data ?? 0);
+  const skipped = seatIds.length - count;
+  return {
+    ok: count > 0,
+    message:
+      count === 0
+        ? "Эти места уже проданы или ждут оплаты — закрыть их нельзя."
+        : `Закрыто мест: ${count}${skipped > 0 ? ` (ещё ${skipped} уже заняты покупателями)` : ""}`,
+  };
+}
+
+/** Opens closed seats of one event for sale again. */
+export async function unblockSeats(eventId: string, seatIds: string[]): Promise<OrderActionResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(eventId) || seatIds.length === 0) return { ok: false, message: "Выберите места." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("unblock_event_seats", { p_event_id: eventId, p_seat_ids: seatIds });
+  if (error) {
+    if (NO_BLOCKS.has(error.code)) return { ok: false, message: NO_BLOCKS_MESSAGE };
+    if (error.message?.includes("event_finished")) return { ok: false, message: EVENT_LOCKED_MESSAGE };
+    return { ok: false, message: "Не удалось открыть места." };
+  }
+  revalidatePath("/admin/tickets/orders");
+  revalidatePath("/admin/tickets/stats", "layout");
+  return { ok: true, message: `Открыто для продажи мест: ${Number(data ?? 0)}` };
+}

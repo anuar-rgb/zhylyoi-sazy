@@ -13,6 +13,15 @@ import NoProfile from "../NoProfile";
 import OrderActions from "./OrderActions";
 import { seatName } from "@/lib/hallSections";
 import { BOOKING_STATUS_BADGE, toBookingStatus } from "@/lib/bookingStatus";
+import { getCultureEventById, isEventLocked, listAllTicketedCultureEvents } from "@/lib/cultureEvents";
+import { formatEventDateTime } from "@/lib/eventFields";
+import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
+import { listEventTicketTypes } from "@/lib/eventTicketTypes";
+import { pricesOf } from "@/lib/eventPrices";
+import { getHallById, listHallRowLayouts, rowLayoutsForMap } from "@/lib/halls";
+import { listSeatBlocks, listSeatOccupants } from "@/lib/ticketing/occupancy";
+import SeatBlockMap from "./SeatBlockMap";
+import EventPicker from "./EventPicker";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -40,6 +49,26 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       ? [...listed].sort((a, b) => (QUEUE_ORDER[a.status] ?? 9) - (QUEUE_ORDER[b.status] ?? 9) || a.createdAt.localeCompare(b.createdAt))
       : listed;
 
+  // The hall map: the chosen event, or else the nearest one still on sale.
+  const ticketed = await listAllTicketedCultureEvents();
+  const mapEventId = eventId ?? ticketed.current[0]?.id ?? null;
+  const mapEvent = mapEventId ? await getCultureEventById(mapEventId) : null;
+  const map =
+    mapEvent?.hallId
+      ? await Promise.all([
+          listEventSeatsForAdmin(mapEvent.id, mapEvent.hallId),
+          listSeatOccupants(mapEvent.id),
+          listSeatBlocks(mapEvent.id),
+          listEventTicketTypes(mapEvent.id),
+          getHallById(mapEvent.hallId),
+          listHallRowLayouts(mapEvent.hallId),
+        ])
+      : null;
+  const pickerEvents = [
+    ...ticketed.current.map((e) => ({ id: e.id, group: "current" as const, label: `${e.titleRu ?? e.titleKk ?? "Мероприятие"} · ${formatEventDateTime(e.eventDate)}` })),
+    ...ticketed.other.map((e) => ({ id: e.id, group: "other" as const, label: `${e.titleRu ?? e.titleKk ?? "Мероприятие"} · ${formatEventDateTime(e.eventDate)}` })),
+  ];
+
   const href = (f: OrderFilter) => `/admin/tickets/orders?${new URLSearchParams({ ...(f !== "all" ? { status: f } : {}), ...(eventId ? { event: eventId } : {}) })}`;
 
   return (
@@ -53,6 +82,25 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         «Подтвердить оплату» — после этого покупатель получит билеты. «Покупатель сообщил об оплате» — это не
         оплата, а просьба проверить. Показаны последние 100.
       </p>
+
+      {mapEvent && map && (
+        <section className={`${CARD} p-4 sm:p-5 mb-6`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 className="font-bold text-ocean">Схема зала</h2>
+            <EventPicker events={pickerEvents} value={mapEvent.id} />
+          </div>
+          <SeatBlockMap
+            eventId={mapEvent.id}
+            seats={map[0].filter((seat) => seat.isActive || map[1].has(seat.id)).map((seat) => ({ id: seat.id, section: seat.section, rowLabel: seat.rowLabel, seatNumber: seat.seatNumber, category: seat.category }))}
+            occupants={Object.fromEntries(map[1])}
+            blocks={Object.fromEntries(map[2])}
+            prices={pricesOf(map[3])}
+            locked={isEventLocked(mapEvent)}
+            rowShape={map[4]?.rowShape}
+            rowLayouts={rowLayoutsForMap(map[5])}
+          />
+        </section>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6">
         {FILTERS.map((f) => (
