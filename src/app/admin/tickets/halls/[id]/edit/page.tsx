@@ -105,7 +105,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           </div>
         ) : (
           <div className={CARD}>
-            <SeatMapEditor seats={seats} categories={categories} rowShape={hall.rowShape} rowLayouts={rowLayoutsForMap(rowLayouts)} />
+            <SeatMapEditor seats={seats} categories={categories} rowShape={hall.rowShape} numbering={hall.seatNumbering} rowLayouts={rowLayoutsForMap(rowLayouts)} />
           </div>
         )}
       </section>
@@ -130,7 +130,7 @@ export default async function EditHallPage({ params }: { params: Promise<{ id: s
           Размер партера, боковых секторов и балкона. Здесь же можно добавить сектор, которого ещё нет.
         </p>
         <div className={CARD}>
-          <GenerateGridForm hallId={hall.id} sizes={sizes} rowShape={hall.rowShape} />
+          <GenerateGridForm hallId={hall.id} sizes={sizes} rowShape={hall.rowShape} numbering={hall.seatNumbering} />
         </div>
       </section>
 

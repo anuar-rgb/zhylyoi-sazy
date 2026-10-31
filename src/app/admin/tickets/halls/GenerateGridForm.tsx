@@ -4,6 +4,7 @@ import { useActionToast, useFeedback } from "@/components/feedback/FeedbackProvi
 import { useActionState, useState, useTransition } from "react";
 import { regenerateSeatGrid } from "./actions";
 import GridFieldset from "./GridFieldset";
+import NumberingField from "./NumberingField";
 import { PARTER, SECTIONS, sectionLabel, type HallSection } from "@/lib/hallSections";
 
 const ROW_SHAPES = [
@@ -23,7 +24,10 @@ export default function GenerateGridForm({
   hallId,
   sizes,
   rowShape,
+  numbering,
 }: {
+  /** Which end of each row seat 1 is drawn at; saved with «Применить изменение сетки». */
+  numbering: "ltr" | "rtl";
   hallId: string;
   /** How the hall's seat maps draw the rows; saved with «Применить изменение сетки». */
   rowShape: "curved" | "straight";
@@ -161,6 +165,8 @@ export default function GenerateGridForm({
         </div>
         <p className="text-xs text-ocean/40 mt-1.5">Для всего зала: так схема выглядит в админке и у покупателя. Места и билеты не меняются.</p>
       </fieldset>
+
+      <NumberingField defaultValue={numbering} />
 
       <button
         type="submit"

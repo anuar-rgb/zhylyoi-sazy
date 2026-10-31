@@ -75,7 +75,8 @@ export async function createHall(_prev: FormState, form: FormData): Promise<Form
   const supabase = await createClient();
   const { data: created, error } = await supabase
     .from("halls")
-    .insert({ ...data, organization_id: organizationId })
+    // seat_numbering only when it differs from the default, so a database without that column still takes the hall.
+    .insert({ ...data, organization_id: organizationId, ...(field(form, "seat_numbering") === "rtl" ? { seat_numbering: "rtl" } : {}) })
     .select("id")
     .single();
 
@@ -207,9 +208,11 @@ export async function regenerateSeatGrid(_prev: FormState, form: FormData): Prom
 
   // The row shape belongs to the whole hall and is saved even when the grid itself is left as it is.
   const rowShape = field(form, "row_shape");
+  const numbering = field(form, "seat_numbering");
   if (rowShape === "curved" || rowShape === "straight") {
     const supabase = await createClient();
-    const { error, count } = await supabase.from("halls").update({ row_shape: rowShape }, { count: "exact" }).eq("id", hallId);
+    const look = { row_shape: rowShape, ...(numbering === "ltr" || numbering === "rtl" ? { seat_numbering: numbering } : {}) };
+    const { error, count } = await supabase.from("halls").update(look, { count: "exact" }).eq("id", hallId);
     if (error) return { error: "Не удалось сохранить геометрию рядов." };
     if (count === 0) return { error: "Недостаточно прав для редактирования этого зала." };
   }
@@ -303,6 +306,8 @@ export type RowLayoutInput = {
   offsetStart: number;
   /** «Сбросить»: the row goes back to seatCount seats, centred, with no setting of its own. */
   reset?: boolean;
+  /** This row's own numbering direction; undefined leaves it as it is, null follows the hall. */
+  numbering?: "ltr" | "rtl" | null;
 };
 
 /**
@@ -374,6 +379,7 @@ export async function saveRowLayout(input: RowLayoutInput): Promise<{ ok: boolea
       seat_count: seatCount,
       alignment,
       offset_start: offsetStart,
+      ...(input.numbering !== undefined ? { numbering_direction: input.numbering } : {}),
       updated_at: new Date().toISOString(),
     });
     if (error) return { ok: false, error: NO_ROW_LAYOUT_TABLE.has(error.code) ? NO_ROW_LAYOUT_MESSAGE : "Не удалось сохранить настройку ряда." };

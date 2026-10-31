@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { sectionOrder, toSection, type HallSection } from "@/lib/hallSections";
 import { categoryOptions } from "@/lib/seatCategories";
-import { rowLayoutKey, toRowAlignment, type RowAlignment, type RowPlacements } from "@/lib/hallRowLayout";
+import { rowLayoutKey, toRowAlignment, toSeatNumbering, type RowAlignment, type RowPlacements, type SeatNumbering } from "@/lib/hallRowLayout";
 
 /** How the seat map draws the rows: in an arc, or as straight parallel rows. */
 export type RowShape = "curved" | "straight";
@@ -13,6 +13,8 @@ export type HallRecord = {
   nameRu: string | null;
   totalCapacity: number;
   rowShape: RowShape;
+  /** Which end of each row seat 1 is drawn at. */
+  seatNumbering: SeatNumbering;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -30,7 +32,8 @@ export type HallSeatRecord = {
   createdAt: string;
 };
 
-const HALL_COLUMNS = "id, organization_id, name_kk, name_ru, total_capacity, row_shape, is_active, created_at, updated_at";
+const BASE_HALL_COLUMNS = "id, organization_id, name_kk, name_ru, total_capacity, row_shape, is_active, created_at, updated_at";
+const HALL_COLUMNS = `${BASE_HALL_COLUMNS}, seat_numbering`;
 const BASE_SEAT_COLUMNS = "id, hall_id, row_label, seat_number, category, is_active, created_at";
 const SEAT_COLUMNS = `${BASE_SEAT_COLUMNS}, section`;
 /** Postgres "undefined_column": the hall_seats.section migration has not been run yet. */
@@ -50,6 +53,7 @@ function toHall(row: Row): HallRecord {
     nameRu: str(row.name_ru),
     totalCapacity: typeof row.total_capacity === "number" ? row.total_capacity : 0,
     rowShape: row.row_shape === "straight" ? "straight" : "curved",
+    seatNumbering: toSeatNumbering(row.seat_numbering) ?? "ltr",
     isActive: row.is_active === true,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -79,7 +83,10 @@ function toSeat(row: Row): HallSeatRecord {
  */
 export async function listHalls(): Promise<HallRecord[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("halls").select(HALL_COLUMNS).order("name_ru");
+  const read = (columns: string) => supabase.from("halls").select(columns).order("name_ru");
+  let { data, error } = await read(HALL_COLUMNS);
+  // Before the seat_numbering migration the column is missing; read the rest.
+  if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await read(BASE_HALL_COLUMNS));
 
   if (error || !data) return [];
   return (data as unknown as Row[]).map(toHall);
@@ -88,7 +95,9 @@ export async function listHalls(): Promise<HallRecord[]> {
 /** One hall by id, for the edit form. Null when missing or not visible to the caller. */
 export async function getHallById(id: string): Promise<HallRecord | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("halls").select(HALL_COLUMNS).eq("id", id).maybeSingle();
+  const read = (columns: string) => supabase.from("halls").select(columns).eq("id", id).maybeSingle();
+  let { data, error } = await read(HALL_COLUMNS);
+  if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await read(BASE_HALL_COLUMNS));
 
   if (error || !data) return null;
   return toHall(data as unknown as Row);
@@ -160,6 +169,8 @@ export type HallRowLayout = {
   alignment: RowAlignment;
   /** With alignment "custom": how many seat places to leave empty on the left. */
   offsetStart: number;
+  /** This row's own numbering direction; null = the hall's. */
+  numbering: SeatNumbering | null;
 };
 
 /**
@@ -169,24 +180,25 @@ export type HallRowLayout = {
  */
 export async function listHallRowLayouts(hallId: string): Promise<HallRowLayout[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("hall_row_layouts")
-    .select("section, row_label, seat_count, alignment, offset_start")
-    .eq("hall_id", hallId);
+  const read = (columns: string) => supabase.from("hall_row_layouts").select(columns).eq("hall_id", hallId);
+  let { data, error } = await read("section, row_label, seat_count, alignment, offset_start, numbering_direction");
+  // Before the numbering migration that column is missing; the rest still counts.
+  if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await read("section, row_label, seat_count, alignment, offset_start"));
   if (error || !data) return [];
-  return (data as Row[]).map((row) => ({
+  return (data as unknown as Row[]).map((row) => ({
     section: toSection(row.section),
     rowLabel: String(row.row_label),
     seatCount: typeof row.seat_count === "number" ? row.seat_count : null,
     alignment: toRowAlignment(row.alignment),
     offsetStart: typeof row.offset_start === "number" ? row.offset_start : 0,
+    numbering: toSeatNumbering(row.numbering_direction),
   }));
 }
 
 /** Row layouts keyed for the seat maps: only what drawing needs. */
 export function rowLayoutsForMap(layouts: HallRowLayout[]): RowPlacements {
   return Object.fromEntries(
-    layouts.map((layout) => [rowLayoutKey(layout.section, layout.rowLabel), { alignment: layout.alignment, offsetStart: layout.offsetStart }])
+    layouts.map((layout) => [rowLayoutKey(layout.section, layout.rowLabel), { alignment: layout.alignment, offsetStart: layout.offsetStart, numbering: layout.numbering }])
   );
 }
 

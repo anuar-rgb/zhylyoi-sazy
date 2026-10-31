@@ -36,6 +36,7 @@ export default function SeatBlockMap({
   prices,
   locked,
   rowShape,
+  numbering,
   rowLayouts,
 }: {
   eventId: string;
@@ -47,6 +48,8 @@ export default function SeatBlockMap({
   /** Past or archived event: the map only shows. */
   locked: boolean;
   rowShape?: "curved" | "straight";
+  /** The hall's numbering direction: seat 1 at the left or the right. */
+  numbering?: "ltr" | "rtl";
   rowLayouts?: RowPlacements;
 }) {
   const router = useRouter();
@@ -132,6 +135,7 @@ export default function SeatBlockMap({
       <SeatMap
         rows={rows}
         rowShape={rowShape}
+        numbering={numbering}
         rowLayouts={rowLayouts}
         seatVariant={seatVariant}
         onSeatClick={onSeat}

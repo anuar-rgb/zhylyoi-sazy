@@ -8,8 +8,15 @@ export type RowAlignment = "center" | "left" | "right" | "custom";
 
 export const ROW_ALIGNMENTS: readonly RowAlignment[] = ["center", "left", "right", "custom"];
 
-/** What the seat map needs to draw a row: where it stands. */
-export type RowPlacement = { alignment: RowAlignment; offsetStart: number };
+/** Which end of a row seat 1 is drawn at: the left (as always) or the right. Never changes a seat's number. */
+export type SeatNumbering = "ltr" | "rtl";
+
+export function toSeatNumbering(value: unknown): SeatNumbering | null {
+  return value === "rtl" || value === "ltr" ? value : null;
+}
+
+/** What the seat map needs to draw a row: where it stands, and (when set) its own numbering direction. */
+export type RowPlacement = { alignment: RowAlignment; offsetStart: number; numbering?: SeatNumbering | null };
 
 /** Row placements keyed by rowLayoutKey. A row missing here is centred, as before. */
 export type RowPlacements = Record<string, RowPlacement>;

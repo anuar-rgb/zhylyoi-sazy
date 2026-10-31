@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import BilingualField from "@/components/admin/BilingualField";
 import GridFieldset from "../GridFieldset";
+import NumberingField from "../NumberingField";
 import { createHall } from "../actions";
 import type { FormState } from "../actions";
 
@@ -118,6 +119,7 @@ export default function NewHallForm() {
           <p className="text-xs text-ocean/50 mt-0.5">Основные ряды перед сценой.</p>
         </div>
         <GridFieldset required />
+        <NumberingField />
 
         <details className="group border-t border-cream-dark pt-4">
           <summary className="flex items-center gap-2 cursor-pointer select-none list-none text-sm font-semibold text-ocean">

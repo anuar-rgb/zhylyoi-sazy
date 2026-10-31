@@ -30,8 +30,11 @@ export default function RowGeometryPanel({
   seatCount,
   placement,
   rowShape,
+  hallNumbering,
   onPreview,
 }: {
+  /** The hall's numbering direction, which a row follows unless it sets its own. */
+  hallNumbering: "ltr" | "rtl";
   hallId: string;
   section: string;
   rowLabel: string;
@@ -47,10 +50,21 @@ export default function RowGeometryPanel({
   const [pending, startTransition] = useTransition();
   const [alignment, setAlignment] = useState<RowAlignment>(placement.alignment);
   const [offset, setOffset] = useState(String(placement.offsetStart));
-  const changed = alignment !== placement.alignment || (alignment === "custom" && (Number.parseInt(offset, 10) || 0) !== placement.offsetStart);
+  const savedRtl = (placement.numbering ?? hallNumbering) === "rtl";
+  const [rtl, setRtl] = useState(savedRtl);
+  const changed =
+    alignment !== placement.alignment ||
+    (alignment === "custom" && (Number.parseInt(offset, 10) || 0) !== placement.offsetStart) ||
+    rtl !== savedRtl;
+  // Stored only when it differs from the hall; the same as the hall means «follow the hall».
+  const rowNumbering = (value: boolean): "ltr" | "rtl" | null => ((value ? "rtl" : "ltr") === hallNumbering ? null : value ? "rtl" : "ltr");
 
-  function preview(nextAlignment: RowAlignment, nextOffset: string) {
-    onPreview({ alignment: nextAlignment, offsetStart: nextAlignment === "custom" ? Math.max(0, Number.parseInt(nextOffset, 10) || 0) : 0 });
+  function preview(nextAlignment: RowAlignment, nextOffset: string, nextRtl = rtl) {
+    onPreview({
+      alignment: nextAlignment,
+      offsetStart: nextAlignment === "custom" ? Math.max(0, Number.parseInt(nextOffset, 10) || 0) : 0,
+      numbering: nextRtl ? "rtl" : "ltr",
+    });
   }
 
   function save() {
@@ -62,6 +76,7 @@ export default function RowGeometryPanel({
         seatCount,
         alignment,
         offsetStart: Number.parseInt(offset, 10) || 0,
+        numbering: rowNumbering(rtl),
       });
       if (result.ok) {
         feedback.success(`Ряд ${rowLabel} сохранён`);
@@ -126,6 +141,19 @@ export default function RowGeometryPanel({
         </label>
       )}
 
+      <label className="flex items-center gap-2.5 text-sm text-ocean cursor-pointer">
+        <input
+          type="checkbox"
+          checked={rtl}
+          onChange={(e) => {
+            setRtl(e.target.checked);
+            preview(alignment, offset, e.target.checked);
+          }}
+          className="w-4 h-4 accent-ocean"
+        />
+        Инвертировать нумерацию ряда (справа налево)
+      </label>
+
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={save} disabled={pending || !changed} className="btn-primary px-5 py-2 text-sm font-semibold disabled:opacity-50">
           {pending ? "Сохранение…" : `Применить к ряду ${rowLabel}`}
@@ -136,6 +164,7 @@ export default function RowGeometryPanel({
             onClick={() => {
               setAlignment(placement.alignment);
               setOffset(String(placement.offsetStart));
+              setRtl(savedRtl);
               onPreview(null);
             }}
             className="text-sm font-semibold text-ocean/60 hover:text-ocean"

@@ -46,6 +46,7 @@ export default function OccupancyMap({
   prices,
   ordersHref,
   rowShape,
+  numbering,
   rowLayouts,
   blocks = {},
 }: {
@@ -53,6 +54,8 @@ export default function OccupancyMap({
   blocks?: Record<string, SeatBlock>;
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
+  /** The hall's numbering direction: seat 1 at the left or the right. */
+  numbering?: "ltr" | "rtl";
   /** Rows set up on their own: where each one stands within its section. */
   rowLayouts?: RowPlacements;
   seats: OccupancySeat[];
@@ -128,6 +131,7 @@ export default function OccupancyMap({
       <SeatMap
         rows={rows}
         rowShape={rowShape}
+        numbering={numbering}
         rowLayouts={rowLayouts}
         seatVariant={seatVariant}
         onSeatClick={(seat) => setSelectedId((current) => (current === seat.id ? null : seat.id))}

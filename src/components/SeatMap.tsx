@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sectionLabel } from "@/lib/hallSections";
-import { rowLayoutKey, type RowPlacements } from "@/lib/hallRowLayout";
+import { rowLayoutKey, type RowPlacements, type SeatNumbering } from "@/lib/hallRowLayout";
 import ZoomPan, { type ZoomPanLabels } from "@/components/ZoomPan";
 
 /**
@@ -64,6 +64,8 @@ export interface SeatMapProps {
   rowShape?: "curved" | "straight";
   /** Rows set up on their own (shorter, aligned left/right or shifted); the rest are centred. */
   rowLayouts?: RowPlacements;
+  /** The hall's numbering direction: seat 1 at the left (default) or the right. A row may set its own. */
+  numbering?: SeatNumbering;
   /**
    * Pinch-to-zoom and drag instead of sideways scrolling: the hall opens fitted to the box, whole.
    * The labels of its +/−/fit buttons and its hint, in the page's language.
@@ -95,7 +97,8 @@ function layoutRow(seats: SeatMapSeat[]): { slots: Slot[]; width: number } {
   seats.forEach((seat, i) => {
     if (prevSeatNumber !== null) {
       x += SEAT_GAP;
-      if (seat.seatNumber - prevSeatNumber > 1) {
+      // Either way along the row: a right-to-left row walks its numbers downwards.
+      if (Math.abs(seat.seatNumber - prevSeatNumber) > 1) {
         slots.push({ kind: "aisle", key: `aisle-${i}`, x });
         x += AISLE_WIDTH + SEAT_GAP;
       }
@@ -169,6 +172,7 @@ export default function SeatMap({
   sectionTitle = (section) => sectionLabel(section, "ru"),
   rowShape = "curved",
   rowLayouts = {},
+  numbering = "ltr",
   zoom,
 }: SeatMapProps) {
   const arc = rowShape !== "straight";
@@ -287,8 +291,10 @@ export default function SeatMap({
     // Every row of a section is placed within the section's full width, so a shorter row can stand
     // centred, at the left, at the right or shifted by a number of seat places.
     const laid = blockRows.map((row) => {
-      const { slots, width } = layoutRow(row.seats);
       const placement = rowLayouts[rowLayoutKey(row.section ?? "parter", row.label)];
+      // Right to left: the same seats, drawn from the other end — seat 1 at the right. Numbers never change.
+      const rtl = (placement?.numbering ?? numbering) === "rtl";
+      const { slots, width } = layoutRow(rtl ? [...row.seats].reverse() : row.seats);
       const shift = placement?.alignment === "custom" ? placement.offsetStart * (SEAT_SIZE + SEAT_GAP) : 0;
       return { row, slots, width, placement, shift };
     });

@@ -142,6 +142,7 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
             prices={prices}
             ordersHref={`/admin/tickets/orders?event=${id}`}
             rowShape={hall?.rowShape}
+            numbering={hall?.seatNumbering}
             rowLayouts={rowLayoutsForMap(rowLayouts)}
             blocks={Object.fromEntries(blocks)}
           />

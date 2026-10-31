@@ -122,11 +122,14 @@ export default function SeatPicker({
   eventId,
   rows,
   rowShape,
+  numbering,
   rowLayouts,
 }: {
   eventId: string;
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
+  /** The hall's numbering direction: seat 1 at the left or the right. */
+  numbering?: "ltr" | "rtl";
   /** Rows set up on their own: where each one stands within its section. */
   rowLayouts?: RowPlacements;
   rows: { section: string; label: string; seats: SeatOption[] }[];
@@ -256,6 +259,7 @@ export default function SeatPicker({
         <SeatMap
           rows={seatMapRows}
           rowShape={rowShape}
+          numbering={numbering}
           rowLayouts={rowLayouts}
           seatVariant={seatVariant}
           seatTooltip={seatTooltip}

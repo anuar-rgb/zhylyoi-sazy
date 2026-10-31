@@ -134,6 +134,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             prices={pricesOf(map[3])}
             locked={isEventLocked(mapEvent)}
             rowShape={map[4]?.rowShape}
+            numbering={map[4]?.seatNumbering}
             rowLayouts={rowLayoutsForMap(map[5])}
           />
         </section>

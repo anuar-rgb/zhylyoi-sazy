@@ -139,7 +139,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
             </p>
           </div>
         ) : (
-          <SeatPicker eventId={event.id} rows={rows} rowShape={hall?.rowShape} rowLayouts={rowLayoutsForMap(rowLayouts)} />
+          <SeatPicker eventId={event.id} rows={rows} rowShape={hall?.rowShape} numbering={hall?.seatNumbering} rowLayouts={rowLayoutsForMap(rowLayouts)} />
         )}
       </div>
     </section>

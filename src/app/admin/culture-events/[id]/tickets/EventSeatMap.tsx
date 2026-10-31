@@ -20,11 +20,14 @@ export default function EventSeatMap({
   seats,
   categories,
   rowShape,
+  numbering,
   rowLayouts,
 }: {
   eventId: string;
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
+  /** The hall's numbering direction: seat 1 at the left or the right. */
+  numbering?: "ltr" | "rtl";
   /** Rows set up on their own: where each one stands within its section. */
   rowLayouts?: RowPlacements;
   seats: HallSeatRecord[];
@@ -100,6 +103,7 @@ export default function EventSeatMap({
       <SeatMap
         rows={rows}
         rowShape={rowShape}
+        numbering={numbering}
         rowLayouts={rowLayouts}
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
