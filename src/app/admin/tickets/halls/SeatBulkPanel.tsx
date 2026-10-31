@@ -24,10 +24,13 @@ export default function SeatBulkPanel({
   seats,
   existingCategories,
   onDone,
+  children,
 }: {
   seats: HallSeatRecord[];
   existingCategories: string[];
   onDone: () => void;
+  /** More controls for the selection, shown at the bottom of the panel (the row's geometry). */
+  children?: React.ReactNode;
 }) {
   const router = useRouter();
   const [category, setCategory] = useState(seats.length === 1 ? seats[0].category : "");
@@ -124,6 +127,7 @@ export default function SeatBulkPanel({
           Скрыть
         </button>
       </div>
+      {children}
     </div>
   );
 }

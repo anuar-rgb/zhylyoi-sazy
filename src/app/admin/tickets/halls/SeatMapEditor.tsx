@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { RowPlacements } from "@/lib/hallRowLayout";
+import { rowLayoutKey, type RowPlacement, type RowPlacements } from "@/lib/hallRowLayout";
+import RowGeometryPanel from "./RowGeometryPanel";
 import SeatMap, { assignCategoryColors, seatsToRows, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import SeatBulkPanel from "./SeatBulkPanel";
 import type { HallSeatRecord } from "@/lib/halls";
@@ -35,6 +36,8 @@ export default function SeatMapEditor({
   categories: string[];
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // A row placement tried in the panel and not saved yet: drawn on the map while that row is selected.
+  const [preview, setPreview] = useState<{ key: string; placement: RowPlacement } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // A click anywhere outside the map or the panel clears the selection —
@@ -72,6 +75,17 @@ export default function SeatMapEditor({
   );
 
   const selectedSeats = seats.filter((seat) => selectedIds.has(seat.id));
+
+  // All the selected seats in one row: the panel can set where that row stands.
+  const oneRow =
+    selectedSeats.length > 0 && selectedSeats.every((seat) => seat.section === selectedSeats[0].section && seat.rowLabel === selectedSeats[0].rowLabel)
+      ? selectedSeats[0]
+      : null;
+  const rowKey = oneRow ? rowLayoutKey(oneRow.section, oneRow.rowLabel) : null;
+  const rowSeatCount = oneRow
+    ? Math.max(0, ...seats.filter((seat) => seat.section === oneRow.section && seat.rowLabel === oneRow.rowLabel && seat.isActive).map((seat) => seat.seatNumber))
+    : 0;
+  const shownLayouts = preview && preview.key === rowKey ? { ...rowLayouts, [preview.key]: preview.placement } : rowLayouts;
 
   function toggleSeat(seat: SeatMapSeat) {
     setSelectedIds((current) => {
@@ -111,7 +125,7 @@ export default function SeatMapEditor({
       <SeatMap
         rows={rows}
         rowShape={rowShape}
-        rowLayouts={rowLayouts}
+        rowLayouts={shownLayouts}
         seatVariant={seatVariant}
         onSeatClick={toggleSeat}
         onRowLabelClick={toggleRow}
@@ -131,7 +145,20 @@ export default function SeatMapEditor({
           seats={selectedSeats}
           existingCategories={categories}
           onDone={() => setSelectedIds(new Set())}
-        />
+        >
+          {oneRow && rowKey && rowSeatCount > 0 && (
+            <RowGeometryPanel
+              key={rowKey}
+              hallId={oneRow.hallId}
+              section={oneRow.section}
+              rowLabel={oneRow.rowLabel}
+              seatCount={rowSeatCount}
+              placement={rowLayouts?.[rowKey] ?? { alignment: "center", offsetStart: 0 }}
+              rowShape={rowShape ?? "curved"}
+              onPreview={(placement) => setPreview(placement ? { key: rowKey, placement } : null)}
+            />
+          )}
+        </SeatBulkPanel>
       )}
     </div>
   );

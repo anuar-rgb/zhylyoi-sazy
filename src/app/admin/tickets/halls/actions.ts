@@ -532,3 +532,16 @@ export async function setSeatsActive(ids: string[], isActive: boolean): Promise<
 // foreign key violation rather than losing the booking silently — but that's
 // still the wrong failure mode for an admin action. setSeatsActive(ids, false)
 // is the only removal a seat gets — see SeatBulkPanel.tsx.
+
+/** The hall's row shape (arc or straight), saved on its own from the seat map's panel. */
+export async function setHallRowShape(hallId: string, shape: string): Promise<{ ok: boolean; error?: string }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, error: "Профиль сотрудника не настроен." };
+  if (shape !== "curved" && shape !== "straight") return { ok: false, error: "Неизвестная форма рядов." };
+  const supabase = await createClient();
+  const { error, count } = await supabase.from("halls").update({ row_shape: shape }, { count: "exact" }).eq("id", hallId);
+  if (error) return { ok: false, error: "Не удалось сохранить форму рядов." };
+  if (count === 0) return { ok: false, error: "Недостаточно прав для редактирования этого зала." };
+  revalidatePath("/admin/tickets/halls", "layout");
+  return { ok: true };
+}
