@@ -36,6 +36,7 @@ type Texts = {
   legendTaken: string;
   stage: string;
   scrollHint: string;
+  zoom: { zoomIn: string; zoomOut: string; fit: string; hint: string };
   selected: string;
   row: string;
   seat: string;
@@ -67,6 +68,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     legendTaken: "Занято / недоступно",
     stage: "Сцена",
     scrollHint: "Листайте схему в стороны",
+    zoom: { zoomIn: "Приблизить", zoomOut: "Отдалить", fit: "Весь зал", hint: "Приблизьте схему двумя пальцами или кнопкой +" },
     selected: "Выбрано мест",
     row: "Ряд",
     seat: "место",
@@ -95,6 +97,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     legendTaken: "Бос емес / қолжетімсіз",
     stage: "Сахна",
     scrollHint: "Схеманы бүйірге жылжытыңыз",
+    zoom: { zoomIn: "Үлкейту", zoomOut: "Кішірейту", fit: "Бүкіл зал", hint: "Схеманы екі саусақпен немесе + түймесімен үлкейтіңіз" },
     selected: "Таңдалған орын",
     row: "Қатар",
     seat: "орын",
@@ -258,6 +261,7 @@ export default function SeatPicker({
           seatTooltip={seatTooltip}
           stageLabel={t.stage}
           scrollHint={t.scrollHint}
+          zoom={t.zoom}
           sectionTitle={(section) => sectionLabel(section, lang)}
           onSeatClick={handleSeatMapClick}
           legend={[

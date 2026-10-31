@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sectionLabel } from "@/lib/hallSections";
 import { rowLayoutKey, type RowPlacements } from "@/lib/hallRowLayout";
+import ZoomPan, { type ZoomPanLabels } from "@/components/ZoomPan";
 
 /**
  * Pure presentation: one row of seats in, one row of circles out. The
@@ -63,6 +64,11 @@ export interface SeatMapProps {
   rowShape?: "curved" | "straight";
   /** Rows set up on their own (shorter, aligned left/right or shifted); the rest are centred. */
   rowLayouts?: RowPlacements;
+  /**
+   * Pinch-to-zoom and drag instead of sideways scrolling: the hall opens fitted to the box, whole.
+   * The labels of its +/−/fit buttons and its hint, in the page's language.
+   */
+  zoom?: ZoomPanLabels;
 }
 
 const SEAT_SIZE = 28;
@@ -163,6 +169,7 @@ export default function SeatMap({
   sectionTitle = (section) => sectionLabel(section, "ru"),
   rowShape = "curved",
   rowLayouts = {},
+  zoom,
 }: SeatMapProps) {
   const arc = rowShape !== "straight";
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -192,15 +199,9 @@ export default function SeatMap({
     return () => observer.disconnect();
   }, []);
 
-  return (
-    <div className={className}>
-      {overflowing && (
-        <p className="text-xs text-ocean/50 text-center mb-2" aria-hidden>
-          ← {scrollHint} →
-        </p>
-      )}
-      <div ref={scrollRef} className="overflow-x-auto">
-      <div ref={innerRef} className="w-max mx-auto px-2 py-1">
+  // The stage and the rows; drawn inside either the zoomable box or the sideways-scrolling one.
+  const hall = (
+    <>
         <div className="flex flex-col items-center mb-6 select-none" aria-hidden>
           <span className="text-[11px] font-semibold tracking-[0.2em] text-ocean/40 uppercase mb-1.5">
             {stageLabel}
@@ -246,8 +247,29 @@ export default function SeatMap({
           );
         })()}
 
-      </div>
-      </div>
+    </>
+  );
+
+  return (
+    <div className={className}>
+      {zoom ? (
+        <ZoomPan labels={zoom}>
+          <div className="px-2 py-1">{hall}</div>
+        </ZoomPan>
+      ) : (
+        <>
+          {overflowing && (
+            <p className="text-xs text-ocean/50 text-center mb-2" aria-hidden>
+              ← {scrollHint} →
+            </p>
+          )}
+          <div ref={scrollRef} className="overflow-x-auto">
+            <div ref={innerRef} className="w-max mx-auto px-2 py-1">
+              {hall}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Outside the scrolling box: the legend must stay in view however far the hall is scrolled. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-6 pt-4 px-2 border-t border-cream-dark text-xs text-ocean/60">
