@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatTime } from "@/lib/timeZone";
+import { seatName } from "@/lib/hallSections";
 
 /**
  * Order notifications in Telegram: one bot for the whole platform (its token lives only in the
@@ -60,9 +61,68 @@ export async function botUsername(): Promise<string | null> {
   return me?.ok ? (me.result?.username ?? null) : null;
 }
 
-export async function sendMessage(chatId: string, html: string): Promise<boolean> {
-  const res = await call("sendMessage", { chat_id: chatId, text: html, parse_mode: "HTML", disable_web_page_preview: true });
+/** Inline buttons under a message: rows of [label, callback data]. */
+export type Buttons = [string, string][][];
+
+function markup(buttons?: Buttons) {
+  return buttons ? { inline_keyboard: buttons.map((row) => row.map(([text, data]) => ({ text, callback_data: data }))) } : undefined;
+}
+
+export async function sendMessage(chatId: string, html: string, buttons?: Buttons): Promise<boolean> {
+  const res = await call("sendMessage", {
+    chat_id: chatId,
+    text: html,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    reply_markup: markup(buttons),
+  });
   return res?.ok === true;
+}
+
+/** Replaces a message's buttons (none = removes them). */
+export async function editButtons(chatId: string | number, messageId: number, buttons?: Buttons): Promise<void> {
+  await call("editMessageReplyMarkup", { chat_id: chatId, message_id: messageId, reply_markup: markup(buttons) ?? { inline_keyboard: [] } });
+}
+
+/** The small notice Telegram shows after a button press; a press must always be answered. */
+export async function answerCallback(id: string, text: string, alert = false): Promise<void> {
+  await call("answerCallbackQuery", { callback_query_id: id, text, show_alert: alert });
+}
+
+// --- Webhook: Telegram tells the site about Starts and button presses ------------------------
+
+/** Sent by Telegram with every webhook call; derived from the token, so no second secret to keep. */
+export function webhookSecret(): string | null {
+  const t = token();
+  if (!t) return null;
+  return createHmac("sha256", t).update("webhook").digest("base64url").slice(0, 32);
+}
+
+/** Whether Telegram currently delivers updates to a webhook (then getUpdates cannot be used). */
+export async function webhookUrl(): Promise<string | null> {
+  const info = await call<{ url?: string }>("getWebhookInfo", {});
+  return info?.ok ? info.result?.url || null : null;
+}
+
+/**
+ * Points the bot's webhook at this site, when it is reachable over https (Telegram accepts nothing
+ * else, so a local copy keeps using getUpdates). Done from the settings page; a no-op when already set.
+ */
+export async function ensureWebhook(origin: string): Promise<void> {
+  if (!origin.startsWith("https://")) return;
+  const secret = webhookSecret();
+  if (!secret) return;
+  const url = `${origin}/api/telegram/webhook`;
+  if ((await webhookUrl()) === url) return;
+  await call("setWebhook", { url, secret_token: secret, allowed_updates: ["message", "callback_query"] });
+}
+
+/** The institution a link code belongs to (checked against every institution: there are few). */
+export async function organizationByCode(code: string): Promise<string | null> {
+  const admin = createAdminClient();
+  if (!admin) return null;
+  const { data } = await admin.from("organizations").select("id");
+  return (data ?? []).map((o) => String(o.id)).find((id) => linkCode(id) === code) ?? null;
 }
 
 type Update = { update_id: number; message?: { text?: string; chat?: { id: number; first_name?: string; username?: string } } };
@@ -84,7 +144,7 @@ export async function findStart(code: string): Promise<{ chatId: string; name: s
 }
 
 /** The address of this site, for links in the messages. */
-async function siteOrigin(): Promise<string> {
+export async function siteOrigin(): Promise<string> {
   try {
     const h = await headers();
     const host = h.get("x-forwarded-host") ?? h.get("host");
@@ -136,6 +196,11 @@ function tickets(n: number): string {
   return `${n} билетов`;
 }
 
+/** The buttons under an order that still waits for the cashier: confirm or reject (each asks once more). */
+export function orderButtons(bookingId: string): Buttons {
+  return [[["✅ Подтвердить оплату", `c:${bookingId}`], ["❌ Отклонить", `r:${bookingId}`]]];
+}
+
 /** The same, for an order known only by the buyer's secret token (the order page). */
 export async function notifyOrderByToken(token: string, event: OrderEvent): Promise<void> {
   try {
@@ -166,23 +231,40 @@ export async function notifyOrder(bookingId: string, event: OrderEvent): Promise
       .maybeSingle();
     if (!booking) return;
 
-    const [{ data: link }, { data: ev }, { count }] = await Promise.all([
+    const [{ data: link }, { data: ev }, { data: items }] = await Promise.all([
       admin.from("org_telegram").select("chat_id, is_enabled").eq("organization_id", booking.organization_id).maybeSingle(),
       admin.from("culture_events").select("title_ru, title_kk").eq("id", booking.event_id).maybeSingle(),
-      admin.from("booking_items").select("id", { count: "exact", head: true }).eq("booking_id", bookingId),
+      admin.from("booking_items").select("seat_id").eq("booking_id", bookingId),
     ]);
     if (!link?.chat_id || link.is_enabled === false) return;
 
     const order = escape(String(booking.public_order_id ?? "Заказ"));
     const title = escape(String(ev?.title_ru ?? ev?.title_kk ?? "мероприятие"));
     const sum = `${Number(booking.total_amount ?? 0).toLocaleString("ru-RU")} ₸`;
-    const lines = [HEAD[event](order), `${title} · ${tickets(count ?? 0)} · ${sum}`];
+    const count = items?.length ?? 0;
+    const lines = [HEAD[event](order), `${title} · ${tickets(count)} · ${sum}`];
+    // Row and seat, and the buttons, for the orders the cashier still has to deal with.
+    const waiting = event === "created" || event === "payment_reported";
+    if (waiting && count > 0) {
+      const { data: seats } = await admin
+        .from("hall_seats")
+        .select("section, row_label, seat_number")
+        .in("id", items!.map((item) => item.seat_id as string));
+      const names = (seats ?? [])
+        .sort(
+          (a, b) =>
+            String(a.row_label).localeCompare(String(b.row_label), undefined, { numeric: true }) ||
+            Number(a.seat_number) - Number(b.seat_number)
+        )
+        .map((seat) => seatName({ section: seat.section as string, rowLabel: String(seat.row_label), seatNumber: Number(seat.seat_number) }));
+      if (names.length > 0) lines.push(escape(names.join("; ")));
+    }
     if (event === "created" && booking.expires_at) lines.push(`Места держатся до ${formatTime(booking.expires_at)}.`);
     if (TAIL[event]) lines.push(TAIL[event]!);
     const filter = event === "created" || event === "payment_reported" ? "?status=pending" : "";
     lines.push(`<a href="${await siteOrigin()}/admin/tickets/orders${filter}">Открыть заказы</a>`);
 
-    await sendMessage(String(link.chat_id), lines.join("\n"));
+    await sendMessage(String(link.chat_id), lines.join("\n"), waiting ? orderButtons(bookingId) : undefined);
   } catch {
     // a notification is never worth failing the action that triggered it
   }

@@ -4,7 +4,7 @@ import SettingsForm from "./SettingsForm";
 import { updateOrganization } from "./actions";
 import TelegramSettings from "./TelegramSettings";
 import { createClient } from "@/lib/supabase/server";
-import { botUsername, linkCode, telegramConfigured } from "@/lib/telegram";
+import { botUsername, ensureWebhook, linkCode, siteOrigin, telegramConfigured } from "@/lib/telegram";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -45,6 +45,8 @@ export default async function SettingsPage() {
   const orgId = identity.organizationId ?? organization.id;
   const configured = telegramConfigured();
   const supabase = await createClient();
+  // The bot sends button presses to this site; on the live (https) site this points it here once.
+  if (configured) await ensureWebhook(await siteOrigin());
   const [{ data: telegram }, username] = await Promise.all([
     supabase.from("org_telegram").select("chat_id, is_enabled").eq("organization_id", orgId).maybeSingle(),
     configured ? botUsername() : Promise.resolve(null),

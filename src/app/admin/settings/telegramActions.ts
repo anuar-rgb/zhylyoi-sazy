@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { findStart, linkCode, sendMessage, telegramConfigured } from "@/lib/telegram";
+import { findStart, linkCode, sendMessage, telegramConfigured, webhookUrl } from "@/lib/telegram";
 
 export type TelegramResult = { ok: boolean; message: string };
 
@@ -24,6 +24,17 @@ export async function checkTelegramLink(): Promise<TelegramResult> {
   if (!orgId) return { ok: false, message: "Профиль сотрудника не настроен." };
   const code = linkCode(orgId);
   if (!code) return { ok: false, message: "На сервере не задан токен бота." };
+
+  // On the live site Telegram delivers the Start straight to the webhook, which links the cashier
+  // itself; here there is only the result to look at.
+  if (await webhookUrl()) {
+    const supabase = await createClient();
+    const { data } = await supabase.from("org_telegram").select("chat_id").eq("organization_id", orgId).maybeSingle();
+    revalidatePath("/admin/settings");
+    return data?.chat_id
+      ? { ok: true, message: "Кассир подключён" }
+      : { ok: false, message: "Бот ещё не получил «Start» по этой ссылке. Откройте ссылку, нажмите Start в боте и проверьте снова." };
+  }
 
   const found = await findStart(code);
   if (!found) {
