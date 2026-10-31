@@ -2,7 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after } from "next/server";
 import { formatPhone, isCompletePhone, phoneDigits } from "@/lib/phone";
+import { notifyOrder, notifyOrderByToken } from "@/lib/telegram";
 
 export type CreateBookingInput = {
   eventId: string;
@@ -70,6 +72,12 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     }
   }
 
+  // The cashier hears about it in Telegram — after the answer has gone back to the buyer.
+  if (row.booking_id) {
+    const bookingId = row.booking_id as string;
+    after(() => notifyOrder(bookingId, "created"));
+  }
+
   return { ok: true, accessToken: row.access_token as string };
 }
 
@@ -85,8 +93,14 @@ export async function reportBookingPayment(token: string): Promise<ReportPayment
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("report_booking_payment", { p_token: token });
   if (error) return { ok: false, error: "failed" };
-  if (data === "reported") return { ok: true, already: false };
+  if (data === "reported") {
+    after(() => notifyOrderByToken(token, "payment_reported"));
+    return { ok: true, already: false };
+  }
   if (data === "already_reported") return { ok: true, already: true };
-  if (data === "expired") return { ok: false, error: "expired" };
+  if (data === "expired") {
+    after(() => notifyOrderByToken(token, "reported_after_expiry"));
+    return { ok: false, error: "expired" };
+  }
   return { ok: false, error: data === "not_found" ? "failed" : "not_pending" };
 }

@@ -2,6 +2,9 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganization } from "@/lib/organization";
 import SettingsForm from "./SettingsForm";
 import { updateOrganization } from "./actions";
+import TelegramSettings from "./TelegramSettings";
+import { createClient } from "@/lib/supabase/server";
+import { botUsername, linkCode, telegramConfigured } from "@/lib/telegram";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -38,5 +41,29 @@ export default async function SettingsPage() {
     );
   }
 
-  return <SettingsForm organization={organization} action={updateOrganization} />;
+  // Order notifications: the institution's link to the bot, and whether a cashier is connected.
+  const orgId = identity.organizationId ?? organization.id;
+  const configured = telegramConfigured();
+  const supabase = await createClient();
+  const [{ data: telegram }, username] = await Promise.all([
+    supabase.from("org_telegram").select("chat_id, is_enabled").eq("organization_id", orgId).maybeSingle(),
+    configured ? botUsername() : Promise.resolve(null),
+  ]);
+  const code = linkCode(orgId);
+  const link = username && code ? `https://t.me/${username}?start=${code}` : null;
+
+  return (
+    <div>
+      <SettingsForm organization={organization} action={updateOrganization} />
+      <section className="mt-8">
+        <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">Уведомления в Telegram</h2>
+        <p className="text-sm text-ocean/60 mb-4">
+          Кассир получает в Telegram сообщение о каждом новом заказе и о каждом шаге по нему — со ссылкой на «Заказы».
+        </p>
+        <div className={`${CARD} p-5 sm:p-6`}>
+          <TelegramSettings link={link} linked={!!telegram?.chat_id && telegram.is_enabled !== false} configured={configured} canManage />
+        </div>
+      </section>
+    </div>
+  );
 }

@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { after } from "next/server";
 import { EVENT_LOCKED_MESSAGE, isBookingEventLocked } from "@/lib/cultureEvents";
+import { notifyOrder, type OrderEvent } from "@/lib/telegram";
 
 export type OrderActionResult = { ok: boolean; message: string };
 
@@ -30,6 +32,16 @@ const MESSAGES: Record<string, OrderActionResult> = {
   cancelled: { ok: false, message: "Заказ отменён." },
 };
 
+/** Which answers are a real change worth a Telegram message (a repeated press is not). */
+const NOTIFY: Record<string, OrderEvent> = {
+  confirmed: "confirmed",
+  rejected: "rejected",
+  late: "late",
+  refunded: "refunded",
+};
+// issue_late_booking answers "confirmed" too; its message says the tickets went out on a late payment.
+const NOTIFY_ISSUED_LATE: Record<string, OrderEvent> = { confirmed: "issued" };
+
 async function run(
   bookingId: string,
   fn: string,
@@ -55,6 +67,8 @@ async function run(
   // The red count of orders to check sits on the «⋯» menu of the Билеты page.
   revalidatePath("/admin/tickets");
   revalidatePath("/admin/tickets/stats", "layout");
+  const event = (fn === "issue_late_booking" ? NOTIFY_ISSUED_LATE : NOTIFY)[String(data)];
+  if (event) after(() => notifyOrder(bookingId, event));
   return MESSAGES[String(data)] ?? { ok: false, message: "Действие не выполнено." };
 }
 
