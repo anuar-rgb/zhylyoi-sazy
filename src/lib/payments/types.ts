@@ -8,7 +8,7 @@
  *
  * Nothing here may touch card data. The buyer enters it only on the provider's own page.
  */
-export type PaymentSecrets = { merchantId: string | null; secretKey: string };
+export type PaymentSecrets = { merchantId: string | null; clientId: string | null; secretKey: string };
 
 export type ProviderPaymentStatus = "pending" | "processing" | "success" | "failed" | "cancelled" | "refunded";
 
@@ -31,6 +31,8 @@ export type CreatePaymentInput = {
   paymentId: string;
   /** The order number people can read out, e.g. DK-000154. */
   orderNumber: string;
+  /** Digits only, unique, unguessable: for a bank that accepts nothing else as the order number. */
+  invoiceNumber: string;
   amount: number;
   currency: string;
   description: string;
@@ -53,11 +55,14 @@ export type CreatePaymentResult =
 
 export type VerifyWebhookResult =
   | { ok: true; observed: ObservedPayment }
-  | { ok: false; status: 400 | 401 | 422; reason: string };
+  | { ok: false; status: 400 | 401 | 422 | 503; reason: string };
 
 export type PaymentStatusResult = { ok: true; observed: ObservedPayment } | { ok: false; reason: string };
 
 export type RefundResult = { ok: true; status: "pending" | "refunded" } | { ok: false; reason: string };
+
+/** A bank's own payment form, opened in the buyer's browser by the bank's script. */
+export type CheckoutForm = { scriptUrl: string; params: Record<string, unknown> };
 
 export interface PaymentProvider {
   /** payment_providers.code, e.g. "halyk_epay". */
@@ -65,6 +70,16 @@ export interface PaymentProvider {
 
   /** Start a payment at the provider and return where to send the buyer. */
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult>;
+
+  /** For a provider whose form opens by script on our page rather than at its own address. */
+  checkoutForm?(input: {
+    providerPaymentId: string;
+    amount: number;
+    currency: string;
+    language: string;
+    metadata: Record<string, unknown>;
+    secrets: PaymentSecrets;
+  }): Promise<CheckoutForm | null>;
 
   /**
    * Ask the provider where a payment stands. Used to reconcile payments whose notification never
@@ -86,7 +101,10 @@ export interface PaymentProvider {
 
   /** Ask the provider to return money. Only a provider confirmation ever makes a payment REFUNDED. */
   refundPayment(input: {
+    /** Our payments.id, as the reference of this refund. */
+    paymentId: string;
     providerPaymentId: string;
+    transactionId: string | null;
     amount: number;
     currency: string;
     secrets: PaymentSecrets;

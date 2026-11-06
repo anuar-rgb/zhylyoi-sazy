@@ -5,11 +5,13 @@ import {
   formatMoment,
   formatMoney,
   getTicketingScope,
+  listOnlinePayments,
   listOrders,
   type OrderFilter,
 } from "@/lib/ticketing/admin";
 import BackToTickets from "../BackToTickets";
 import NoProfile from "../NoProfile";
+import { isBankOnlyEvent } from "@/lib/payments/mode";
 import OrderActions from "./OrderActions";
 import { seatName } from "@/lib/hallSections";
 import { BOOKING_STATUS_BADGE, toBookingStatus } from "@/lib/bookingStatus";
@@ -46,6 +48,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const filter = FILTERS.some((f) => f.id === status) ? (status as OrderFilter) : "all";
   const eventId = event && /^[0-9a-f-]{36}$/i.test(event) ? event : null;
   const listed = showMap ? [] : await listOrders(scope.organizationId, filter, eventId);
+  const [onlinePayments, bankOnlyEvents] = await Promise.all([
+    listOnlinePayments(listed.map((order) => order.id)),
+    Promise.all(
+      [...new Set(listed.map((order) => order.eventId))].map(async (id) => [id, await isBankOnlyEvent(id, scope.organizationId)] as const)
+    ).then((pairs) => new Map(pairs)),
+  ]);
+  const allByBank = listed.length > 0 && listed.every((order) => bankOnlyEvents.get(order.eventId) === true);
   const orders =
     filter === "pending"
       ? [...listed].sort((a, b) => (QUEUE_ORDER[a.status] ?? 9) - (QUEUE_ORDER[b.status] ?? 9) || a.createdAt.localeCompare(b.createdAt))
@@ -83,9 +92,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         Заказы {!showMap && <span className="text-ocean/40 font-normal">({orders.length})</span>}
       </h1>
       <p className="text-sm text-ocean/60 mb-5">
-        Оплата ручная: найдите поступление в Kaspi Pay (сумма, время, номер заказа) и только тогда нажмите
-        «Подтвердить оплату» — после этого покупатель получит билеты. «Покупатель сообщил об оплате» — это не
-        оплата, а просьба проверить. Показаны последние 100.
+        {allByBank ? (
+          "Покупатели платят картой на странице банка, билеты выдаются сами, подтверждать ничего не нужно. Показаны последние 100."
+        ) : (
+          <>
+            Оплата ручная: найдите поступление в Kaspi Pay (сумма, время, номер заказа) и только тогда нажмите
+            «Подтвердить оплату» — после этого покупатель получит билеты. «Покупатель сообщил об оплате» — это не
+            оплата, а просьба проверить. Показаны последние 100.
+          </>
+        )}
       </p>
 
       <div className="flex flex-wrap gap-2 mb-6">
@@ -166,8 +181,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               <p className="text-sm text-ocean/50">{order.eventTitle || "Мероприятие не найдено"}</p>
 
               {/* What the cashier knows before acting: when the buyer said they paid, until when the
-                  seats are held, the Kaspi operation number and any note already written down. */}
-              {(order.paymentReportedAt || order.kaspiOperationId || order.resolutionNote || (order.expiresAt && ["pending", "payment_reported"].includes(order.status))) && (
+                  seats are held, the Kaspi or bank number and any note already written down. */}
+              {(order.paymentReportedAt || order.kaspiOperationId || order.payment?.bankNumber || order.resolutionNote || (order.expiresAt && ["pending", "payment_reported"].includes(order.status))) && (
                 <ul className="mt-2 text-xs text-ocean/70 space-y-0.5">
                   {order.paymentReportedAt && (
                     <li className="font-semibold text-orange-800">Покупатель нажал «Я оплатил» в {formatMoment(order.paymentReportedAt)}</li>
@@ -176,6 +191,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     <li>Места держатся до {formatMoment(order.expiresAt)}</li>
                   )}
                   {order.kaspiOperationId && <li>Операция Kaspi: {order.kaspiOperationId}</li>}
+                  {order.payment?.bankNumber && <li>Номер в банке: <span className="break-all">{order.payment.bankNumber}</span></li>}
                   {order.resolutionNote && <li>Комментарий: {order.resolutionNote}</li>}
                 </ul>
               )}
@@ -188,6 +204,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     <p className="text-xs text-ocean/50">Мероприятие прошло или в архиве — действия с оплатой недоступны.</p>
                   ) : (
                     <OrderActions
+                      automatic={bankOnlyEvents.get(order.eventId) === true}
+                      paidOnline={onlinePayments.get(order.id)?.paid === true}
+                      needsRefund={onlinePayments.get(order.id)?.needsRefund === true}
                       order={{
                         id: order.id,
                         status: toBookingStatus(order.status),

@@ -1,4 +1,7 @@
+import { randomInt } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toSecrets } from "./keys";
+import { syncBookingPayments } from "./pipeline";
 import { getProvider } from "./registry";
 
 /**
@@ -103,10 +106,15 @@ export async function createPaymentForBooking(input: {
 
   const { data: keys } = await admin
     .from("organization_payment_secrets")
-    .select("merchant_id, secret_key")
+    .select("merchant_id, client_id, secret_key")
     .eq("organization_payment_method_id", method.id)
     .maybeSingle();
-  if (!keys?.secret_key) return { ok: false, error: "method_unavailable" };
+  const secrets = toSecrets(keys);
+  if (!secrets) return { ok: false, error: "method_unavailable" };
+
+  // A failed attempt whose notification has not arrived must not be handed back as still open.
+  const { livePipeline } = await import("./deps");
+  await syncBookingPayments(livePipeline(), String(booking.id));
 
   // The buyer pressed the button twice, or came back: hand over the payment already started.
   const { data: open } = await admin
@@ -124,6 +132,11 @@ export async function createPaymentForBooking(input: {
 
   const amount = Number(booking.total_amount);
   const currency = String(booking.currency ?? "KZT");
+
+  const { data: seq, error: seqError } = await admin.rpc("next_payment_invoice_seq");
+  if (seqError || seq === null) return { ok: false, error: "failed" };
+  // A bank wants the last six digits unique, so those count; the rest keep the number unguessable.
+  const invoiceNumber = `${randomInt(100_000_000, 1_000_000_000)}${String(seq).padStart(6, "0")}`;
 
   const { data: payment, error: insertError } = await admin
     .from("payments")
@@ -144,12 +157,13 @@ export async function createPaymentForBooking(input: {
   const created = await provider.createPayment({
     paymentId: String(payment.id),
     orderNumber: String(booking.public_order_id),
+    invoiceNumber,
     amount,
     currency,
     description: `${title} (${booking.public_order_id})`,
     returnUrl: `${input.origin}/payment/pending?order=${input.accessToken}`,
     webhookUrl: `${input.origin}/api/payments/webhook/${method.id}`,
-    secrets: { merchantId: (keys.merchant_id as string | null) ?? null, secretKey: String(keys.secret_key) },
+    secrets,
   });
 
   if (!created.ok) {

@@ -45,6 +45,7 @@ type Texts = {
   phone: string;
   working: string;
   book: string;
+  pay: string;
   confirm: string;
   consent: string;
 };
@@ -77,6 +78,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     phone: "Телефон",
     working: "Оформление…",
     book: "Забронировать",
+    pay: "Перейти к оплате",
     confirm: "Подтвердить",
     consent: "Даю согласие на обработку персональных данных",
   },
@@ -106,6 +108,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     phone: "Телефон",
     working: "Рәсімделуде…",
     book: "Броньдау",
+    pay: "Төлемге өту",
     confirm: "Растау",
     consent: "Дербес деректерді өңдеуге келісім беремін",
   },
@@ -124,8 +127,11 @@ export default function SeatPicker({
   rowShape,
   numbering,
   rowLayouts,
+  bankMethodId,
 }: {
   eventId: string;
+  /** Paid through this bank method alone: the one button takes the buyer straight to the bank's form. */
+  bankMethodId?: string | null;
   /** The hall's row shape, so the map is drawn as the hall is set up. */
   rowShape?: "curved" | "straight";
   /** The hall's numbering direction: seat 1 at the left or the right. */
@@ -242,6 +248,25 @@ export default function SeatPicker({
       }
 
       rememberTicket(result.accessToken);
+
+      // The seats are held from here on. Should the form not open, the order page offers it again.
+      if (bankMethodId && total > 0) {
+        try {
+          const res = await fetch("/api/payments/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accessToken: result.accessToken, methodId: bankMethodId }),
+          });
+          const data = (await res.json().catch(() => null)) as { redirectUrl?: string } | null;
+          if (res.ok && data?.redirectUrl) {
+            window.location.assign(data.redirectUrl);
+            return;
+          }
+        } catch {
+          // falls through to the order page
+        }
+      }
+
       feedback.success(t.created);
       router.push(`/my-ticket/${result.accessToken}`);
     });
@@ -349,7 +374,7 @@ export default function SeatPicker({
             disabled={pending || selectedSeats.length === 0 || !consent}
             className="btn-primary w-full py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {pending ? t.working : total > 0 ? t.book : t.confirm}
+            {pending ? t.working : total > 0 ? (bankMethodId ? t.pay : t.book) : t.confirm}
           </button>
         </form>
       </div>

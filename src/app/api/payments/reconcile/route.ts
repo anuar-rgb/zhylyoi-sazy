@@ -1,7 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
+import { livePipeline } from "@/lib/payments/deps";
 import { reconcile } from "@/lib/payments/pipeline";
-import { getProvider } from "@/lib/payments/registry";
-import { createSupabaseStore } from "@/lib/payments/store";
 
 /**
  * Asks the providers about payments that have waited too long for a notification.
@@ -20,14 +19,14 @@ async function run(request: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  let store;
+  let deps;
   try {
-    store = createSupabaseStore();
+    deps = livePipeline();
   } catch {
     return Response.json({ error: "payments_not_configured" }, { status: 503 });
   }
 
-  const summary = await reconcile({ store, getProvider });
+  const summary = await reconcile(deps);
   return Response.json(summary);
 }
 

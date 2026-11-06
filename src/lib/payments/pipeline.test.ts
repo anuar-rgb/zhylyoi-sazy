@@ -28,6 +28,16 @@ class MemoryStore implements PaymentStore {
   problems = new Map<string, string>();
   failNextSettle = false;
 
+  async closeRefundedPayment(paymentId: string) {
+    const payment = this.payments.get(paymentId);
+    if (payment) payment.status = "refunded";
+  }
+  async listOpenPayments(bookingId: string) {
+    return [...this.payments.values()].filter((p) => p.bookingId === bookingId && (p.status === "pending" || p.status === "processing"));
+  }
+  async listRefundablePayments(bookingId: string) {
+    return [...this.payments.values()].filter((p) => p.bookingId === bookingId && p.status === "success");
+  }
   async findMethod(id: string) {
     return this.methods.get(id) ?? null;
   }
@@ -90,7 +100,7 @@ class MemoryStore implements PaymentStore {
 function setup(overrides: Partial<PaymentRow> = {}) {
   const store = new MemoryStore();
   store.methods.set(METHOD_ID, { id: METHOD_ID, organizationId: ORG_ID, providerCode: "mock", isEnabled: true });
-  store.secrets.set(METHOD_ID, { merchantId: "m", secretKey: SECRET });
+  store.secrets.set(METHOD_ID, { merchantId: "m", clientId: null, secretKey: SECRET });
   store.bookings.set(BOOKING_ID, { status: "pending" });
   store.payments.set(PAYMENT_ID, {
     id: PAYMENT_ID,

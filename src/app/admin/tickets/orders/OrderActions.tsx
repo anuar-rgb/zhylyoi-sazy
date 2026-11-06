@@ -9,6 +9,7 @@ import {
   issueLateOrder,
   markOrderLate,
   markOrderRefunded,
+  refundOrderOnline,
   rejectOrder,
   type OrderActionResult,
 } from "./actions";
@@ -40,7 +41,20 @@ type Mode = null | "reject" | "late" | "refund";
  * it is about to do (event, tickets, sum, buyer), and only reports success when the database
  * function said so; on an error the order stays exactly as it was.
  */
-export default function OrderActions({ order }: { order: OrderSummary }) {
+export default function OrderActions({
+  order,
+  automatic,
+  paidOnline,
+  needsRefund,
+}: {
+  order: OrderSummary;
+  /** This event is paid through the bank alone: there is nothing to confirm by hand. */
+  automatic?: boolean;
+  /** The money came through the bank, so it can go back through the bank. */
+  paidOnline?: boolean;
+  /** The bank took the money but the order could not honour it, and the automatic refund failed. */
+  needsRefund?: boolean;
+}) {
   const router = useRouter();
   const feedback = useFeedback();
   const [busy, setBusy] = useState(false);
@@ -99,6 +113,48 @@ export default function OrderActions({ order }: { order: OrderSummary }) {
   );
 
   const waiting = order.status === "pending" || order.status === "payment_reported";
+
+  const refundOnlineButton = (
+    <button
+      type="button"
+      disabled={busy}
+      className={`${DANGER} !px-3 !py-1.5`}
+      onClick={() =>
+        act(
+          {
+            title: "Вернуть деньги покупателю?",
+            confirmLabel: "Вернуть деньги",
+            danger: true,
+            extra: "Деньги вернутся на карту покупателя через банк. Билеты перестанут действовать, места снова поступят в продажу.",
+          },
+          () => refundOrderOnline(order.id)
+        )
+      }
+    >
+      {busy ? "…" : "Вернуть деньги"}
+    </button>
+  );
+
+  if (needsRefund) {
+    return (
+      <div className="space-y-3">
+        <p className="text-xs text-red-700">Оплата пришла, но выдать места нельзя, а автоматический возврат не прошёл.</p>
+        {refundOnlineButton}
+        {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+    );
+  }
+  if (paidOnline && order.status === "confirmed") {
+    return (
+      <div className="space-y-3">
+        {refundOnlineButton}
+        {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+    );
+  }
+  if (automatic && order.status !== "confirmed" && order.status !== "late_payment") {
+    return <p className="text-xs text-ocean/50">{waiting ? "Покупатель оплачивает картой. Подтверждать ничего не нужно." : "Оплата картой не поступила."}</p>;
+  }
 
   return (
     <div className="space-y-3">

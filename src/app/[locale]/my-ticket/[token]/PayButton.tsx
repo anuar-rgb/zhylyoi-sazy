@@ -7,6 +7,7 @@ import { useFeedback } from "@/components/feedback/FeedbackProvider";
 const TEXTS = {
   ru: {
     pay: "Оплатить",
+    retry: "Попробовать снова",
     preparing: "Подготовка платежа…",
     redirecting: "Перенаправление в банк…",
     hint: "Оплата проходит на странице банка. Мы не видим и не храним данные вашей карты.",
@@ -20,6 +21,7 @@ const TEXTS = {
   },
   kk: {
     pay: "Төлеу",
+    retry: "Қайталап көру",
     preparing: "Төлем дайындалуда…",
     redirecting: "Банкке бағытталуда…",
     hint: "Төлем банк бетінде жүреді. Біз карта деректерін көрмейміз және сақтамаймыз.",
@@ -40,7 +42,7 @@ type ErrorKey = keyof (typeof TEXTS)["ru"]["errors"];
  * The browser only asks; the server decides whether the booking may be paid and what to answer.
  * Nothing here can mark anything paid.
  */
-export default function PayButton({ accessToken, methodId }: { accessToken: string; methodId: string }) {
+export default function PayButton({ accessToken, methodId, retry }: { accessToken: string; methodId: string; retry?: boolean }) {
   const t = TEXTS[useLocale() === "kk" ? "kk" : "ru"];
   const feedback = useFeedback();
   const [state, setState] = useState<"idle" | "preparing" | "redirecting">("idle");
@@ -82,7 +84,7 @@ export default function PayButton({ accessToken, methodId }: { accessToken: stri
         disabled={busy}
         className="btn-primary px-8 py-3 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {state === "preparing" ? t.preparing : state === "redirecting" ? t.redirecting : t.pay}
+        {state === "preparing" ? t.preparing : state === "redirecting" ? t.redirecting : retry ? t.retry : t.pay}
       </button>
       <p className="text-xs text-ocean/50 mt-2 max-w-xs">{t.hint}</p>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}

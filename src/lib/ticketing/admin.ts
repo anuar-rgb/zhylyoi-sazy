@@ -82,8 +82,22 @@ export type OrderRow = {
   checkedIn: number;
   /** The order's seats still held, each with when it was used at the door (null: not yet). */
   seats: { section: HallSection; row: string; seat: number; checkedInAt: string | null }[];
-  payment: { provider: string; status: string; paidAt: string | null; needsRefund: boolean; note: string | null } | null;
+  /** bankNumber: the number the bank knows this payment by, the one on the buyer's bank receipt. */
+  payment: { provider: string; status: string; paidAt: string | null; needsRefund: boolean; note: string | null; bankNumber: string | null } | null;
 };
+
+/** Which of these orders took money through a bank, and whether any of it still has to go back. */
+export async function listOnlinePayments(bookingIds: string[]): Promise<Map<string, { paid: boolean; needsRefund: boolean }>> {
+  const result = new Map<string, { paid: boolean; needsRefund: boolean }>();
+  if (bookingIds.length === 0) return result;
+  const supabase = await createClient();
+  const { data } = await supabase.from("payments").select("booking_id, needs_refund").in("booking_id", bookingIds).eq("status", "success");
+  for (const row of data ?? []) {
+    const id = String(row.booking_id);
+    result.set(id, { paid: true, needsRefund: result.get(id)?.needsRefund === true || row.needs_refund === true });
+  }
+  return result;
+}
 
 export async function listOrders(organizationId: string, filter: OrderFilter, eventId: string | null, limit = 100): Promise<OrderRow[]> {
   const supabase = await createClient();
@@ -94,7 +108,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
         "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
           "payment_reported_at, kaspi_operation_id, resolution_note, " +
           `culture_events(title_ru, title_kk, event_date, status), booking_items(checked_in_at, released_at, hall_seats(${seatColumns})), ` +
-          "payments(provider_code, status, paid_at, needs_refund, note, created_at)"
+          "payments(provider_code, provider_payment_id, status, paid_at, needs_refund, note, created_at)"
       )
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
@@ -155,6 +169,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
             paidAt: str(last.paid_at),
             needsRefund: last.needs_refund === true,
             note: str(last.note),
+            bankNumber: str(last.provider_payment_id),
           }
         : null,
     };

@@ -7,10 +7,12 @@ import { getCultureEventById } from "@/lib/cultureEvents";
 import { BOOKING_STATUS_BADGE, BOOKING_STATUS_PUBLIC, isHold } from "@/lib/bookingStatus";
 import { seatName } from "@/lib/hallSections";
 import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
+import { getOrderSnapshot } from "@/lib/payments/orderStatus";
 import { formatTime } from "@/lib/timeZone";
 import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
 import PayButton from "./PayButton";
+import CancelOrderButton from "./CancelOrderButton";
 import ManualPayment from "./ManualPayment";
 import ReportPaidButton from "./ReportPaidButton";
 import TicketActions from "./TicketActions";
@@ -31,6 +33,7 @@ const AFTER: Partial<Record<string, { ru: string; kk: string }>> = {
     kk: "Ақша бронь уақыты біткен соң келді. Кассир шешеді: орындар бос болса — билет береді, болмаса — ақшаны қайтарады.",
   },
   refunded: { ru: "Деньги за этот заказ возвращены, билеты больше не действуют.", kk: "Бұл тапсырыстың ақшасы қайтарылды, билеттер енді жарамсыз." },
+  cancelled: { ru: "Заказ отменён, места освобождены.", kk: "Тапсырыстан бас тартылды, орындар босатылды." },
 };
 
 export default async function MyTicketPage({ params }: { params: Promise<{ token: string }> }) {
@@ -58,6 +61,8 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
     method.mode !== "api" && method.paymentUrl ? [{ ...method, paymentUrl: method.paymentUrl }] : []
   );
   const canPay = bankOnly || manualMethods.length > 0;
+  // A card attempt already failed: the seats are still the buyer's, so offer it again and say so.
+  const attemptFailed = bankOnly && ["failed", "cancelled"].includes((await getOrderSnapshot(token))?.payment ?? "");
   const eventTitle = event ? (lang === "kk" ? (event.titleKk ?? event.titleRu) : (event.titleRu ?? event.titleKk)) : null;
   const sum = `${booking.totalAmount} ₸`;
   const after = AFTER[booking.status]?.[lang];
@@ -157,10 +162,17 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                 </p>
               ) : bankOnly ? (
                 <>
+                  {attemptFailed && (
+                    <p className="text-sm text-ocean bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mb-4">
+                      {lang === "kk"
+                        ? "Төлем өтпеді, ақша алынбады. Орындар әзірге сізде — қайталап көріңіз немесе басқа картаны қолданыңыз."
+                        : "Оплата не прошла, деньги не списаны. Места пока за вами: попробуйте ещё раз или другой картой."}
+                    </p>
+                  )}
                   <p className="text-sm text-ocean/60 mb-5">
                     {lang === "kk"
-                      ? `Төлеу үшін «Төлеу» түймесін басыңыз (${sum}): банк бетіне өтесіз. Банк төлемді хабарлаған бойда тапсырыс өзі расталады.`
-                      : `Нажмите «Оплатить» (${sum}): вы перейдёте на страницу банка. Заказ подтвердится сам, как только банк сообщит об оплате.`}
+                      ? `Банк бетінде карта деректерін енгізіңіз (${sum}). Төлем өткен бойда билеттер осында пайда болады.`
+                      : `Введите данные карты на странице банка (${sum}). Как только оплата пройдёт, билеты появятся здесь.`}
                   </p>
                   <div className="space-y-4">
                     {paymentMethods.map((method) => (
@@ -168,10 +180,13 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                         <p className="text-sm font-semibold text-ocean mb-3">
                           {method.displayNameRu ?? method.displayNameKk ?? method.providerName}
                         </p>
-                        <PayButton accessToken={token} methodId={method.id} />
+                        <PayButton accessToken={token} methodId={method.id} retry={attemptFailed} />
                       </div>
                     ))}
                   </div>
+                  {booking.status === "pending" && (
+                    <CancelOrderButton token={token} seatsHref={event?.slug ? `/afisha/${event.slug}/tickets` : null} />
+                  )}
                 </>
               ) : (
                 <>

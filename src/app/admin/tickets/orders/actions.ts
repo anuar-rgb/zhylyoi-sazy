@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { after } from "next/server";
 import { EVENT_LOCKED_MESSAGE, isBookingEventLocked } from "@/lib/cultureEvents";
-import { notifyOrder, type OrderEvent } from "@/lib/telegram";
+import { getStaffIdentity } from "@/lib/profile";
+import { livePipeline } from "@/lib/payments/deps";
+import { refundPayment } from "@/lib/payments/pipeline";
 
 export type OrderActionResult = { ok: boolean; message: string };
 
@@ -32,16 +33,6 @@ const MESSAGES: Record<string, OrderActionResult> = {
   cancelled: { ok: false, message: "Заказ отменён." },
 };
 
-/** Which answers are a real change worth a Telegram message (a repeated press is not). */
-const NOTIFY: Record<string, OrderEvent> = {
-  confirmed: "confirmed",
-  rejected: "rejected",
-  late: "late",
-  refunded: "refunded",
-};
-// issue_late_booking answers "confirmed" too; its message says the tickets went out on a late payment.
-const NOTIFY_ISSUED_LATE: Record<string, OrderEvent> = { confirmed: "issued" };
-
 async function run(
   bookingId: string,
   fn: string,
@@ -67,8 +58,6 @@ async function run(
   // The red count of orders to check sits on the «⋯» menu of the Билеты page.
   revalidatePath("/admin/tickets");
   revalidatePath("/admin/tickets/stats", "layout");
-  const event = (fn === "issue_late_booking" ? NOTIFY_ISSUED_LATE : NOTIFY)[String(data)];
-  if (event) after(() => notifyOrder(bookingId, event));
   return MESSAGES[String(data)] ?? { ok: false, message: "Действие не выполнено." };
 }
 
@@ -97,6 +86,39 @@ export async function issueLateOrder(bookingId: string) {
 /** «Отметить возврат»: the money went back through Kaspi, outside this site. */
 export async function markOrderRefunded(bookingId: string, note?: string) {
   return run(bookingId, "mark_booking_refunded", { p_note: text(note, 500) });
+}
+
+/**
+ * «Вернуть деньги»: the money goes back through the bank, and the order changes only once the bank
+ * agreed. The server's key does the work, so the checks here are explicit: the order must be visible
+ * to this staff member and belong to their own institution.
+ */
+export async function refundOrderOnline(bookingId: string): Promise<OrderActionResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(bookingId)) return { ok: false, message: "Заказ не найден." };
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, message: "Не авторизовано." };
+  const supabase = await createClient();
+  const { data: booking } = await supabase.from("bookings").select("organization_id").eq("id", bookingId).maybeSingle();
+  if (!booking || (identity.organizationId && identity.organizationId !== booking.organization_id)) {
+    return { ok: false, message: "Заказ не найден или недостаточно прав." };
+  }
+
+  let deps;
+  try {
+    deps = livePipeline();
+  } catch {
+    return { ok: false, message: "На сервере не задан служебный ключ." };
+  }
+  const [payment] = await deps.store.listRefundablePayments(bookingId);
+  if (!payment) return { ok: false, message: "По этому заказу нет оплаты картой." };
+
+  const result = await refundPayment(deps, payment);
+  if (!result.ok) return { ok: false, message: "Банк не выполнил возврат. Заказ не изменён, деньги у покупателя не возвращены." };
+
+  revalidatePath("/admin/tickets/orders");
+  revalidatePath("/admin/tickets");
+  revalidatePath("/admin/tickets/stats", "layout");
+  return { ok: true, message: "Деньги возвращены через банк" };
 }
 
 /** Postgres "undefined_function" / PostgREST "no such function": the event_seat_blocks migration has not been run. */

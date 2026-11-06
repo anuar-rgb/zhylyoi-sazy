@@ -2,9 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { after } from "next/server";
 import { formatPhone, isCompletePhone, phoneDigits } from "@/lib/phone";
-import { notifyOrder, notifyOrderByToken } from "@/lib/telegram";
 
 export type CreateBookingInput = {
   eventId: string;
@@ -72,12 +70,6 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     }
   }
 
-  // The cashier hears about it in Telegram — after the answer has gone back to the buyer.
-  if (row.booking_id) {
-    const bookingId = row.booking_id as string;
-    after(() => notifyOrder(bookingId, "created"));
-  }
-
   return { ok: true, accessToken: row.access_token as string };
 }
 
@@ -93,14 +85,21 @@ export async function reportBookingPayment(token: string): Promise<ReportPayment
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("report_booking_payment", { p_token: token });
   if (error) return { ok: false, error: "failed" };
-  if (data === "reported") {
-    after(() => notifyOrderByToken(token, "payment_reported"));
-    return { ok: true, already: false };
-  }
+  if (data === "reported") return { ok: true, already: false };
   if (data === "already_reported") return { ok: true, already: true };
-  if (data === "expired") {
-    after(() => notifyOrderByToken(token, "reported_after_expiry"));
-    return { ok: false, error: "expired" };
-  }
+  if (data === "expired") return { ok: false, error: "expired" };
   return { ok: false, error: data === "not_found" ? "failed" : "not_pending" };
+}
+
+/**
+ * «Отменить и выбрать другие места»: the seats go back on sale now. Only for an order still waiting
+ * for money; the secret order token is the only key. A payment that still arrives afterwards is
+ * returned to the buyer automatically.
+ */
+export async function cancelBooking(token: string): Promise<{ ok: boolean }> {
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return { ok: false };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("cancel_booking_by_token", { p_token: token });
+  if (error) return { ok: false };
+  return { ok: data === "cancelled" || data === "already_cancelled" };
 }

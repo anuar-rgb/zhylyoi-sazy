@@ -9,6 +9,7 @@ import { listPublicEventSeats } from "@/lib/eventSeatCategories";
 import { listPublicEventTicketTypes } from "@/lib/eventTicketTypes";
 import { getTakenSeatIds } from "@/lib/bookings";
 import { getHallById, listHallRowLayouts, rowLayoutsForMap } from "@/lib/halls";
+import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import SeatPicker, { type SeatOption } from "./SeatPicker";
 import type { Locale } from "@/i18n/routing";
 
@@ -85,6 +86,10 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
     );
   }
 
+  const paymentMethods = await listPublicPaymentMethodsForEvent(event.id, event.organizationId);
+  // Paid through the bank alone: the booking button goes straight to the bank's form.
+  const bankMethodId = paymentMethods.length > 0 && paymentMethods.every((method) => method.mode === "api") ? paymentMethods[0].id : null;
+
   const [seats, ticketTypes, takenSeatIds, hall, rowLayouts] = await Promise.all([
     listPublicEventSeats(event.id, event.hallId),
     listPublicEventTicketTypes(event.id),
@@ -139,7 +144,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
             </p>
           </div>
         ) : (
-          <SeatPicker eventId={event.id} rows={rows} rowShape={hall?.rowShape} numbering={hall?.seatNumbering} rowLayouts={rowLayoutsForMap(rowLayouts)} />
+          <SeatPicker bankMethodId={bankMethodId} eventId={event.id} rows={rows} rowShape={hall?.rowShape} numbering={hall?.seatNumbering} rowLayouts={rowLayoutsForMap(rowLayouts)} />
         )}
       </div>
     </section>

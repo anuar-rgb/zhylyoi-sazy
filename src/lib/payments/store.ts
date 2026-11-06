@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toSecrets } from "./keys";
 import type { PaymentSecrets } from "./types";
 
 /**
@@ -22,6 +23,9 @@ export type PaymentRow = {
   currency: string;
   status: string;
   metadata: Record<string, unknown>;
+  transactionId?: string | null;
+  note?: string | null;
+  createdAt?: string;
 };
 
 export type WebhookLogEntry = {
@@ -51,6 +55,12 @@ export interface PaymentStore {
     onlyFrom: string[]
   ): Promise<boolean>;
   applyRefund(paymentId: string): Promise<string>;
+  /** A refund that leaves the order alone: a second payment for an order that stands. */
+  closeRefundedPayment(paymentId: string): Promise<void>;
+  /** The booking's payments still waiting for an answer. */
+  listOpenPayments(bookingId: string): Promise<PaymentRow[]>;
+  /** The booking's taken money that can go back: a payment flagged for it first. */
+  listRefundablePayments(bookingId: string): Promise<PaymentRow[]>;
   listStalePayments(olderThan: Date, limit: number): Promise<PaymentRow[]>;
   noteReconcileProblem(paymentId: string, problem: string): Promise<void>;
 }
@@ -69,6 +79,9 @@ function toPayment(row: Row): PaymentRow {
     currency: String(row.currency ?? "KZT"),
     status: String(row.status),
     metadata: row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>) : {},
+    transactionId: typeof row.provider_transaction_id === "string" ? row.provider_transaction_id : null,
+    note: typeof row.note === "string" ? row.note : null,
+    createdAt: typeof row.created_at === "string" ? row.created_at : undefined,
   };
 }
 
@@ -96,11 +109,10 @@ export function createSupabaseStore(): PaymentStore {
     async getSecrets(methodId) {
       const { data } = await admin
         .from("organization_payment_secrets")
-        .select("merchant_id, secret_key")
+        .select("merchant_id, client_id, secret_key")
         .eq("organization_payment_method_id", methodId)
         .maybeSingle();
-      if (!data?.secret_key) return null;
-      return { merchantId: (data.merchant_id as string | null) ?? null, secretKey: String(data.secret_key) };
+      return toSecrets(data);
     },
 
     async logWebhook(entry) {
@@ -172,6 +184,37 @@ export function createSupabaseStore(): PaymentStore {
       const { data, error } = await admin.rpc("apply_refund", { p_payment_id: paymentId });
       if (error) throw new Error(`apply_refund failed: ${error.message}`);
       return (data as { result: string }[] | null)?.[0]?.result ?? "unknown_payment";
+    },
+
+    async closeRefundedPayment(paymentId) {
+      const { error } = await admin
+        .from("payments")
+        .update({ status: "refunded", refunded_at: new Date().toISOString(), needs_refund: false })
+        .eq("id", paymentId);
+      if (error) throw new Error(`payment update failed: ${error.message}`);
+    },
+
+    async listOpenPayments(bookingId) {
+      const { data, error } = await admin
+        .from("payments")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .in("status", ["pending", "processing"])
+        .not("provider_payment_id", "is", null);
+      if (error || !data) return [];
+      return (data as Row[]).map(toPayment);
+    },
+
+    async listRefundablePayments(bookingId) {
+      const { data, error } = await admin
+        .from("payments")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .eq("status", "success")
+        .order("needs_refund", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error || !data) return [];
+      return (data as Row[]).map(toPayment);
     },
 
     async listStalePayments(olderThan, limit) {

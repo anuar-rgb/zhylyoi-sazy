@@ -57,11 +57,14 @@ export async function applyObserved(
       }
       const { outcome } = await store.settle(payment.id, observed.amount, observed.currency, observed.transactionId);
 
-      if (outcome === "settled" || outcome === "settled_late" || outcome === "already_settled") {
+      if (outcome === "settled" || outcome === "settled_late") {
         return { ok: true, journal: "processed", note: outcome === "settled_late" ? outcome : null };
       }
+      if (outcome === "already_settled") return { ok: true, journal: "processed", note: null };
       if (NEEDS_REFUND.has(outcome)) {
-        // The bank took the money, so it must hear "received"; a person decides about the refund.
+        // The bank took the money, so it must hear "received". The money goes straight back; if it
+        // cannot, the payment stays flagged in the admin for staff to refund.
+        await refundPayment(deps, { ...payment, transactionId: observed.transactionId, note: outcome });
         return { ok: true, journal: "processed", note: outcome };
       }
       if (outcome === "already_refunded") return { ok: true, journal: "ignored", note: outcome };
@@ -92,6 +95,55 @@ export async function applyObserved(
       const outcome = await store.applyRefund(payment.id);
       if (outcome === "refunded" || outcome === "already_refunded") return { ok: true, journal: "processed", note: null };
       return { ok: false, journal: "rejected", note: outcome };
+    }
+  }
+}
+
+/**
+ * Returns a settled payment's money through the provider, and records it only once the provider
+ * agreed. A second payment for an order that stands refunds that payment alone; anything else
+ * closes the order with it.
+ */
+export async function refundPayment(
+  deps: PipelineDeps,
+  payment: PaymentRow
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const provider = deps.getProvider(payment.providerCode);
+  const secrets = payment.paymentMethodId ? await deps.store.getSecrets(payment.paymentMethodId) : null;
+  if (!provider || !secrets || !payment.providerPaymentId) return { ok: false, reason: "provider_or_keys_missing" };
+
+  const result = await provider.refundPayment({
+    paymentId: payment.id,
+    providerPaymentId: payment.providerPaymentId,
+    transactionId: payment.transactionId ?? null,
+    amount: payment.amount,
+    currency: payment.currency,
+    secrets,
+  });
+  if (!result.ok) return { ok: false, reason: result.reason };
+
+  if (payment.note === "duplicate_payment") {
+    await deps.store.closeRefundedPayment(payment.id);
+    return { ok: true };
+  }
+  const outcome = await deps.store.applyRefund(payment.id);
+  return outcome === "refunded" || outcome === "already_refunded" ? { ok: true } : { ok: false, reason: outcome };
+}
+
+/**
+ * Asks the provider about one booking's unanswered payments, for a buyer waiting on the page: a
+ * bank's notification can be late or lost. Any failure just leaves things as they were.
+ */
+export async function syncBookingPayments(deps: PipelineDeps, bookingId: string): Promise<void> {
+  for (const payment of await deps.store.listOpenPayments(bookingId)) {
+    try {
+      const provider = deps.getProvider(payment.providerCode);
+      const secrets = payment.paymentMethodId ? await deps.store.getSecrets(payment.paymentMethodId) : null;
+      if (!provider || !secrets || !payment.providerPaymentId) continue;
+      const answer = await provider.getPaymentStatus({ providerPaymentId: payment.providerPaymentId, metadata: payment.metadata, secrets });
+      if (answer.ok) await applyObserved(deps, payment, answer.observed);
+    } catch {
+      // the next look, or reconciliation, tries again
     }
   }
 }
@@ -164,6 +216,8 @@ export async function handleWebhook(deps: PipelineDeps, methodId: string, reques
   }
 }
 
+const ABANDONED_AFTER_MS = 60 * 60 * 1000;
+
 export type ReconcileSummary = {
   checked: number;
   settled: number;
@@ -206,6 +260,17 @@ export async function reconcile(
       if (!answer.ok) {
         summary.problems++;
         await store.noteReconcileProblem(payment.id, `status_unavailable:${answer.reason}`);
+        continue;
+      }
+
+      // Nobody paid and the form has long closed: stop asking, or such rows crowd out the live ones.
+      const abandoned =
+        answer.observed.status === "pending" &&
+        payment.createdAt !== undefined &&
+        now.getTime() - new Date(payment.createdAt).getTime() > ABANDONED_AFTER_MS;
+      if (abandoned) {
+        await store.updatePaymentStatus(payment.id, { status: "cancelled", failureReason: "abandoned" }, ["pending", "processing"]);
+        summary.closed++;
         continue;
       }
 
