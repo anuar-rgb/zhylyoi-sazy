@@ -31,6 +31,12 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
         action={updatePaymentMethod}
         heading={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
       />
+      {!hasProvider(method.providerCode) && (
+        <p className="mt-5 bg-cream/40 border border-cream-dark text-sm text-ocean/70 rounded-2xl px-4 py-3">
+          У этого способа нет подключения к банку, поэтому покупатели им не пользуются: оплата принимается только картой на странице
+          банка. Его можно выключить.
+        </p>
+      )}
       {connection && (
         <>
           <BankConnectionForm

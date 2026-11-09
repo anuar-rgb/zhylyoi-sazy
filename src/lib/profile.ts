@@ -15,6 +15,8 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export type StaffIdentity = {
+  /** The account's id, for journals that record who did what. */
+  userId: string;
   /** full_name when the profile has one, otherwise the account's email. */
   displayName: string;
   /** null when the user has no profile row yet — nothing to label. */
@@ -54,6 +56,7 @@ export const getStaffIdentity = cache(async (): Promise<StaffIdentity | null> =>
   const fullName = profile?.full_name?.trim();
 
   return {
+    userId: user.id,
     displayName: fullName || user.email || "Сотрудник",
     // An unknown role still shows something: better a raw value than a blank badge.
     roleLabel: profile ? (ROLE_LABELS[profile.role] ?? profile.role) : null,

@@ -71,8 +71,8 @@ export default function PaymentMethodForm({
           label="Название для зрителя"
           defaultKk={method?.displayNameKk}
           defaultRu={method?.displayNameRu}
-          placeholderKk="Kaspi арқылы төлеу"
-          placeholderRu="Оплата через Kaspi"
+          placeholderKk="Картамен төлеу"
+          placeholderRu="Оплата картой"
         />
         <p className="text-xs text-ocean/40 mt-1.5">Необязательно — если не заполнить, покажется название провайдера.</p>
 
@@ -82,26 +82,6 @@ export default function PaymentMethodForm({
             <span>Использовать по умолчанию</span>
           </label>
         )}
-      </div>
-
-      <div className={CARD}>
-        <label className={LABEL} htmlFor="payment_url">
-          Ссылка на оплату
-        </label>
-        <input
-          id="payment_url"
-          name="payment_url"
-          type="url"
-          inputMode="url"
-          defaultValue={method?.paymentUrl ?? ""}
-          placeholder="https://pay.kaspi.kz/..."
-          className={INPUT}
-        />
-        <p className="text-xs text-ocean/40 mt-1.5">
-          Ссылка, которую банк выдал этому учреждению (Kaspi Pay, Halyk и т. п.). На странице заказа покупатель
-          нажимает «Перейти к оплате» и попадает в приложение банка. Без ссылки покупателю будет написано, что платить
-          пока нельзя. Только адреса, которые начинаются с https://.
-        </p>
       </div>
 
       <div className="flex items-center gap-3">

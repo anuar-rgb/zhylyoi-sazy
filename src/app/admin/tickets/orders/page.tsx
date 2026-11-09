@@ -11,9 +11,7 @@ import {
 } from "@/lib/ticketing/admin";
 import BackToTickets from "../BackToTickets";
 import NoProfile from "../NoProfile";
-import { isBankOnlyEvent } from "@/lib/payments/mode";
 import OrderActions from "./OrderActions";
-import { seatName } from "@/lib/hallSections";
 import { BOOKING_STATUS_BADGE, toBookingStatus } from "@/lib/bookingStatus";
 import { getCultureEventById, isEventLocked, listAllTicketedCultureEvents } from "@/lib/cultureEvents";
 import { formatEventDateTime } from "@/lib/eventFields";
@@ -29,14 +27,14 @@ const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
 const FILTERS: { id: OrderFilter; label: string }[] = [
   { id: "all", label: "Все" },
-  { id: "pending", label: "Ждут проверки" },
+  { id: "pending", label: "Ждут оплаты" },
   { id: "paid", label: "Оплаченные" },
   { id: "refunded", label: "Возвраты" },
   { id: "closed", label: "Отклонённые и истёкшие" },
 ];
 
-/** In the cashier's queue: the buyer said they paid first, then unpaid holds, then late payments. */
-const QUEUE_ORDER: Record<string, number> = { payment_reported: 0, pending: 1, late_payment: 2 };
+/** Unpaid holds first, then what is left of the earlier manual payment. */
+const QUEUE_ORDER: Record<string, number> = { pending: 0, payment_reported: 1, late_payment: 2 };
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; event?: string; view?: string }> }) {
   const scope = await getTicketingScope();
@@ -48,13 +46,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const filter = FILTERS.some((f) => f.id === status) ? (status as OrderFilter) : "all";
   const eventId = event && /^[0-9a-f-]{36}$/i.test(event) ? event : null;
   const listed = showMap ? [] : await listOrders(scope.organizationId, filter, eventId);
-  const [onlinePayments, bankOnlyEvents] = await Promise.all([
-    listOnlinePayments(listed.map((order) => order.id)),
-    Promise.all(
-      [...new Set(listed.map((order) => order.eventId))].map(async (id) => [id, await isBankOnlyEvent(id, scope.organizationId)] as const)
-    ).then((pairs) => new Map(pairs)),
-  ]);
-  const allByBank = listed.length > 0 && listed.every((order) => bankOnlyEvents.get(order.eventId) === true);
+  const onlinePayments = await listOnlinePayments(listed.map((order) => order.id));
   const orders =
     filter === "pending"
       ? [...listed].sort((a, b) => (QUEUE_ORDER[a.status] ?? 9) - (QUEUE_ORDER[b.status] ?? 9) || a.createdAt.localeCompare(b.createdAt))
@@ -92,15 +84,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         Заказы {!showMap && <span className="text-ocean/40 font-normal">({orders.length})</span>}
       </h1>
       <p className="text-sm text-ocean/60 mb-5">
-        {allByBank ? (
-          "Покупатели платят картой на странице банка, билеты выдаются сами, подтверждать ничего не нужно. Показаны последние 100."
-        ) : (
-          <>
-            Оплата ручная: найдите поступление в Kaspi Pay (сумма, время, номер заказа) и только тогда нажмите
-            «Подтвердить оплату» — после этого покупатель получит билеты. «Покупатель сообщил об оплате» — это не
-            оплата, а просьба проверить. Показаны последние 100.
-          </>
-        )}
+        Покупатели платят картой на странице банка, билеты выдаются сами, подтверждать ничего не нужно. Возврат
+        оформляется здесь: за весь заказ или за отдельные места, деньги возвращает банк. Показаны последние 100.
       </p>
 
       <div className="flex flex-wrap gap-2 mb-6">
@@ -182,7 +167,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
               {/* What the cashier knows before acting: when the buyer said they paid, until when the
                   seats are held, the Kaspi or bank number and any note already written down. */}
-              {(order.paymentReportedAt || order.kaspiOperationId || order.payment?.bankNumber || order.resolutionNote || (order.expiresAt && ["pending", "payment_reported"].includes(order.status))) && (
+              {(order.paymentReportedAt || order.kaspiOperationId || order.payment?.bankNumber || order.resolutionNote || order.refundedAmount > 0 || (order.expiresAt && ["pending", "payment_reported"].includes(order.status))) && (
                 <ul className="mt-2 text-xs text-ocean/70 space-y-0.5">
                   {order.paymentReportedAt && (
                     <li className="font-semibold text-orange-800">Покупатель нажал «Я оплатил» в {formatMoment(order.paymentReportedAt)}</li>
@@ -192,21 +177,27 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   )}
                   {order.kaspiOperationId && <li>Операция Kaspi: {order.kaspiOperationId}</li>}
                   {order.payment?.bankNumber && <li>Номер в банке: <span className="break-all">{order.payment.bankNumber}</span></li>}
+                  {order.refundedAmount > 0 && order.status === "confirmed" && (
+                    <li className="font-semibold text-red-700">
+                      Возвращено за часть мест: {formatMoney(order.refundedAmount, order.currency)}
+                    </li>
+                  )}
                   {order.resolutionNote && <li>Комментарий: {order.resolutionNote}</li>}
                 </ul>
               )}
 
-              {/* A paid order's actions. Free orders confirm themselves at creation and never wait;
-                  a past or archived event's orders are history and change no more. */}
-              {order.amount > 0 && ["pending", "payment_reported", "expired", "rejected", "late_payment", "confirmed"].includes(order.status) && (
+              {/* What can still happen to the order: a paid one goes back through the bank, whole or seat
+                  by seat, a free one is cancelled. A past or archived event's orders are history. */}
+              {(order.amount > 0 ? ["pending", "payment_reported", "confirmed"] : ["confirmed"]).includes(order.status) && (
                 <div className="mt-3 bg-cream/40 border border-cream-dark rounded-2xl px-3 py-3">
                   {order.eventLocked ? (
                     <p className="text-xs text-ocean/50">Мероприятие прошло или в архиве — действия с оплатой недоступны.</p>
                   ) : (
                     <OrderActions
-                      automatic={bankOnlyEvents.get(order.eventId) === true}
                       paidOnline={onlinePayments.get(order.id)?.paid === true}
                       needsRefund={onlinePayments.get(order.id)?.needsRefund === true}
+                      free={order.amount === 0}
+                      seats={order.items.filter((item) => item.active).map((item) => ({ id: item.id, name: item.name, price: item.price, checkedIn: Boolean(item.checkedInAt) }))}
                       order={{
                         id: order.id,
                         status: toBookingStatus(order.status),
@@ -230,7 +221,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 <div>
                   <dt className="text-ocean/40">Оплата</dt>
                   <dd className="text-ocean/80 font-medium">
-                    {order.payment ? `${order.payment.provider} · ${PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status}` : order.amount > 0 ? "вручную или ещё не начата" : "—"}
+                    {order.payment ? `${order.payment.provider} · ${PAYMENT_STATUS_LABEL[order.payment.status] ?? order.payment.status}` : order.amount > 0 ? "ещё не начата" : "—"}
                   </dd>
                 </div>
                 <div>
@@ -246,17 +237,17 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               </dl>
 
               {/* Seat by seat, for checking someone in by hand when the scanner is not at hand. */}
-              {order.status === "confirmed" && order.seats.length > 0 && (
+              {order.status === "confirmed" && order.items.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
-                  {order.seats.map((s) => (
+                  {order.items.filter((item) => item.active || item.refundedAt).map((item) => (
                     <span
-                      key={`${s.section}-${s.row}-${s.seat}`}
+                      key={item.id}
                       className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        s.checkedInAt ? "bg-gold/15 text-ocean-dark" : "bg-ocean/5 text-ocean/50"
+                        item.refundedAt ? "bg-red-50 text-red-700 line-through" : item.checkedInAt ? "bg-gold/15 text-ocean-dark" : "bg-ocean/5 text-ocean/50"
                       }`}
                     >
-                      {seatName({ section: s.section, rowLabel: s.row, seatNumber: s.seat })}
-                      {s.checkedInAt ? ` · вход ${formatMoment(s.checkedInAt)}` : ""}
+                      {item.name}
+                      {item.refundedAt ? " · возврат" : item.checkedInAt ? ` · вход ${formatMoment(item.checkedInAt)}` : ""}
                     </span>
                   ))}
                 </div>

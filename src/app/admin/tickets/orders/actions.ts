@@ -5,32 +5,29 @@ import { createClient } from "@/lib/supabase/server";
 import { EVENT_LOCKED_MESSAGE, isBookingEventLocked } from "@/lib/cultureEvents";
 import { getStaffIdentity } from "@/lib/profile";
 import { livePipeline } from "@/lib/payments/deps";
-import { refundPayment } from "@/lib/payments/pipeline";
+import { MIN_REFUND_AMOUNT, refundItems, refundPayment } from "@/lib/payments/pipeline";
 
 export type OrderActionResult = { ok: boolean; message: string };
 
 /**
- * The cashier's actions on an order. Each one is a database function (see the migration
- * bookings_manual_payment): it checks the institution, the order's current status and the hold
- * expiry itself, writes the journal (booking_actions) and does nothing on a second press. This
- * file only checks the session and turns the function's answer into words.
+ * The cashier's actions on an order. Money is taken and returned only by the bank; the cashier
+ * starts a refund here, and the order changes once the bank agreed. Cancelling a free order is a
+ * database function (mark_booking_refunded) that checks the institution and the order's status
+ * itself; this file only checks the session and turns its answer into words.
  */
 const MESSAGES: Record<string, OrderActionResult> = {
-  confirmed: { ok: true, message: "Оплата подтверждена, билеты выданы" },
-  already_confirmed: { ok: true, message: "Заказ уже был подтверждён — билеты те же" },
-  rejected: { ok: true, message: "Заказ отклонён, места освобождены" },
-  already_rejected: { ok: true, message: "Заказ уже был отклонён" },
-  late: { ok: true, message: "Отмечено как поздняя оплата: выдайте билеты или оформите возврат" },
-  already_late: { ok: true, message: "Заказ уже отмечен как поздняя оплата" },
-  refunded: { ok: true, message: "Возврат отмечен, билеты больше не действуют" },
-  already_refunded: { ok: true, message: "Возврат уже был отмечен" },
-  expired: { ok: false, message: "Бронь уже истекла, места могли занять. Если деньги пришли — нажмите «Поздняя оплата»." },
-  seats_taken: { ok: false, message: "Часть мест уже продана другим. Выдать билеты нельзя — оформите возврат." },
+  refunded: { ok: true, message: "Билеты аннулированы, места снова в продаже" },
+  already_refunded: { ok: true, message: "Билеты уже были аннулированы" },
   event_finished: { ok: false, message: EVENT_LOCKED_MESSAGE },
   pending: { ok: false, message: "Заказ ещё ждёт оплату." },
-  payment_reported: { ok: false, message: "Заказ ещё ждёт проверки оплаты." },
-  late_payment: { ok: false, message: "Заказ отмечен как поздняя оплата: выдайте билеты или оформите возврат." },
   cancelled: { ok: false, message: "Заказ отменён." },
+};
+
+const REFUND_REFUSED: Record<string, string> = {
+  nothing_to_refund: "Выберите места для возврата.",
+  items_not_refundable: "Часть выбранных мест уже возвращена или не относится к заказу. Обновите страницу.",
+  amount_too_small: `Банк не возвращает меньше ${MIN_REFUND_AMOUNT} ₸ за один раз.`,
+  amount_exceeds_payment: "Сумма возврата больше оплаченной. Обновите страницу.",
 };
 
 async function run(
@@ -63,62 +60,78 @@ async function run(
 
 const text = (value: string | undefined, max: number) => (value ?? "").trim().slice(0, max) || null;
 
-/** «Подтвердить оплату»: the cashier found the money in Kaspi Pay. Tickets are issued now. */
-export async function confirmOrderPayment(bookingId: string, operationId?: string) {
-  return run(bookingId, "confirm_booking_manual", { p_operation_id: text(operationId, 100) });
-}
-
-/** «Отклонить»: no money found. Seats go back on sale. */
-export async function rejectOrder(bookingId: string, note?: string) {
-  return run(bookingId, "reject_booking", { p_note: text(note, 500) });
-}
-
-/** «Поздняя оплата»: the money came after the hold ran out. No tickets yet. */
-export async function markOrderLate(bookingId: string, operationId?: string, note?: string) {
-  return run(bookingId, "mark_booking_late", { p_operation_id: text(operationId, 100), p_note: text(note, 500) });
-}
-
-/** «Выдать билеты» for a late payment: only when the same seats are still free. */
-export async function issueLateOrder(bookingId: string) {
-  return run(bookingId, "issue_late_booking", {});
-}
-
-/** «Отметить возврат»: the money went back through Kaspi, outside this site. */
+/** «Аннулировать билеты» of a free order: no money moved, so nothing goes back. */
 export async function markOrderRefunded(bookingId: string, note?: string) {
   return run(bookingId, "mark_booking_refunded", { p_note: text(note, 500) });
 }
 
+function revalidateOrders() {
+  revalidatePath("/admin/tickets/orders");
+  revalidatePath("/admin/tickets");
+  revalidatePath("/admin/tickets/stats", "layout");
+}
+
 /**
- * «Вернуть деньги»: the money goes back through the bank, and the order changes only once the bank
- * agreed. The server's key does the work, so the checks here are explicit: the order must be visible
- * to this staff member and belong to their own institution.
+ * The order's bank payment, for a refund by the server's key. The checks are explicit: the order
+ * must be visible to this staff member, belong to their own institution and its event be current.
  */
-export async function refundOrderOnline(bookingId: string): Promise<OrderActionResult> {
-  if (!/^[0-9a-f-]{36}$/i.test(bookingId)) return { ok: false, message: "Заказ не найден." };
+async function refundablePayment(bookingId: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(bookingId)) return { error: "Заказ не найден." } as const;
   const identity = await getStaffIdentity();
-  if (!identity?.hasProfile) return { ok: false, message: "Не авторизовано." };
+  if (!identity?.hasProfile) return { error: "Не авторизовано." } as const;
   const supabase = await createClient();
   const { data: booking } = await supabase.from("bookings").select("organization_id").eq("id", bookingId).maybeSingle();
   if (!booking || (identity.organizationId && identity.organizationId !== booking.organization_id)) {
-    return { ok: false, message: "Заказ не найден или недостаточно прав." };
+    return { error: "Заказ не найден или недостаточно прав." } as const;
   }
+  if (await isBookingEventLocked(bookingId)) return { error: EVENT_LOCKED_MESSAGE } as const;
 
   let deps;
   try {
     deps = livePipeline();
   } catch {
-    return { ok: false, message: "На сервере не задан служебный ключ." };
+    return { error: "На сервере не задан служебный ключ." } as const;
   }
   const [payment] = await deps.store.listRefundablePayments(bookingId);
-  if (!payment) return { ok: false, message: "По этому заказу нет оплаты картой." };
+  if (!payment) return { error: "По этому заказу нет оплаты картой." } as const;
+  return { deps, payment, actorId: identity.userId } as const;
+}
 
-  const result = await refundPayment(deps, payment);
+/** «Вернуть весь заказ»: what is left of the payment goes back through the bank. */
+export async function refundOrderOnline(bookingId: string): Promise<OrderActionResult> {
+  const found = await refundablePayment(bookingId);
+  if ("error" in found) return { ok: false, message: found.error ?? "Не удалось выполнить действие." };
+
+  const result = await refundPayment(found.deps, found.payment);
   if (!result.ok) return { ok: false, message: "Банк не выполнил возврат. Заказ не изменён, деньги у покупателя не возвращены." };
 
-  revalidatePath("/admin/tickets/orders");
-  revalidatePath("/admin/tickets");
-  revalidatePath("/admin/tickets/stats", "layout");
-  return { ok: true, message: "Деньги возвращены через банк" };
+  revalidateOrders();
+  return { ok: true, message: "Деньги возвращены через банк, билеты больше не действуют" };
+}
+
+/** «Вернуть выбранные»: the price of the chosen seats goes back; the rest of the order stands. */
+export async function refundOrderItemsOnline(bookingId: string, itemIds: string[]): Promise<OrderActionResult> {
+  const ids = [...new Set(itemIds)].filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+  if (ids.length === 0) return { ok: false, message: REFUND_REFUSED.nothing_to_refund };
+  const found = await refundablePayment(bookingId);
+  if ("error" in found) return { ok: false, message: found.error ?? "Не удалось выполнить действие." };
+
+  const result = await refundItems(found.deps, found.payment, ids, found.actorId);
+  if (!result.ok) {
+    if (result.reason.startsWith("recorded_failed")) {
+      revalidateOrders();
+      return { ok: false, message: "Банк вернул деньги, но сайт не смог отметить возврат. Сообщите администратору платформы." };
+    }
+    return { ok: false, message: REFUND_REFUSED[result.reason] ?? "Банк не выполнил возврат. Заказ не изменён, деньги у покупателя не возвращены." };
+  }
+
+  revalidateOrders();
+  return {
+    ok: true,
+    message: result.all
+      ? "Деньги возвращены через банк, билеты больше не действуют"
+      : `Возвращено ${result.amount.toLocaleString("ru-RU")} ₸ за ${ids.length} ${ids.length === 1 ? "место" : "места"}, остальные билеты действуют`,
+  };
 }
 
 /** Postgres "undefined_function" / PostgREST "no such function": the event_seat_blocks migration has not been run. */

@@ -13,16 +13,14 @@ import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
 import PayButton from "./PayButton";
 import CancelOrderButton from "./CancelOrderButton";
-import ManualPayment from "./ManualPayment";
-import ReportPaidButton from "./ReportPaidButton";
 import TicketActions from "./TicketActions";
 import type { Locale } from "@/i18n/routing";
 
 /** What the buyer is told under the order once it is no longer waiting for money. */
 const AFTER: Partial<Record<string, { ru: string; kk: string }>> = {
   expired: {
-    ru: "15 минут прошли без подтверждения оплаты, места освобождены. Если вы уже перевели деньги, свяжитесь с учреждением и назовите номер заказа.",
-    kk: "15 минут ішінде төлем расталмады, орындар босатылды. Ақша аударып қойсаңыз, мекемеге хабарласып, тапсырыс нөмірін айтыңыз.",
+    ru: "15 минут прошли, оплата не поступила, места освобождены. Если деньги всё же списались, банк вернёт их сам, а если нет — свяжитесь с учреждением и назовите номер заказа.",
+    kk: "15 минут өтті, төлем түспеді, орындар босатылды. Ақша бәрібір шегерілсе, банк оны өзі қайтарады, болмаса мекемеге хабарласып, тапсырыс нөмірін айтыңыз.",
   },
   rejected: {
     ru: "Кассир не нашёл оплату по этому заказу, места освобождены. Если вы оплатили, свяжитесь с учреждением и назовите номер заказа.",
@@ -47,22 +45,19 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
   const isConfirmed = booking.status === "confirmed";
   const holding = isHold(booking.status);
   const needsPayment = holding && booking.totalAmount > 0;
-  const reported = booking.status === "payment_reported";
   const [paymentMethods, event] = await Promise.all([
     needsPayment ? listPublicPaymentMethodsForEvent(booking.eventId, booking.organizationId) : Promise.resolve([]),
     getCultureEventById(booking.eventId),
   ]);
 
-  // Every method goes through the bank: the order confirms itself when the bank reports the payment.
-  const bankOnly = paymentMethods.length > 0 && paymentMethods.every((method) => method.mode === "api");
-  // A manual method is usable only with the institution's own payment link; without one there is
-  // nothing to pay by yet, and the buyer is told not to pay.
-  const manualMethods = paymentMethods.flatMap((method) =>
-    method.mode !== "api" && method.paymentUrl ? [{ ...method, paymentUrl: method.paymentUrl }] : []
-  );
-  const canPay = bankOnly || manualMethods.length > 0;
+  // Payment is by card on the bank's page only: the order confirms itself when the bank reports it.
+  const bankMethods = paymentMethods.filter((method) => method.mode === "api");
+  const canPay = bankMethods.length > 0;
   // A card attempt already failed: the seats are still the buyer's, so offer it again and say so.
-  const attemptFailed = bankOnly && ["failed", "cancelled"].includes((await getOrderSnapshot(token))?.payment ?? "");
+  const attemptFailed = canPay && ["failed", "cancelled"].includes((await getOrderSnapshot(token))?.payment ?? "");
+  // Seats returned by a partial refund: their tickets no longer work.
+  const returned = isConfirmed ? booking.items.filter((item) => item.releasedAt) : [];
+  const returnedSum = returned.reduce((sum, item) => sum + item.priceAtBooking, 0);
   const eventTitle = event ? (lang === "kk" ? (event.titleKk ?? event.titleRu) : (event.titleRu ?? event.titleKk)) : null;
   const sum = `${booking.totalAmount} ₸`;
   const after = AFTER[booking.status]?.[lang];
@@ -104,16 +99,19 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
             <div className="mt-5 pt-5 border-t border-cream-dark space-y-2.5">
               {booking.items.map((item) => {
                 const name = item.ticketTypeNameRu ?? item.ticketTypeNameKk ?? item.category;
+                const isReturned = isConfirmed && Boolean(item.releasedAt);
                 return (
                   <div
                     key={item.itemId}
-                    className="flex flex-wrap items-center justify-between gap-3 bg-cream/30 rounded-2xl px-4 py-3"
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 ${isReturned ? "bg-red-50/60" : "bg-cream/30"}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      {isConfirmed && item.ticketCode && <TicketQr value={item.ticketCode} />}
+                      {isConfirmed && !isReturned && item.ticketCode && <TicketQr value={item.ticketCode} />}
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-ocean">{seatName(item, lang)}</p>
-                        <p className="text-xs text-ocean/50">{name}</p>
+                        <p className={`text-sm font-semibold ${isReturned ? "text-ocean/50 line-through" : "text-ocean"}`}>{seatName(item, lang)}</p>
+                        <p className="text-xs text-ocean/50">
+                          {isReturned ? (lang === "kk" ? "Ақшасы қайтарылды, билет жарамсыз" : "Деньги возвращены, билет не действует") : name}
+                        </p>
                       </div>
                     </div>
                     <span className="text-sm font-semibold text-ocean shrink-0">
@@ -137,6 +135,14 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
               </span>
             </div>
 
+            {returned.length > 0 && (
+              <p className="text-sm text-ocean/70 mt-5 bg-cream/40 rounded-2xl px-4 py-3">
+                {lang === "kk"
+                  ? `${returned.length} билеттің ақшасы (${returnedSum} ₸) картаңызға қайтарылды. Қалған билеттер жарамды.`
+                  : `Деньги за ${returned.length} ${returned.length === 1 ? "билет" : "билета"} (${returnedSum} ₸) возвращены на вашу карту. Остальные билеты действуют.`}
+              </p>
+            )}
+
             {after && <p className="text-sm text-ocean/70 mt-5 bg-cream/40 rounded-2xl px-4 py-3">{after}</p>}
           </div>
         </FadeIn>
@@ -146,21 +152,13 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
             <div className="mt-6 bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8">
               <h2 className="text-lg font-bold text-ocean mb-3">{lang === "kk" ? "Төлем" : "Оплата"}</h2>
 
-              {reported && booking.paymentReportedAt && (
-                <p className="text-sm text-ocean bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 mb-5">
-                  {lang === "kk"
-                    ? `Сіз төлегеніңізді ${formatTime(booking.paymentReportedAt)} хабарладыңыз. Кассир Kaspi-дегі түсімді тексереді — билеттер осы бетте пайда болады. Бетті кейінірек жаңартыңыз.`
-                    : `Вы сообщили об оплате в ${formatTime(booking.paymentReportedAt)}. Кассир проверит поступление в Kaspi — билеты появятся на этой странице. Обновите её чуть позже.`}
-                </p>
-              )}
-
               {!canPay ? (
                 <p className="text-sm text-ocean bg-red-50 border border-red-200 rounded-2xl p-4">
                   {lang === "kk"
-                    ? "Мекеме төлем сілтемесін әлі берген жоқ. Әзірге төлемеңіз — мекемеге хабарласыңыз."
-                    : "Учреждение ещё не указало ссылку для оплаты. Пока не платите — свяжитесь с учреждением."}
+                    ? "Картамен онлайн төлем әзірге қосылмаған. Ешқайда төлемеңіз — мекемеге хабарласыңыз."
+                    : "Оплата картой онлайн пока не подключена. Никуда не платите — свяжитесь с учреждением."}
                 </p>
-              ) : bankOnly ? (
+              ) : (
                 <>
                   {attemptFailed && (
                     <p className="text-sm text-ocean bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mb-4">
@@ -175,7 +173,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                       : `Введите данные карты на странице банка (${sum}). Как только оплата пройдёт, билеты появятся здесь.`}
                   </p>
                   <div className="space-y-4">
-                    {paymentMethods.map((method) => (
+                    {bankMethods.map((method) => (
                       <div key={method.id} className="bg-cream/30 rounded-2xl p-4 text-center sm:text-left">
                         <p className="text-sm font-semibold text-ocean mb-3">
                           {method.displayNameRu ?? method.displayNameKk ?? method.providerName}
@@ -187,40 +185,6 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                   {booking.status === "pending" && (
                     <CancelOrderButton token={token} seatsHref={event?.slug ? `/afisha/${event.slug}/tickets` : null} />
                   )}
-                </>
-              ) : (
-                <>
-                  <ol className="text-sm text-ocean/70 space-y-1.5 mb-5 list-decimal pl-5">
-                    {lang === "kk" ? (
-                      <>
-                        <li>
-                          Дәл <b className="text-ocean">{sum}</b> соманы төмендегі «Төлемге өту» түймесі арқылы банк қосымшасында төлеңіз.
-                        </li>
-                        <li>Бронь уақыты біткенше «Мен төледім» түймесін басыңыз.</li>
-                        <li>Кассир түсімді тексереді — билеттер осы бетте пайда болады.</li>
-                      </>
-                    ) : (
-                      <>
-                        <li>
-                          Оплатите ровно <b className="text-ocean">{sum}</b> кнопкой «Перейти к оплате» ниже — откроется приложение банка.
-                        </li>
-                        <li>До конца брони нажмите «Я оплатил».</li>
-                        <li>Кассир проверит поступление — билеты появятся на этой странице.</li>
-                      </>
-                    )}
-                  </ol>
-                  <div className="space-y-4">
-                    {manualMethods.map((method) => (
-                      <ManualPayment
-                        key={method.id}
-                        name={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
-                        isDefault={method.isDefault}
-                        paymentUrl={method.paymentUrl}
-                        locale={lang}
-                      />
-                    ))}
-                  </div>
-                  {!reported && <ReportPaidButton token={token} />}
                 </>
               )}
             </div>

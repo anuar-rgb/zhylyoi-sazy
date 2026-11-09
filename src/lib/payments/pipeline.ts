@@ -92,6 +92,12 @@ export async function applyObserved(
     }
 
     case "refunded": {
+      // Some seats were already returned through the site: the bank's word "refunded" may describe
+      // only those, and must not close the seats the buyer still holds. The site's own refund
+      // buttons record everything else.
+      if ((payment.refundedAmount ?? 0) > 0 && payment.status === "success") {
+        return { ok: true, journal: "ignored", note: "partial_refund_on_record" };
+      }
       const outcome = await store.applyRefund(payment.id);
       if (outcome === "refunded" || outcome === "already_refunded") return { ok: true, journal: "processed", note: null };
       return { ok: false, journal: "rejected", note: outcome };
@@ -112,11 +118,15 @@ export async function refundPayment(
   const secrets = payment.paymentMethodId ? await deps.store.getSecrets(payment.paymentMethodId) : null;
   if (!provider || !secrets || !payment.providerPaymentId) return { ok: false, reason: "provider_or_keys_missing" };
 
+  // After partial refunds only the rest of the payment is still with the institution.
+  const amount = payment.amount - (payment.refundedAmount ?? 0);
+  if (amount <= 0) return { ok: false, reason: "nothing_left_to_refund" };
+
   const result = await provider.refundPayment({
     paymentId: payment.id,
     providerPaymentId: payment.providerPaymentId,
     transactionId: payment.transactionId ?? null,
-    amount: payment.amount,
+    amount,
     currency: payment.currency,
     secrets,
   });
@@ -128,6 +138,57 @@ export async function refundPayment(
   }
   const outcome = await deps.store.applyRefund(payment.id);
   return outcome === "refunded" || outcome === "already_refunded" ? { ok: true } : { ok: false, reason: outcome };
+}
+
+/** The smallest refund a bank takes; Halyk ePay refuses anything under 10 tenge. */
+export const MIN_REFUND_AMOUNT = 10;
+
+/**
+ * Returns the price of some of the order's seats through the provider and, once it agreed,
+ * releases those seats. The seats must still hold; their price comes from the database, never
+ * from the caller. Refunding every remaining seat is a full refund and goes through refundPayment.
+ */
+export async function refundItems(
+  deps: PipelineDeps,
+  payment: PaymentRow,
+  itemIds: string[],
+  actorId: string | null
+): Promise<{ ok: true; amount: number; all: boolean } | { ok: false; reason: string }> {
+  const wanted = new Set(itemIds);
+  if (wanted.size === 0) return { ok: false, reason: "nothing_to_refund" };
+
+  const active = await deps.store.listActiveItems(payment.bookingId);
+  const chosen = active.filter((item) => wanted.has(item.id));
+  if (chosen.length !== wanted.size) return { ok: false, reason: "items_not_refundable" };
+
+  if (chosen.length === active.length) {
+    const full = await refundPayment(deps, payment);
+    return full.ok ? { ok: true, amount: payment.amount - (payment.refundedAmount ?? 0), all: true } : full;
+  }
+
+  const amount = chosen.reduce((sum, item) => sum + item.price, 0);
+  if (amount < MIN_REFUND_AMOUNT) return { ok: false, reason: "amount_too_small" };
+  if ((payment.refundedAmount ?? 0) + amount > payment.amount) return { ok: false, reason: "amount_exceeds_payment" };
+
+  const provider = deps.getProvider(payment.providerCode);
+  const secrets = payment.paymentMethodId ? await deps.store.getSecrets(payment.paymentMethodId) : null;
+  if (!provider || !secrets || !payment.providerPaymentId) return { ok: false, reason: "provider_or_keys_missing" };
+
+  const result = await provider.refundPayment({
+    paymentId: payment.id,
+    providerPaymentId: payment.providerPaymentId,
+    transactionId: payment.transactionId ?? null,
+    amount,
+    currency: payment.currency,
+    secrets,
+  });
+  if (!result.ok) return { ok: false, reason: result.reason };
+
+  const outcome = await deps.store.applyPartialRefund(payment.id, [...wanted], actorId);
+  if (outcome === "refunded_partly") return { ok: true, amount, all: false };
+  if (outcome === "refunded_all") return { ok: true, amount, all: true };
+  // The bank returned the money but the record failed: staff must see it, the money is gone.
+  return { ok: false, reason: `recorded_failed:${outcome}` };
 }
 
 /**

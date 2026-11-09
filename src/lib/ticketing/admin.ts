@@ -82,6 +82,10 @@ export type OrderRow = {
   checkedIn: number;
   /** The order's seats still held, each with when it was used at the door (null: not yet). */
   seats: { section: HallSection; row: string; seat: number; checkedInAt: string | null }[];
+  /** Every seat of the order, held or returned: what a partial refund chooses from. */
+  items: { id: string; name: string; price: number; checkedInAt: string | null; refundedAt: string | null; active: boolean }[];
+  /** Already returned by partial refunds. */
+  refundedAmount: number;
   /** bankNumber: the number the bank knows this payment by, the one on the buyer's bank receipt. */
   payment: { provider: string; status: string; paidAt: string | null; needsRefund: boolean; note: string | null; bankNumber: string | null } | null;
 };
@@ -105,9 +109,9 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
     let query = supabase
       .from("bookings")
       .select(
-        "id, public_order_id, status, buyer_name, buyer_phone, total_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
+        "id, public_order_id, status, buyer_name, buyer_phone, total_amount, refunded_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
           "payment_reported_at, kaspi_operation_id, resolution_note, " +
-          `culture_events(title_ru, title_kk, event_date, status), booking_items(checked_in_at, released_at, hall_seats(${seatColumns})), ` +
+          `culture_events(title_ru, title_kk, event_date, status), booking_items(id, price_at_booking, checked_in_at, released_at, refunded_at, hall_seats(${seatColumns})), ` +
           "payments(provider_code, provider_payment_id, status, paid_at, needs_refund, note, created_at)"
       )
       .eq("organization_id", organizationId)
@@ -162,6 +166,20 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
           };
         })
         .filter((s) => s.row || s.seat),
+      items: items
+        .map((item) => {
+          const seat = (Array.isArray(item.hall_seats) ? item.hall_seats[0] : item.hall_seats) as Row | null;
+          return {
+            id: String(item.id),
+            name: seat ? seatName({ section: str(seat.section), rowLabel: String(seat.row_label), seatNumber: Number(seat.seat_number) }) : "Место",
+            price: Number(item.price_at_booking) || 0,
+            checkedInAt: str(item.checked_in_at),
+            refundedAt: str(item.refunded_at),
+            active: item.released_at === null || item.released_at === undefined,
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, "ru", { numeric: true })),
+      refundedAmount: Number(row.refunded_amount) || 0,
       payment: last
         ? {
             provider: String(last.provider_code),
@@ -333,17 +351,21 @@ export type EventStats = {
 /** What each tile means is spelled out in the page; the arithmetic lives here, in one place. */
 export function summarizeEvent(
   eventId: string,
-  bookings: { status: string; total: number; items: { checkedIn: boolean }[] }[]
+  bookings: { status: string; total: number; refunded?: number; items: { checkedIn: boolean; refunded?: boolean }[] }[]
 ): EventStats {
   const stats: EventStats = { eventId, sold: 0, waiting: 0, cancelled: 0, refunded: 0, checkedIn: 0, notCame: 0, revenue: 0 };
   for (const booking of bookings) {
     const tickets = booking.items.length;
     if (booking.status === "confirmed") {
-      stats.sold += tickets;
-      stats.revenue += booking.total;
-      const entered = booking.items.filter((item) => item.checkedIn).length;
+      // Seats returned by a partial refund are refunds, and their price is no longer revenue.
+      const returned = booking.items.filter((item) => item.refunded).length;
+      const held = booking.items.filter((item) => !item.refunded);
+      stats.sold += held.length;
+      stats.refunded += returned;
+      stats.revenue += booking.total - (booking.refunded ?? 0);
+      const entered = held.filter((item) => item.checkedIn).length;
       stats.checkedIn += entered;
-      stats.notCame += tickets - entered;
+      stats.notCame += held.length - entered;
     } else if (isHold(booking.status)) stats.waiting += tickets;
     else if (booking.status === "refunded") stats.refunded += tickets;
     else stats.cancelled += tickets; // cancelled, expired, rejected and late (no seats held)
@@ -355,18 +377,19 @@ export async function getEventStats(organizationId: string): Promise<Map<string,
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
-    .select("event_id, status, total_amount, booking_items(checked_in_at)")
+    .select("event_id, status, total_amount, refunded_amount, booking_items(checked_in_at, refunded_at)")
     .eq("organization_id", organizationId);
   if (error || !data) return new Map();
 
-  const byEvent = new Map<string, { status: string; total: number; items: { checkedIn: boolean }[] }[]>();
+  const byEvent = new Map<string, { status: string; total: number; refunded: number; items: { checkedIn: boolean; refunded: boolean }[] }[]>();
   for (const row of data as unknown as Row[]) {
     const id = String(row.event_id);
     const list = byEvent.get(id) ?? [];
     list.push({
       status: String(row.status),
       total: Number(row.total_amount) || 0,
-      items: ((row.booking_items as Row[] | null) ?? []).map((item) => ({ checkedIn: Boolean(item.checked_in_at) })),
+      refunded: Number(row.refunded_amount) || 0,
+      items: ((row.booking_items as Row[] | null) ?? []).map((item) => ({ checkedIn: Boolean(item.checked_in_at), refunded: Boolean(item.refunded_at) })),
     });
     byEvent.set(id, list);
   }

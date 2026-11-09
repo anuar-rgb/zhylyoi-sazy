@@ -95,7 +95,7 @@ describe("Halyk refund", () => {
   it("says refunded only when Halyk agreed", async () => {
     const calls = fakeHalyk([], {});
     await expect(refund("txn")).resolves.toEqual({ ok: true, status: "refunded" });
-    expect(calls.at(-1)).toContain("/operation/txn/refund?externalID=p1");
+    expect(calls.at(-1)).toContain("/operation/txn/refund?amount=500&externalID=p1");
     fakeHalyk([], { "/refund": 400 });
     await expect(refund("txn")).resolves.toMatchObject({ ok: false });
     await expect(refund(null)).resolves.toMatchObject({ ok: false });

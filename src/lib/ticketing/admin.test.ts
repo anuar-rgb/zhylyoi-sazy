@@ -26,6 +26,13 @@ describe("summarizeEvent", () => {
     expect(s).toEqual({ eventId: "e", sold: 3, waiting: 1, cancelled: 3, refunded: 1, checkedIn: 1, notCame: 2, revenue: 4500 });
   });
 
+  it("counts seats returned by a partial refund as refunds, not as sold or revenue", () => {
+    const s = summarizeEvent("e", [
+      { status: "confirmed", total: 1500, refunded: 500, items: [{ checkedIn: true }, { checkedIn: false }, { checkedIn: false, refunded: true }] },
+    ]);
+    expect(s).toMatchObject({ sold: 2, refunded: 1, checkedIn: 1, notCame: 1, revenue: 1000 });
+  });
+
   it("is all zeros for an event nobody has bought", () => {
     expect(summarizeEvent("e", [])).toEqual({
       eventId: "e", sold: 0, waiting: 0, cancelled: 0, refunded: 0, checkedIn: 0, notCame: 0, revenue: 0,

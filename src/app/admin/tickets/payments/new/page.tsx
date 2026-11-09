@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { listPaymentMethods, listPaymentProviders } from "@/lib/paymentMethods";
+import { hasProvider } from "@/lib/payments/registry";
 import PaymentMethodForm from "../PaymentMethodForm";
 import { createPaymentMethod } from "../actions";
 
@@ -14,7 +15,8 @@ export default async function NewPaymentMethodPage() {
 
   const [allProviders, existing] = await Promise.all([listPaymentProviders(), listPaymentMethods(organizationId)]);
   const usedCodes = new Set(existing.map((m) => m.providerCode));
-  const availableProviders = allProviders.filter((p) => !usedCodes.has(p.code));
+  // Only banks the site is connected to: payment is by card on the bank's page, nothing by hand.
+  const availableProviders = allProviders.filter((p) => !usedCodes.has(p.code) && hasProvider(p.code));
 
   if (availableProviders.length === 0) {
     redirect("/admin/tickets/payments");

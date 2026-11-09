@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { handleWebhook, reconcile, sha256, MAX_BODY_BYTES, type PipelineDeps } from "./pipeline";
+import { applyObserved, handleWebhook, reconcile, refundItems, refundPayment, sha256, MAX_BODY_BYTES, type PipelineDeps } from "./pipeline";
 import { MOCK_SIGNATURE_HEADER, mockProvider, signMockBody } from "./mock";
 import { getProvider } from "./registry";
 import type { MethodRow, PaymentRow, PaymentStore, WebhookLogEntry } from "./store";
@@ -27,7 +27,28 @@ class MemoryStore implements PaymentStore {
   refunds = 0;
   problems = new Map<string, string>();
   failNextSettle = false;
+  /** The order's seats: price, and whether the seat still holds. */
+  items = new Map<string, { bookingId: string; price: number; active: boolean }>();
 
+  async listActiveItems(bookingId: string) {
+    return [...this.items.entries()]
+      .filter(([, item]) => item.bookingId === bookingId && item.active)
+      .map(([id, item]) => ({ id, price: item.price }));
+  }
+  async applyPartialRefund(paymentId: string, itemIds: string[]) {
+    const payment = this.payments.get(paymentId);
+    if (!payment || payment.status !== "success") return "not_refundable";
+    const chosen = itemIds.map((id) => this.items.get(id));
+    if (chosen.some((item) => !item || !item.active || item.bookingId !== payment.bookingId)) return "items_not_refundable";
+    for (const item of chosen) item!.active = false;
+    payment.refundedAmount = (payment.refundedAmount ?? 0) + chosen.reduce((sum, item) => sum + item!.price, 0);
+    if ([...this.items.values()].every((item) => item.bookingId !== payment.bookingId || !item.active)) {
+      payment.status = "refunded";
+      this.bookings.get(payment.bookingId)!.status = "refunded";
+      return "refunded_all";
+    }
+    return "refunded_partly";
+  }
   async closeRefundedPayment(paymentId: string) {
     const payment = this.payments.get(paymentId);
     if (payment) payment.status = "refunded";
@@ -404,5 +425,87 @@ describe("the mock provider", () => {
     vi.stubEnv("NODE_ENV", "production");
     const prodDeps: PipelineDeps = { ...deps, getProvider };
     expect((await handleWebhook(prodDeps, METHOD_ID, signedRequest(notification("payment.succeeded")))).status).toBe(501);
+  });
+});
+
+describe("refunds of some seats", () => {
+  /** A paid order of three seats at 500 each, with a provider that records what it was asked. */
+  function paidOrder() {
+    const { store, deps } = setup({ status: "success", amount: 1500, transactionId: "txn_1" });
+    store.bookings.get(BOOKING_ID)!.status = "confirmed";
+    for (const id of ["seat-a", "seat-b", "seat-c"]) store.items.set(id, { bookingId: BOOKING_ID, price: 500, active: true });
+    const asked: number[] = [];
+    const provider: PaymentProvider = {
+      ...mockProvider,
+      async refundPayment(input) {
+        asked.push(input.amount);
+        return { ok: true, status: "refunded" };
+      },
+    };
+    return { store, deps: { ...deps, getProvider: () => provider }, asked };
+  }
+
+  it("returns only the chosen seats' price and keeps the order", async () => {
+    const { store, deps, asked } = paidOrder();
+    const result = await refundItems(deps, store.payments.get(PAYMENT_ID)!, ["seat-a"], null);
+
+    expect(result).toEqual({ ok: true, amount: 500, all: false });
+    expect(asked).toEqual([500]);
+    expect(store.items.get("seat-a")!.active).toBe(false);
+    expect(store.bookings.get(BOOKING_ID)!.status).toBe("confirmed");
+  });
+
+  it("a full refund after a partial one returns only what is left", async () => {
+    const { store, deps, asked } = paidOrder();
+    await refundItems(deps, store.payments.get(PAYMENT_ID)!, ["seat-a"], null);
+    const result = await refundPayment(deps, store.payments.get(PAYMENT_ID)!);
+
+    expect(result).toEqual({ ok: true });
+    expect(asked).toEqual([500, 1000]);
+    expect(store.bookings.get(BOOKING_ID)!.status).toBe("refunded");
+  });
+
+  it("choosing every remaining seat is a full refund", async () => {
+    const { store, deps, asked } = paidOrder();
+    const result = await refundItems(deps, store.payments.get(PAYMENT_ID)!, ["seat-a", "seat-b", "seat-c"], null);
+
+    expect(result).toMatchObject({ ok: true, all: true });
+    expect(asked).toEqual([1500]);
+    expect(store.refunds).toBe(1);
+  });
+
+  it("refuses seats that are not the order's or already returned, and asks the bank nothing", async () => {
+    const { store, deps, asked } = paidOrder();
+    store.items.set("other", { bookingId: "someone-else", price: 500, active: true });
+    await refundItems(deps, store.payments.get(PAYMENT_ID)!, ["seat-a"], null);
+
+    expect(await refundItems(deps, store.payments.get(PAYMENT_ID)!, ["other"], null)).toMatchObject({ ok: false });
+    expect(await refundItems(deps, store.payments.get(PAYMENT_ID)!, ["seat-a"], null)).toMatchObject({ ok: false });
+    expect(asked).toEqual([500]);
+  });
+
+  it("does nothing when the bank refuses", async () => {
+    const { store, deps } = paidOrder();
+    const refusing = { ...deps, getProvider: () => ({ ...mockProvider, refundPayment: async () => ({ ok: false as const, reason: "no" }) }) };
+    expect(await refundItems(refusing, store.payments.get(PAYMENT_ID)!, ["seat-a"], null)).toEqual({ ok: false, reason: "no" });
+    expect(store.items.get("seat-a")!.active).toBe(true);
+  });
+
+  it("a bank's 'refunded' after a partial refund does not close the seats still held", async () => {
+    const { store, deps } = paidOrder();
+    await refundItems(deps, store.payments.get(PAYMENT_ID)!, ["seat-a"], null);
+    const applied = await applyObserved(deps, store.payments.get(PAYMENT_ID)!, {
+      providerPaymentId: PROVIDER_PAYMENT_ID,
+      status: "refunded",
+      amount: 500,
+      currency: "KZT",
+      transactionId: "txn_1",
+      eventId: null,
+      eventType: "status_check",
+    });
+
+    expect(applied.journal).toBe("ignored");
+    expect(store.bookings.get(BOOKING_ID)!.status).toBe("confirmed");
+    expect(store.items.get("seat-b")!.active).toBe(true);
   });
 });

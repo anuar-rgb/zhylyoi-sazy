@@ -8,6 +8,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import { MEDIA_BUCKET } from "@/lib/storage";
+import { hasProvider } from "@/lib/payments/registry";
 
 export type FormState = { error: string | null };
 
@@ -22,22 +23,6 @@ function field(form: FormData, name: string): string | null {
 function revalidatePayments(id?: string) {
   revalidatePath("/admin/tickets/payments");
   if (id) revalidatePath(`/admin/tickets/payments/${id}`);
-}
-
-/**
- * The pay link, or an error message. Only https is accepted: the value ends up as a link on a
- * public page, and the database enforces the same rule.
- */
-function parsePaymentUrl(form: FormData): { url: string | null; error: string | null } {
-  const raw = field(form, "payment_url");
-  if (!raw) return { url: null, error: null };
-  try {
-    const parsed = new URL(raw);
-    if (parsed.protocol === "https:") return { url: parsed.toString(), error: null };
-  } catch {
-    // falls through to the message below
-  }
-  return { url: null, error: "Ссылка на оплату должна начинаться с https:// и быть корректным адресом." };
 }
 
 function paymentPayload(form: FormData) {
@@ -66,8 +51,8 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 
-  const link = parsePaymentUrl(form);
-  if (link.error) return { error: link.error };
+  // Only a bank the site is connected to: the buyer pays on its page and the order confirms itself.
+  if (!hasProvider(data.provider_code)) return { error: "Для этого провайдера нет подключения к банку." };
 
   const supabase = await createClient();
   const { data: created, error } = await supabase
@@ -78,7 +63,6 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
       display_name_kk: data.display_name_kk,
       display_name_ru: data.display_name_ru,
       is_default: data.is_default,
-      payment_url: link.url,
     })
     .select("id")
     .single();
@@ -105,8 +89,6 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
   if (!id) return { error: "Способ оплаты не найден." };
 
   const data = await fillPaymentTranslations(paymentPayload(form));
-  const link = parsePaymentUrl(form);
-  if (link.error) return { error: link.error };
 
   const supabase = await createClient();
   const { error, count } = await supabase
@@ -115,7 +97,6 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
       {
         display_name_kk: data.display_name_kk,
         display_name_ru: data.display_name_ru,
-        payment_url: link.url,
       },
       { count: "exact" }
     )

@@ -23,6 +23,8 @@ export type PaymentRow = {
   currency: string;
   status: string;
   metadata: Record<string, unknown>;
+  /** Already returned by partial refunds; a full refund returns only what is left. */
+  refundedAmount?: number;
   transactionId?: string | null;
   note?: string | null;
   createdAt?: string;
@@ -55,6 +57,10 @@ export interface PaymentStore {
     onlyFrom: string[]
   ): Promise<boolean>;
   applyRefund(paymentId: string): Promise<string>;
+  /** Records a refund of some seats of the order, once the bank returned their price. */
+  applyPartialRefund(paymentId: string, itemIds: string[], actorId: string | null): Promise<string>;
+  /** The order's seats that still hold, with their price: what a partial refund can return. */
+  listActiveItems(bookingId: string): Promise<{ id: string; price: number }[]>;
   /** A refund that leaves the order alone: a second payment for an order that stands. */
   closeRefundedPayment(paymentId: string): Promise<void>;
   /** The booking's payments still waiting for an answer. */
@@ -79,6 +85,7 @@ function toPayment(row: Row): PaymentRow {
     currency: String(row.currency ?? "KZT"),
     status: String(row.status),
     metadata: row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>) : {},
+    refundedAmount: Number(row.refunded_amount ?? 0) || 0,
     transactionId: typeof row.provider_transaction_id === "string" ? row.provider_transaction_id : null,
     note: typeof row.note === "string" ? row.note : null,
     createdAt: typeof row.created_at === "string" ? row.created_at : undefined,
@@ -184,6 +191,26 @@ export function createSupabaseStore(): PaymentStore {
       const { data, error } = await admin.rpc("apply_refund", { p_payment_id: paymentId });
       if (error) throw new Error(`apply_refund failed: ${error.message}`);
       return (data as { result: string }[] | null)?.[0]?.result ?? "unknown_payment";
+    },
+
+    async applyPartialRefund(paymentId, itemIds, actorId) {
+      const { data, error } = await admin.rpc("apply_partial_refund", {
+        p_payment_id: paymentId,
+        p_item_ids: itemIds,
+        p_actor: actorId,
+      });
+      if (error) throw new Error(`apply_partial_refund failed: ${error.message}`);
+      return (data as { result: string }[] | null)?.[0]?.result ?? "unknown_payment";
+    },
+
+    async listActiveItems(bookingId) {
+      const { data, error } = await admin
+        .from("booking_items")
+        .select("id, price_at_booking")
+        .eq("booking_id", bookingId)
+        .is("released_at", null);
+      if (error || !data) return [];
+      return data.map((row) => ({ id: String(row.id), price: Number(row.price_at_booking) || 0 }));
     },
 
     async closeRefundedPayment(paymentId) {

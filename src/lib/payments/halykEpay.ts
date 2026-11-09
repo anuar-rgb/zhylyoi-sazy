@@ -213,9 +213,12 @@ export const halykEpayProvider: PaymentProvider = {
     return answer.ok ? answer : { ok: false, status: 503, reason: answer.reason };
   },
 
-  async refundPayment({ transactionId, paymentId, secrets }): Promise<RefundResult> {
+  // The amount is always sent: after a partial refund only the rest may go back, and Halyk
+  // refunds the whole charge when the amount is left out.
+  async refundPayment({ transactionId, paymentId, amount, secrets }): Promise<RefundResult> {
     if (!transactionId) return { ok: false, reason: "no_transaction_id" };
-    const done = await operation(secrets, transactionId, `refund?externalID=${encodeURIComponent(paymentId)}`);
+    const query = new URLSearchParams({ amount: String(amount), externalID: paymentId });
+    const done = await operation(secrets, transactionId, `refund?${query}`);
     return done ? { ok: true, status: "refunded" } : { ok: false, reason: "refund_refused" };
   },
 

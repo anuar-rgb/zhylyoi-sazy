@@ -88,7 +88,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
 
   const paymentMethods = await listPublicPaymentMethodsForEvent(event.id, event.organizationId);
   // Paid through the bank alone: the booking button goes straight to the bank's form.
-  const bankMethodId = paymentMethods.length > 0 && paymentMethods.every((method) => method.mode === "api") ? paymentMethods[0].id : null;
+  const bankMethodId = paymentMethods.find((method) => method.mode === "api")?.id ?? null;
 
   const [seats, ticketTypes, takenSeatIds, hall, rowLayouts] = await Promise.all([
     listPublicEventSeats(event.id, event.hallId),

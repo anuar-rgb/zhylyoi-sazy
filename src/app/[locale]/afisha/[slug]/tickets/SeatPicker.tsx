@@ -44,8 +44,8 @@ type Texts = {
   name: string;
   phone: string;
   working: string;
-  book: string;
   pay: string;
+  noOnlinePayment: string;
   confirm: string;
   consent: string;
 };
@@ -77,8 +77,8 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     name: "Имя",
     phone: "Телефон",
     working: "Оформление…",
-    book: "Забронировать",
     pay: "Перейти к оплате",
+    noOnlinePayment: "Оплата картой онлайн пока не подключена. Купить билеты можно будет позже.",
     confirm: "Подтвердить",
     consent: "Даю согласие на обработку персональных данных",
   },
@@ -107,8 +107,8 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     name: "Аты-жөні",
     phone: "Телефон",
     working: "Рәсімделуде…",
-    book: "Броньдау",
     pay: "Төлемге өту",
+    noOnlinePayment: "Картамен онлайн төлем әзірге қосылмаған. Билетті кейінірек сатып алуға болады.",
     confirm: "Растау",
     consent: "Дербес деректерді өңдеуге келісім беремін",
   },
@@ -368,13 +368,14 @@ export default function SeatPicker({
           </label>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+          {total > 0 && !bankMethodId && <p className="text-sm text-ocean bg-red-50 border border-red-200 rounded-2xl px-4 py-3">{t.noOnlinePayment}</p>}
 
           <button
             type="submit"
-            disabled={pending || selectedSeats.length === 0 || !consent}
+            disabled={pending || selectedSeats.length === 0 || !consent || (total > 0 && !bankMethodId)}
             className="btn-primary w-full py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {pending ? t.working : total > 0 ? (bankMethodId ? t.pay : t.book) : t.confirm}
+            {pending ? t.working : total > 0 ? t.pay : t.confirm}
           </button>
         </form>
       </div>
