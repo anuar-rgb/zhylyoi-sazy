@@ -30,6 +30,13 @@ const meta = {
   },
 } as const;
 
+/**
+ * The site's own address, so the link preview image (opengraph-image.jpg) is given to messengers
+ * as a full URL. Pages are rendered ahead of time, so it cannot come from the request; SITE_URL at
+ * build time overrides it for another institution's domain.
+ */
+const SITE_URL = process.env.SITE_URL ?? "https://dk-zhylyoi.kz";
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -43,6 +50,7 @@ export async function generateMetadata({
   const m = hasLocale(routing.locales, locale) ? meta[locale] : meta.kk;
 
   return {
+    metadataBase: new URL(SITE_URL),
     title: { default: m.title, template: `%s | Кең Жылыой` },
     description: m.description,
     keywords: [
