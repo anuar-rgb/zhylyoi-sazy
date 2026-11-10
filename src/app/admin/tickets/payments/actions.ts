@@ -109,6 +109,41 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
   return { error: null };
 }
 
+/**
+ * «Подключить» on a payment system's card: adds it as this institution's method (switched off for
+ * buyers until the bank's details are saved and card payment is turned on) and opens its page.
+ */
+export async function connectPaymentProvider(providerCode: string): Promise<{ error: string }> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
+  if (!hasProvider(providerCode)) return { error: "Для этого провайдера нет подключения к банку." };
+  const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
+  if (!organizationId) return { error: "Не удалось определить учреждение." };
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("organization_payment_methods")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("provider_code", providerCode)
+    .maybeSingle();
+  if (existing) redirect(`/admin/tickets/payments/${existing.id}`);
+
+  const { count } = await supabase
+    .from("organization_payment_methods")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+  const { data: created, error } = await supabase
+    .from("organization_payment_methods")
+    .insert({ organization_id: organizationId, provider_code: providerCode, is_default: (count ?? 0) === 0 })
+    .select("id")
+    .single();
+  if (error || !created) return { error: "Не удалось подключить." };
+
+  revalidatePayments();
+  redirect(`/admin/tickets/payments/${created.id}`);
+}
+
 export async function setPaymentMethodEnabled(id: string, isEnabled: boolean): Promise<{ ok: boolean }> {
   const supabase = await createClient();
   const {

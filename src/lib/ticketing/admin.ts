@@ -69,10 +69,6 @@ export type OrderRow = {
   confirmedAt: string | null;
   /** How long the seats of an unpaid order are held. */
   expiresAt: string | null;
-  /** When the buyer pressed «Я оплатил»: a note to the cashier, not proof of payment. */
-  paymentReportedAt: string | null;
-  /** The Kaspi operation number the cashier typed in. */
-  kaspiOperationId: string | null;
   resolutionNote: string | null;
   eventId: string;
   eventTitle: string;
@@ -110,7 +106,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       .from("bookings")
       .select(
         "id, public_order_id, status, buyer_name, buyer_phone, total_amount, refunded_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
-          "payment_reported_at, kaspi_operation_id, resolution_note, " +
+          "resolution_note, " +
           `culture_events(title_ru, title_kk, event_date, status), booking_items(id, price_at_booking, checked_in_at, released_at, refunded_at, hall_seats(${seatColumns})), ` +
           "payments(provider_code, provider_payment_id, status, paid_at, needs_refund, note, created_at)"
       )
@@ -146,8 +142,6 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       createdAt: String(row.created_at),
       confirmedAt: str(row.confirmed_at),
       expiresAt: str(row.expires_at),
-      paymentReportedAt: str(row.payment_reported_at),
-      kaspiOperationId: str(row.kaspi_operation_id),
       resolutionNote: str(row.resolution_note),
       eventId: String(row.event_id),
       eventTitle: titleOf(row.culture_events),

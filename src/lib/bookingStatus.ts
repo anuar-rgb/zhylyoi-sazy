@@ -1,10 +1,10 @@
 /**
- * Order (bookings.status) states of the manual payment flow, in one place. Safe to import from
- * client components. The database enforces the same list (bookings_status_check).
+ * Order (bookings.status) states, in one place. Safe to import from client components. The
+ * database enforces the same list (bookings_status_check).
  *
- * Paying is manual: the buyer pays by the institution's own link or QR, a cashier finds the
- * money in Kaspi Pay and confirms the order. «Я оплатил» (payment_reported) is a note to the
- * cashier, never proof of payment.
+ * Paying is by card on the bank's page only, and the bank's word confirms the order.
+ * payment_reported, rejected and late_payment are left from the earlier manual payment and only
+ * describe old orders.
  */
 export type BookingStatus =
   | "pending"

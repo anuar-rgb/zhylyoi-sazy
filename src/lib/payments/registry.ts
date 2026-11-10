@@ -30,3 +30,8 @@ export function getProvider(code: string): PaymentProvider | null {
 export function hasProvider(code: string): boolean {
   return getProvider(code) !== null;
 }
+
+/** The site has an integration for this bank, switched on or not (see isAllowed). */
+export function hasIntegration(code: string): boolean {
+  return code in realProviders;
+}

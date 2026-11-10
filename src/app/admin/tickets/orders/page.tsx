@@ -165,17 +165,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               </p>
               <p className="text-sm text-ocean/50">{order.eventTitle || "Мероприятие не найдено"}</p>
 
-              {/* What the cashier knows before acting: when the buyer said they paid, until when the
-                  seats are held, the Kaspi or bank number and any note already written down. */}
-              {(order.paymentReportedAt || order.kaspiOperationId || order.payment?.bankNumber || order.resolutionNote || order.refundedAmount > 0 || (order.expiresAt && ["pending", "payment_reported"].includes(order.status))) && (
+              {/* What the cashier knows before acting: until when the seats are held, the bank's
+                  number, partial refunds and any note already written down. */}
+              {(order.payment?.bankNumber || order.resolutionNote || order.refundedAmount > 0 || (order.expiresAt && ["pending", "payment_reported"].includes(order.status))) && (
                 <ul className="mt-2 text-xs text-ocean/70 space-y-0.5">
-                  {order.paymentReportedAt && (
-                    <li className="font-semibold text-orange-800">Покупатель нажал «Я оплатил» в {formatMoment(order.paymentReportedAt)}</li>
-                  )}
                   {order.expiresAt && ["pending", "payment_reported"].includes(order.status) && (
                     <li>Места держатся до {formatMoment(order.expiresAt)}</li>
                   )}
-                  {order.kaspiOperationId && <li>Операция Kaspi: {order.kaspiOperationId}</li>}
                   {order.payment?.bankNumber && <li>Номер в банке: <span className="break-all">{order.payment.bankNumber}</span></li>}
                   {order.refundedAmount > 0 && order.status === "confirmed" && (
                     <li className="font-semibold text-red-700">

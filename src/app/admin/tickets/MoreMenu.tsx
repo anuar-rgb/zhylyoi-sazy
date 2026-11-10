@@ -25,7 +25,7 @@ const GROUPS = [
     links: [
       { href: "/admin/tickets/stats", label: "Статистика", badge: false },
       { href: "/admin/tickets/halls", label: "Залы и места", badge: false },
-      { href: "/admin/tickets/payments", label: "Способы оплаты", badge: false },
+      { href: "/admin/tickets/payments", label: "Платёжные системы", badge: false },
     ],
   },
 ];
