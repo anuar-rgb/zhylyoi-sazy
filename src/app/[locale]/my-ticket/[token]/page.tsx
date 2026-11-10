@@ -176,9 +176,6 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                   <div className="space-y-4">
                     {bankMethods.map((method) => (
                       <div key={method.id} className="bg-cream/30 rounded-2xl p-4 text-center sm:text-left">
-                        <p className="text-sm font-semibold text-ocean mb-3">
-                          {method.displayNameRu ?? method.displayNameKk ?? method.providerName}
-                        </p>
                         <PayButton accessToken={token} methodId={method.id} retry={attemptFailed} />
                       </div>
                     ))}

@@ -1,12 +1,11 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getPaymentMethodById } from "@/lib/paymentMethods";
 import { getBankConnection } from "@/lib/payments/keys";
 import { hasIntegration, hasProvider } from "@/lib/payments/registry";
 import BankConnectionForm from "../BankConnectionForm";
-import PaymentMethodForm from "../PaymentMethodForm";
 import PaymentModeForm from "../PaymentModeForm";
-import { updatePaymentMethod } from "../actions";
 
 export default async function EditPaymentMethodPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,12 +26,12 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
 
   return (
     <>
-      <PaymentMethodForm
-        method={method}
-        providers={[]}
-        action={updatePaymentMethod}
-        heading={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-ocean">{method.providerName}</h1>
+        <Link href="/admin/tickets/payments" className="text-sm font-semibold text-ocean/60 hover:text-ocean">
+          ← Платёжные системы
+        </Link>
+      </div>
       {!hasIntegration(method.providerCode) && (
         <p className="mt-5 bg-cream/40 border border-cream-dark text-sm text-ocean/70 rounded-2xl px-4 py-3">
           У этого способа нет подключения к банку, поэтому покупатели им не пользуются: оплата принимается только картой на странице
