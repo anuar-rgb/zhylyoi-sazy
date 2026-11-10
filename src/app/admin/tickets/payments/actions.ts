@@ -8,7 +8,7 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import { MEDIA_BUCKET } from "@/lib/storage";
-import { hasProvider } from "@/lib/payments/registry";
+import { hasIntegration } from "@/lib/payments/registry";
 
 export type FormState = { error: string | null };
 
@@ -52,7 +52,7 @@ export async function createPaymentMethod(_prev: FormState, form: FormData): Pro
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 
   // Only a bank the site is connected to: the buyer pays on its page and the order confirms itself.
-  if (!hasProvider(data.provider_code)) return { error: "Для этого провайдера нет подключения к банку." };
+  if (!hasIntegration(data.provider_code)) return { error: "Для этого провайдера нет подключения к банку." };
 
   const supabase = await createClient();
   const { data: created, error } = await supabase
@@ -116,7 +116,7 @@ export async function updatePaymentMethod(_prev: FormState, form: FormData): Pro
 export async function connectPaymentProvider(providerCode: string): Promise<{ error: string }> {
   const identity = await getStaffIdentity();
   if (!identity?.hasProfile) return { error: "Профиль сотрудника не настроен." };
-  if (!hasProvider(providerCode)) return { error: "Для этого провайдера нет подключения к банку." };
+  if (!hasIntegration(providerCode)) return { error: "Для этого провайдера нет подключения к банку." };
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение." };
 

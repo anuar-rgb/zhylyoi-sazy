@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hasProvider } from "@/lib/payments/registry";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -88,7 +89,8 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
 
   const paymentMethods = await listPublicPaymentMethodsForEvent(event.id, event.organizationId);
   // Paid through the bank alone: the booking button goes straight to the bank's form.
-  const bankMethodId = paymentMethods.find((method) => method.mode === "api")?.id ?? null;
+  // A bank the platform has switched on (registry), with card payment turned on by the institution.
+  const bankMethodId = paymentMethods.find((method) => method.mode === "api" && hasProvider(method.providerCode))?.id ?? null;
 
   const [seats, ticketTypes, takenSeatIds, hall, rowLayouts] = await Promise.all([
     listPublicEventSeats(event.id, event.hallId),

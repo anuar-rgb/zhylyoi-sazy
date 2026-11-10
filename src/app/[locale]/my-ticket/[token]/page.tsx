@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { hasProvider } from "@/lib/payments/registry";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import FadeIn from "@/components/FadeIn";
@@ -51,7 +52,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
   ]);
 
   // Payment is by card on the bank's page only: the order confirms itself when the bank reports it.
-  const bankMethods = paymentMethods.filter((method) => method.mode === "api");
+  const bankMethods = paymentMethods.filter((method) => method.mode === "api" && hasProvider(method.providerCode));
   const canPay = bankMethods.length > 0;
   // A card attempt already failed: the seats are still the buyer's, so offer it again and say so.
   const attemptFailed = canPay && ["failed", "cancelled"].includes((await getOrderSnapshot(token))?.payment ?? "");

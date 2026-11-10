@@ -24,6 +24,11 @@ type Status = { label: string; className: string; hint: string };
 
 const STATUS = {
   on: { label: "Подключено", className: "bg-green-50 text-green-800 border-green-200", hint: "Покупатели платят картой на странице банка." },
+  waiting: {
+    label: "Ждёт включения",
+    className: "bg-ocean/5 text-ocean/70 border-cream-dark",
+    hint: "Данные банка можно ввести уже сейчас. Приём оплаты включится после проверки банка администратором платформы.",
+  },
   setup: {
     label: "Не настроено",
     className: "bg-orange-50 text-orange-800 border-orange-200",
@@ -34,6 +39,7 @@ const STATUS = {
 
 async function statusOf(method: PaymentMethodRecord): Promise<Status> {
   if (!method.isEnabled) return STATUS.off;
+  if (!hasProvider(method.providerCode)) return STATUS.waiting;
   const connection = await getBankConnection(method.id);
   const ready = connection.hasSecret && Boolean(connection.merchantId && connection.clientId);
   return ready && method.mode === "api" ? STATUS.on : STATUS.setup;
@@ -74,16 +80,17 @@ export default async function PaymentsPage() {
       const method = byCode.get(entry.code) ?? null;
       return {
         ...entry,
-        available: hasProvider(entry.code),
-        // Written but not yet switched on for this site (Halyk until HALYK_EPAY_LIVE=1).
-        pending: !hasProvider(entry.code) && hasIntegration(entry.code),
+        // The site has the integration: it can be connected and its details saved.
+        available: hasIntegration(entry.code),
+        // Not yet switched on for buyers on this site (Halyk until HALYK_EPAY_LIVE=1).
+        pending: hasIntegration(entry.code) && !hasProvider(entry.code),
         method,
         status: method ? await statusOf(method) : null,
       };
     })
   );
   // Methods of systems the site does not connect to: payment is by card on a connected bank's page only.
-  const unused = methods.filter((method) => !hasProvider(method.providerCode));
+  const unused = methods.filter((method) => !hasIntegration(method.providerCode));
 
   return (
     <div>
@@ -115,8 +122,8 @@ export default async function PaymentsPage() {
             </div>
 
             <p className="text-sm text-ocean/60 flex-1">
-              {card.pending
-                ? "Подключение готово и будет включено администратором платформы после проверки банком."
+              {card.pending && !card.status
+                ? "Подключите и введите данные банка. Приём оплаты включится после проверки банка администратором платформы."
                 : !card.available
                 ? "Подключение к этой системе ещё не готово."
                 : card.status

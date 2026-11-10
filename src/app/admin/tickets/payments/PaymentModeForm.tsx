@@ -7,7 +7,18 @@ import { setPaymentMode, type BankFormState } from "./bankActions";
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
 /** Whether buyers can pay by card with this method; the bank confirms each payment itself. */
-export default function PaymentModeForm({ methodId, mode, canUseBank }: { methodId: string; mode: string; canUseBank: boolean }) {
+export default function PaymentModeForm({
+  methodId,
+  mode,
+  canUseBank,
+  switchedOn = true,
+}: {
+  methodId: string;
+  mode: string;
+  canUseBank: boolean;
+  /** The platform has switched this bank on for buyers; until then the details can only be saved. */
+  switchedOn?: boolean;
+}) {
   const [state, formAction, pending] = useActionState<BankFormState, FormData>(setPaymentMode, { error: null });
   useActionToast(state, "Сохранено");
 
@@ -28,7 +39,13 @@ export default function PaymentModeForm({ methodId, mode, canUseBank }: { method
         <span>
           <span className="font-semibold">Включён.</span> Покупатель вводит данные карты на странице банка и сразу получает билет, кассиру
           ничего нажимать не нужно.
-          {!canUseBank && <span className="block text-xs mt-1">Сначала сохраните данные банка выше.</span>}
+          {!switchedOn ? (
+            <span className="block text-xs mt-1">
+              Пока недоступно: администратор платформы включит этот банк после его проверки. Данные банка выше можно сохранить уже сейчас.
+            </span>
+          ) : (
+            !canUseBank && <span className="block text-xs mt-1">Сначала сохраните данные банка выше.</span>
+          )}
         </span>
       </label>
 

@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
 import { getPaymentMethodById } from "@/lib/paymentMethods";
 import { getBankConnection } from "@/lib/payments/keys";
-import { hasProvider } from "@/lib/payments/registry";
+import { hasIntegration, hasProvider } from "@/lib/payments/registry";
 import BankConnectionForm from "../BankConnectionForm";
 import PaymentMethodForm from "../PaymentMethodForm";
 import PaymentModeForm from "../PaymentModeForm";
@@ -19,9 +19,11 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
   const method = await getPaymentMethodById(id);
   if (!method) notFound();
 
-  // Only for a bank with an integration switched on, and only for the institution the keys belong to.
+  // For a bank the site has an integration for, and only for the institution the keys belong to.
+  // The bank's details can be saved before the platform switches the bank on for buyers.
   const ownsMethod = !identity.organizationId || identity.organizationId === method.organizationId;
-  const connection = ownsMethod && hasProvider(method.providerCode) ? await getBankConnection(method.id) : null;
+  const connection = ownsMethod && hasIntegration(method.providerCode) ? await getBankConnection(method.id) : null;
+  const switchedOn = hasProvider(method.providerCode);
 
   return (
     <>
@@ -31,7 +33,7 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
         action={updatePaymentMethod}
         heading={method.displayNameRu ?? method.displayNameKk ?? method.providerName}
       />
-      {!hasProvider(method.providerCode) && (
+      {!hasIntegration(method.providerCode) && (
         <p className="mt-5 bg-cream/40 border border-cream-dark text-sm text-ocean/70 rounded-2xl px-4 py-3">
           У этого способа нет подключения к банку, поэтому покупатели им не пользуются: оплата принимается только картой на странице
           банка. Его можно выключить.
@@ -57,7 +59,8 @@ export default async function EditPaymentMethodPage({ params }: { params: Promis
           <PaymentModeForm
             methodId={method.id}
             mode={method.mode}
-            canUseBank={connection.hasSecret && Boolean(connection.merchantId && connection.clientId)}
+            canUseBank={switchedOn && connection.hasSecret && Boolean(connection.merchantId && connection.clientId)}
+            switchedOn={switchedOn}
           />
         </>
       )}
