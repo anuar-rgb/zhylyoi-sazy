@@ -74,8 +74,8 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
                   {booking.orderNumber
                     ? `${lang === "kk" ? "Тапсырыс" : "Заказ"} ${booking.orderNumber}`
                     : lang === "kk"
-                      ? "Менің брониум"
-                      : "Моя бронь"}
+                      ? "Менің тапсырысым"
+                      : "Мой заказ"}
                 </h1>
                 {eventTitle && <p className="text-sm text-ocean/70 mt-0.5">{eventTitle}</p>}
               </div>

@@ -49,7 +49,7 @@ export const BOOKING_STATUS_LABEL: Record<BookingStatus, string> = {
 export const BOOKING_STATUS_PUBLIC: Record<BookingStatus, { ru: string; kk: string }> = {
   pending: { ru: "Ожидает оплаты", kk: "Төлем күтілуде" },
   payment_reported: { ru: "Оплата проверяется", kk: "Төлем тексерілуде" },
-  confirmed: { ru: "Оплачено", kk: "Төленді" },
+  confirmed: { ru: "Билеты готовы", kk: "Билеттер дайын" },
   expired: { ru: "Бронь истекла", kk: "Бронь мерзімі өтті" },
   rejected: { ru: "Оплата не найдена", kk: "Төлем табылмады" },
   late_payment: { ru: "Оплата пришла поздно, решает кассир", kk: "Төлем кеш келді, кассир шешеді" },

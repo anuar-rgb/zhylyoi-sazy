@@ -25,7 +25,7 @@ const content: Record<
     location: "Өтетін орны",
     organizer: "Ұйымдастырушы",
     addToCalendar: "Күнтізбеге қосу",
-    buyTickets: "Билет брондау",
+    buyTickets: "Билет сатып алу",
   },
   ru: {
     back: "Назад к афише",
@@ -33,7 +33,7 @@ const content: Record<
     location: "Место проведения",
     organizer: "Организатор",
     addToCalendar: "Добавить в календарь",
-    buyTickets: "Забронировать билет",
+    buyTickets: "Купить билет",
   },
 };
 
