@@ -3,6 +3,7 @@ import { ACTIVE_STATUSES, CASHIER_QUEUE_STATUSES } from "@/lib/bookingStatus";
 
 export type PendingPaidBooking = {
   id: string;
+  buyerEmail: string;
   buyerName: string;
   buyerPhone: string;
   totalAmount: number;
@@ -59,7 +60,7 @@ export async function listPendingPaidBookings(organizationId: string): Promise<P
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, buyer_name, buyer_phone, total_amount, expires_at, created_at, culture_events(title_kk, title_ru)")
+    .select("id, buyer_name, buyer_phone, buyer_email, total_amount, expires_at, created_at, culture_events(title_kk, title_ru)")
     .eq("organization_id", organizationId)
     .in("status", CASHIER_QUEUE_STATUSES)
     .gt("total_amount", 0)
@@ -73,8 +74,9 @@ export async function listPendingPaidBookings(organizationId: string): Promise<P
 
     return {
       id: String(row.id),
-      buyerName: String(row.buyer_name),
-      buyerPhone: String(row.buyer_phone),
+      buyerEmail: row.buyer_email ? String(row.buyer_email) : "",
+      buyerName: row.buyer_name ? String(row.buyer_name) : "",
+      buyerPhone: row.buyer_phone ? String(row.buyer_phone) : "",
       totalAmount: Number(row.total_amount) || 0,
       expiresAt: (row.expires_at as string | null) ?? null,
       createdAt: String(row.created_at),

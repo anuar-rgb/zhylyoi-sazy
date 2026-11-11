@@ -1,21 +1,25 @@
 "use server";
 
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formatPhone, isCompletePhone, phoneDigits } from "@/lib/phone";
+import { isEmail, normalizeEmail } from "@/lib/email";
+import { sendTicketsEmail } from "@/lib/mail/tickets";
 
 export type CreateBookingInput = {
   eventId: string;
-  buyerName: string;
-  buyerPhone: string;
+  /** Where the tickets are sent. The only thing asked of the buyer. */
+  buyerEmail: string;
   seatIds: string[];
+  /** The page's language: the email and the PDF come in it. */
+  locale: "kk" | "ru";
   /** The buyer ticked the consent to personal data processing. */
   consent: boolean;
 };
 
 export type CreateBookingResult =
   | { ok: true; accessToken: string }
-  | { ok: false; error: "missing" | "phone" | "consent" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
+  | { ok: false; error: "email" | "consent" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
 
 /**
  * The only way a booking is ever created. Everything that matters — price,
@@ -25,20 +29,18 @@ export type CreateBookingResult =
  * can show. It never computes or trusts a price or a seat's availability itself.
  */
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
-  const buyerName = input.buyerName.trim();
-  if (!buyerName || !input.buyerPhone.trim()) return { ok: false, error: "missing" };
-  // The form's mask already insists on all ten digits; checked again here, where it counts.
-  if (!isCompletePhone(input.buyerPhone)) return { ok: false, error: "phone" };
-  const buyerPhone = formatPhone(phoneDigits(input.buyerPhone));
+  const buyerEmail = normalizeEmail(input.buyerEmail);
+  // The form checks the address too; checked again here, where it counts, and by the database.
+  if (!isEmail(buyerEmail)) return { ok: false, error: "email" };
   if (input.consent !== true) return { ok: false, error: "consent" };
   if (input.seatIds.length === 0) return { ok: false, error: "no_seats" };
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("create_booking", {
+  const { data, error } = await supabase.rpc("create_booking_by_email", {
     p_event_id: input.eventId,
-    p_buyer_name: buyerName,
-    p_buyer_phone: buyerPhone,
+    p_buyer_email: buyerEmail,
     p_seat_ids: input.seatIds,
+    p_locale: input.locale === "kk" ? "kk" : "ru",
   });
 
   if (error) {
@@ -51,6 +53,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     if (error.message?.includes("event_has_no_hall")) return { ok: false, error: "unavailable" };
     if (error.message?.includes("event_not_found")) return { ok: false, error: "unavailable" };
     if (error.message?.includes("event_finished")) return { ok: false, error: "unavailable" };
+    if (error.message?.includes("invalid_email")) return { ok: false, error: "email" };
     return { ok: false, error: "failed" };
   }
 
@@ -68,6 +71,12 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     } catch {
       // not recorded; the booking stands
     }
+  }
+
+  // A free order is confirmed at once: its tickets go out now, after the answer reaches the buyer.
+  if (row.booking_id && row.status === "confirmed") {
+    const bookingId = row.booking_id as string;
+    after(() => sendTicketsEmail(bookingId).then(() => undefined));
   }
 
   return { ok: true, accessToken: row.access_token as string };

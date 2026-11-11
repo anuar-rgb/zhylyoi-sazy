@@ -61,6 +61,8 @@ export type OrderRow = {
   id: string;
   orderNumber: string;
   status: string;
+  /** Orders made since the form asks only for an email have no name or phone. */
+  buyerEmail: string;
   buyerName: string;
   buyerPhone: string;
   amount: number;
@@ -105,7 +107,7 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
     let query = supabase
       .from("bookings")
       .select(
-        "id, public_order_id, status, buyer_name, buyer_phone, total_amount, refunded_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
+        "id, public_order_id, status, buyer_name, buyer_phone, buyer_email, total_amount, refunded_amount, currency, created_at, confirmed_at, expires_at, event_id, " +
           "resolution_note, " +
           `culture_events(title_ru, title_kk, event_date, status), booking_items(id, price_at_booking, checked_in_at, released_at, refunded_at, hall_seats(${seatColumns})), ` +
           "payments(provider_code, provider_payment_id, status, paid_at, needs_refund, note, created_at)"
@@ -135,8 +137,9 @@ export async function listOrders(organizationId: string, filter: OrderFilter, ev
       id: String(row.id),
       orderNumber: String(row.public_order_id),
       status: String(row.status),
-      buyerName: String(row.buyer_name),
-      buyerPhone: String(row.buyer_phone),
+      buyerEmail: str(row.buyer_email) ?? "",
+      buyerName: str(row.buyer_name) ?? "",
+      buyerPhone: str(row.buyer_phone) ?? "",
       amount: Number(row.total_amount) || 0,
       currency: String(row.currency ?? "KZT"),
       createdAt: String(row.created_at),
@@ -217,7 +220,7 @@ export async function listPayments(organizationId: string, limit = 100): Promise
     .from("payments")
     .select(
       "id, provider_code, provider_payment_id, status, amount, currency, needs_refund, note, failure_reason, paid_at, refunded_at, created_at, " +
-        "bookings(public_order_id, buyer_name, culture_events(title_ru, title_kk, event_date, status))"
+        "bookings(public_order_id, buyer_name, buyer_email, culture_events(title_ru, title_kk, event_date, status))"
     )
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
@@ -240,7 +243,7 @@ export async function listPayments(organizationId: string, limit = 100): Promise
       refundedAt: str(row.refunded_at),
       createdAt: String(row.created_at),
       orderNumber: booking ? String(booking.public_order_id) : "—",
-      buyerName: booking ? String(booking.buyer_name) : "",
+      buyerName: booking ? (str(booking.buyer_email) ?? str(booking.buyer_name) ?? "") : "",
       eventTitle: booking ? titleOf(booking.culture_events) : "",
       eventLocked: booking ? lockedOf(booking.culture_events) : true,
     };

@@ -14,6 +14,8 @@ import type { ObservedPayment, PaymentProvider } from "./types";
 export type PipelineDeps = {
   store: PaymentStore;
   getProvider: (code: string) => PaymentProvider | null;
+  /** The order was just confirmed by a payment: send the buyer their tickets. Best effort. */
+  onConfirmed?: (bookingId: string) => Promise<void>;
 };
 
 export const MAX_BODY_BYTES = 100_000;
@@ -55,9 +57,15 @@ export async function applyObserved(
       if (observed.amount === null || !observed.currency) {
         return { ok: false, journal: "rejected", note: "missing_amount_or_currency" };
       }
-      const { outcome } = await store.settle(payment.id, observed.amount, observed.currency, observed.transactionId);
+      const { outcome, bookingId } = await store.settle(payment.id, observed.amount, observed.currency, observed.transactionId);
 
       if (outcome === "settled" || outcome === "settled_late") {
+        // The bank must hear "received" whatever happens to the email; a failed one is retried later.
+        try {
+          await deps.onConfirmed?.(bookingId ?? payment.bookingId);
+        } catch {
+          // retried by the reconciliation
+        }
         return { ok: true, journal: "processed", note: outcome === "settled_late" ? outcome : null };
       }
       if (outcome === "already_settled") return { ok: true, journal: "processed", note: null };

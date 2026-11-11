@@ -26,7 +26,7 @@ export async function listSeatOccupants(eventId: string): Promise<Map<string, Se
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("booking_items")
-    .select("seat_id, checked_in_at, price_at_booking, bookings!inner(status, public_order_id, buyer_name)")
+    .select("seat_id, checked_in_at, price_at_booking, bookings!inner(status, public_order_id, buyer_name, buyer_email)")
     .eq("event_id", eventId)
     .is("released_at", null);
   if (error || !data) return new Map();
@@ -40,7 +40,8 @@ export async function listSeatOccupants(eventId: string): Promise<Map<string, Se
     occupants.set(String(row.seat_id), {
       state: isHold(status) ? "held" : row.checked_in_at ? "entered" : "sold",
       orderNumber: booking.public_order_id ? String(booking.public_order_id) : null,
-      buyerName: booking.buyer_name ? String(booking.buyer_name) : null,
+      // Orders now carry an email only; earlier ones a name.
+      buyerName: booking.buyer_email ? String(booking.buyer_email) : booking.buyer_name ? String(booking.buyer_name) : null,
       paid: row.price_at_booking === null || row.price_at_booking === undefined ? null : Number(row.price_at_booking),
     });
   }
@@ -50,6 +51,7 @@ export async function listSeatOccupants(eventId: string): Promise<Map<string, Se
 /** One sold ticket, for the list under an event's hall map. */
 export type SoldTicket = {
   orderNumber: string;
+  buyerEmail: string;
   buyerName: string;
   buyerPhone: string;
   section: string;
@@ -71,7 +73,7 @@ export async function listSoldTickets(eventId: string): Promise<SoldTicket[]> {
       .from("booking_items")
       .select(
         `checked_in_at, price_at_booking, hall_seats(${seatColumns}), event_ticket_types(category), ` +
-          "bookings!inner(status, public_order_id, buyer_name, buyer_phone)"
+          "bookings!inner(status, public_order_id, buyer_name, buyer_phone, buyer_email)"
       )
       .eq("event_id", eventId)
       .eq("bookings.status", "confirmed")
@@ -90,6 +92,7 @@ export async function listSoldTickets(eventId: string): Promise<SoldTicket[]> {
       const type = one(row.event_ticket_types);
       return {
         orderNumber: booking?.public_order_id ? String(booking.public_order_id) : "—",
+        buyerEmail: booking?.buyer_email ? String(booking.buyer_email) : "",
         buyerName: booking?.buyer_name ? String(booking.buyer_name) : "",
         buyerPhone: booking?.buyer_phone ? String(booking.buyer_phone) : "",
         section: seat?.section ? String(seat.section) : "parter",

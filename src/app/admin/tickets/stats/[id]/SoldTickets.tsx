@@ -5,6 +5,7 @@ import { seatName } from "@/lib/hallSections";
 import { categoryLabel } from "@/lib/seatCategories";
 import { formatDateTime } from "@/lib/timeZone";
 import type { SoldTicket } from "@/lib/ticketing/occupancy";
+import { buyerContact } from "@/lib/buyer";
 
 /** Rows shown before «Показать все»: a hall of 200 sold seats should not stretch the page. */
 const LIMIT = 5;
@@ -49,7 +50,6 @@ export default function SoldTickets({ tickets }: { tickets: SoldTicket[] }) {
               <th className="font-medium px-3 py-2.5 text-right">Цена</th>
               <th className="font-medium px-3 py-2.5">Заказ</th>
               <th className="font-medium px-3 py-2.5">Покупатель</th>
-              <th className="font-medium px-3 py-2.5">Телефон</th>
               <th className="font-medium px-6 py-2.5">Вход</th>
             </tr>
           </thead>
@@ -60,8 +60,7 @@ export default function SoldTickets({ tickets }: { tickets: SoldTicket[] }) {
                 <td className="px-3 py-2.5">{t.category ? categoryLabel(t.category) : "—"}</td>
                 <td className="px-3 py-2.5 text-right whitespace-nowrap">{money(t.paid)}</td>
                 <td className="px-3 py-2.5 whitespace-nowrap">{t.orderNumber}</td>
-                <td className="px-3 py-2.5">{t.buyerName}</td>
-                <td className="px-3 py-2.5 whitespace-nowrap">{t.buyerPhone}</td>
+                <td className="px-3 py-2.5 break-all">{buyerContact(t)}</td>
                 <td className="px-6 py-2.5 whitespace-nowrap">{entered(t)}</td>
               </tr>
             ))}
@@ -80,7 +79,7 @@ export default function SoldTickets({ tickets }: { tickets: SoldTicket[] }) {
               {t.category ? categoryLabel(t.category) : "—"} · {t.orderNumber}
             </p>
             <p className="text-ocean/80">
-              {t.buyerName} · {t.buyerPhone}
+              {buyerContact(t)}
             </p>
             <p className="text-xs mt-0.5">Вход: {entered(t)}</p>
           </li>

@@ -10,7 +10,7 @@ import type { RowPlacements } from "@/lib/hallRowLayout";
 import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from "@/components/SeatMap";
 import { sectionLabel, seatName } from "@/lib/hallSections";
 import { categoryLabel } from "@/lib/seatCategories";
-import { isCompletePhone, nextPhoneValue } from "@/lib/phone";
+import { isEmail } from "@/lib/email";
 
 export type SeatOption = {
   id: string;
@@ -41,8 +41,8 @@ type Texts = {
   row: string;
   seat: string;
   total: string;
-  name: string;
-  phone: string;
+  email: string;
+  emailHint: string;
   working: string;
   pay: string;
   noOnlinePayment: string;
@@ -54,8 +54,7 @@ type Texts = {
 const TEXTS: Record<"ru" | "kk", Texts> = {
   ru: {
     errors: {
-      missing: "Укажите имя и телефон.",
-      phone: "Введите номер телефона полностью: +7 и 10 цифр.",
+      email: "Введите электронную почту, например: name@mail.kz",
       consent: "Для брони нужно дать согласие на обработку данных.",
       no_seats: "Выберите хотя бы одно место.",
       unavailable: "Билеты для этого мероприятия сейчас недоступны.",
@@ -74,8 +73,8 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     row: "Ряд",
     seat: "место",
     total: "Итого",
-    name: "Имя",
-    phone: "Телефон",
+    email: "Электронная почта",
+    emailHint: "Сюда придут билеты. Они также появятся на странице заказа.",
     working: "Оформление…",
     pay: "Перейти к оплате",
     noOnlinePayment: "Оплата картой онлайн пока не подключена. Купить билеты можно будет позже.",
@@ -84,8 +83,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
   },
   kk: {
     errors: {
-      missing: "Аты-жөніңіз бен телефоныңызды көрсетіңіз.",
-      phone: "Телефон нөмірін толық енгізіңіз: +7 және 10 сан.",
+      email: "Электрондық поштаңызды енгізіңіз, мысалы: name@mail.kz",
       consent: "Броньдау үшін деректерді өңдеуге келісім беру қажет.",
       no_seats: "Кемінде бір орынды таңдаңыз.",
       unavailable: "Бұл іс-шараға билеттер қазір қолжетімсіз.",
@@ -104,8 +102,8 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     row: "Қатар",
     seat: "орын",
     total: "Барлығы",
-    name: "Аты-жөні",
-    phone: "Телефон",
+    email: "Электрондық пошта",
+    emailHint: "Билеттер осы мекенжайға келеді. Олар тапсырыс бетінде де пайда болады.",
     working: "Рәсімделуде…",
     pay: "Төлемге өту",
     noOnlinePayment: "Картамен онлайн төлем әзірге қосылмаған. Билетті кейінірек сатып алуға болады.",
@@ -145,8 +143,7 @@ export default function SeatPicker({
   const lang = useLocale() === "kk" ? "kk" : "ru";
   const t = TEXTS[lang];
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [buyerName, setBuyerName] = useState("");
-  const [buyerPhone, setBuyerPhone] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -225,18 +222,18 @@ export default function SeatPicker({
       feedback.error(t.errors.no_seats);
       return;
     }
-    if (!isCompletePhone(buyerPhone)) {
-      setError(t.errors.phone);
-      feedback.error(t.errors.phone);
-      document.getElementById("buyer_phone")?.focus();
+    if (!isEmail(buyerEmail)) {
+      setError(t.errors.email);
+      feedback.error(t.errors.email);
+      document.getElementById("buyer_email")?.focus();
       return;
     }
 
     startTransition(async () => {
       const result = await createBooking({
         eventId,
-        buyerName,
-        buyerPhone,
+        buyerEmail,
+        locale: lang,
         seatIds: [...selected],
         consent,
       });
@@ -323,38 +320,28 @@ export default function SeatPicker({
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-ocean/70 mb-1.5" htmlFor="buyer_name">
-              {t.name}
+            <label className="block text-sm font-medium text-ocean/70 mb-1.5" htmlFor="buyer_email">
+              {t.email}
             </label>
             <input
-              id="buyer_name"
-              value={buyerName}
-              onChange={(e) => setBuyerName(e.target.value)}
+              id="buyer_email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={buyerEmail}
+              onChange={(e) => setBuyerEmail(e.target.value)}
+              placeholder="name@mail.kz"
+              aria-invalid={buyerEmail !== "" && !isEmail(buyerEmail)}
+              aria-describedby="buyer_email_hint"
               required
               // text-base, not text-sm: below 16px, iOS/Android auto-zoom the
               // page on focus, and the header's fixed mobile menu then sits
               // mispositioned relative to that zoomed viewport until it resets.
               className="w-full px-4 py-2.5 border border-cream-dark rounded-full bg-cream/30 text-base text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-ocean/70 mb-1.5" htmlFor="buyer_phone">
-              {t.phone}
-            </label>
-            <input
-              id="buyer_phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              // Only digits are kept; brackets, spaces and dashes are put in as they are typed,
-              // and a pasted «8 701 …» or «+7701…» comes out the same.
-              value={buyerPhone}
-              onChange={(e) => setBuyerPhone(nextPhoneValue(buyerPhone, e.target.value))}
-              placeholder="+7 (777) 000-00-00"
-              aria-invalid={buyerPhone !== "" && !isCompletePhone(buyerPhone)}
-              required
-              className="w-full px-4 py-2.5 border border-cream-dark rounded-full bg-cream/30 text-base text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
-            />
+            <p id="buyer_email_hint" className="text-xs text-ocean/50 mt-1.5 px-1">
+              {t.emailHint}
+            </p>
           </div>
 
           <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">

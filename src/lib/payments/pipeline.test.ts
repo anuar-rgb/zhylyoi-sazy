@@ -509,3 +509,26 @@ describe("refunds of some seats", () => {
     expect(store.items.get("seat-b")!.active).toBe(true);
   });
 });
+
+describe("tickets by email after payment", () => {
+  it("asks once for the tickets to be sent when the payment confirms the order", async () => {
+    const { store, deps } = setup();
+    const confirmed: string[] = [];
+    const withMail: PipelineDeps = { ...deps, onConfirmed: async (id) => void confirmed.push(id) };
+    const body = notification("payment.succeeded");
+    await send(withMail, body);
+    await send(withMail, body);
+
+    expect(store.bookings.get(BOOKING_ID)!.status).toBe("confirmed");
+    expect(confirmed).toEqual([BOOKING_ID]);
+  });
+
+  it("a failing email does not fail the payment", async () => {
+    const { store, deps } = setup();
+    const failing: PipelineDeps = { ...deps, onConfirmed: async () => { throw new Error("smtp down"); } };
+    const res = await send(failing, notification("payment.succeeded"));
+
+    expect(res.status).toBe(200);
+    expect(store.bookings.get(BOOKING_ID)!.status).toBe("confirmed");
+  });
+});

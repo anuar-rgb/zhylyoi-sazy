@@ -24,8 +24,9 @@ export type BookingItemView = {
 export type BookingView = {
   bookingId: string;
   status: BookingStatus;
-  buyerName: string;
-  buyerPhone: string;
+  /** Null on orders made since the form asks only for an email. */
+  buyerName: string | null;
+  buyerPhone: string | null;
   totalAmount: number;
   expiresAt: string | null;
   createdAt: string;
@@ -41,8 +42,8 @@ export type BookingView = {
 type BookingByTokenRow = {
   booking_id: string;
   status: string;
-  buyer_name: string;
-  buyer_phone: string;
+  buyer_name: string | null;
+  buyer_phone: string | null;
   total_amount: number | string;
   expires_at: string | null;
   created_at: string;

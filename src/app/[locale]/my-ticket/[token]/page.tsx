@@ -93,9 +93,12 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
               </>
             )}
 
-            <p className="text-sm text-ocean/60 mt-2">
-              {lang === "kk" ? "Аты-жөні" : "Имя"}: <span className="text-ocean font-medium">{booking.buyerName}</span>
-            </p>
+            {/* Earlier orders were made with a name; those made since carry an email only. */}
+            {booking.buyerName && (
+              <p className="text-sm text-ocean/60 mt-2">
+                {lang === "kk" ? "Аты-жөні" : "Имя"}: <span className="text-ocean font-medium">{booking.buyerName}</span>
+              </p>
+            )}
 
             <div className="mt-5 pt-5 border-t border-cream-dark space-y-2.5">
               {booking.items.map((item) => {

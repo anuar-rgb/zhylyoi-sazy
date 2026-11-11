@@ -18,8 +18,8 @@ export type OrderSummary = {
   eventTitle: string;
   tickets: number;
   amountText: string;
-  buyerName: string;
-  buyerPhone: string;
+  /** Email, or name and phone on earlier orders. */
+  buyer: string;
 };
 
 export type RefundableSeat = { id: string; name: string; price: number; checkedIn: boolean };
@@ -56,7 +56,7 @@ export default function OrderActions({
 
   const summary =
     `Заказ ${order.orderNumber}\n${order.eventTitle || "Мероприятие"}\n` +
-    `Билетов: ${order.tickets} · Сумма: ${order.amountText}\n${order.buyerName} · ${order.buyerPhone}`;
+    `Билетов: ${order.tickets} · Сумма: ${order.amountText}\n${order.buyer}`;
 
   async function act(
     ask: { title: string; confirmLabel: string; extra: string },

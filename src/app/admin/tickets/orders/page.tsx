@@ -13,6 +13,7 @@ import BackToTickets from "../BackToTickets";
 import NoProfile from "../NoProfile";
 import OrderActions from "./OrderActions";
 import { BOOKING_STATUS_BADGE, toBookingStatus } from "@/lib/bookingStatus";
+import { buyerContact } from "@/lib/buyer";
 import { getCultureEventById, isEventLocked, listAllTicketedCultureEvents } from "@/lib/cultureEvents";
 import { formatEventDateTime } from "@/lib/eventFields";
 import { listEventSeatsForAdmin } from "@/lib/eventSeatCategories";
@@ -161,7 +162,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 </span>
               </div>
               <p className="text-sm text-ocean/70 mt-1">
-                {order.buyerName} · {order.buyerPhone}
+                {buyerContact(order)}
               </p>
               <p className="text-sm text-ocean/50">{order.eventTitle || "Мероприятие не найдено"}</p>
 
@@ -201,8 +202,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                         eventTitle: order.eventTitle,
                         tickets: order.tickets,
                         amountText: formatMoney(order.amount, order.currency),
-                        buyerName: order.buyerName,
-                        buyerPhone: order.buyerPhone,
+                        buyer: buyerContact(order),
                       }}
                     />
                   )}
