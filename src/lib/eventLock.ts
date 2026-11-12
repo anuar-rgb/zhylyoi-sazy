@@ -2,7 +2,7 @@
  * When an event stops being editable. Plain functions with no server imports, so client
  * components and tests can use them as well as the pages and server actions.
  */
-type EventLike = { eventDate: string; status: string };
+type EventLike = { eventDate: string; status: string; cancelledAt?: string | null };
 
 /** True once the event has started: ticket sales are closed from that moment, as on the public listing. */
 export function hasEventStarted(event: Pick<EventLike, "eventDate">): boolean {
@@ -10,12 +10,12 @@ export function hasEventStarted(event: Pick<EventLike, "eventDate">): boolean {
 }
 
 /**
- * Read-only from here on: the event has started (a draft too) or is archived. Its card, prices,
- * seats and payments are history now; staff can look and delete it, nothing else. The admin
- * pages hide the controls and every server action that changes an event checks this again.
+ * Read-only from here on: the event has started (a draft too), is archived or was cancelled. Its
+ * card, prices, seats and payments are history now; staff can look, nothing else. The admin pages
+ * hide the controls and every server action that changes an event checks this again.
  */
 export function isEventLocked(event: EventLike): boolean {
-  return event.status === "archived" || hasEventStarted(event);
+  return event.status === "archived" || Boolean(event.cancelledAt) || hasEventStarted(event);
 }
 
-export const EVENT_LOCKED_MESSAGE = "Мероприятие прошло или в архиве: его можно только просматривать.";
+export const EVENT_LOCKED_MESSAGE = "Мероприятие прошло, отменено или в архиве: его можно только просматривать.";

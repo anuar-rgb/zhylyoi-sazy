@@ -7,6 +7,7 @@ import FadeIn from "@/components/FadeIn";
 import { getPublicCultureEventBySlug } from "@/lib/cultureEvents";
 import { buildIcsDataUri, toEventView } from "@/lib/eventView";
 import type { Locale } from "@/i18n/routing";
+import { formatDateTime } from "@/lib/timeZone";
 
 const content: Record<
   Locale,
@@ -17,6 +18,10 @@ const content: Record<
     organizer: string;
     addToCalendar: string;
     buyTickets: string;
+    cancelled: string;
+    reason: string;
+    cancelledNote: string;
+    movedFrom: string;
   }
 > = {
   kk: {
@@ -26,6 +31,10 @@ const content: Record<
     organizer: "Ұйымдастырушы",
     addToCalendar: "Күнтізбеге қосу",
     buyTickets: "Билет сатып алу",
+    cancelled: "Іс-шара болдырылмады",
+    reason: "Себебі",
+    cancelledNote: "Билет сатып алғандарға электрондық поштаға хат жіберілді. Төленген билеттердің ақшасы картаға қайтарылады.",
+    movedFrom: "Іс-шара ауыстырылды. Бұрынғы күні:",
   },
   ru: {
     back: "Назад к афише",
@@ -34,6 +43,10 @@ const content: Record<
     organizer: "Организатор",
     addToCalendar: "Добавить в календарь",
     buyTickets: "Купить билет",
+    cancelled: "Мероприятие отменено",
+    reason: "Причина",
+    cancelledNote: "Покупателям билетов отправлено письмо на электронную почту. Деньги за оплаченные билеты возвращаются на карту.",
+    movedFrom: "Мероприятие перенесено. Прежняя дата:",
   },
 };
 
@@ -114,6 +127,23 @@ export default async function EventDetailPage({
               <h1 className="text-2xl sm:text-3xl font-bold text-ocean mb-4 leading-tight">
                 {event.title}
               </h1>
+              {record.cancelledAt ? (
+                <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 mb-6">
+                  <p className="font-semibold text-red-700">{t.cancelled}</p>
+                  {record.cancelReason && (
+                    <p className="text-sm text-red-700/80 mt-0.5">
+                      {t.reason}: {record.cancelReason}
+                    </p>
+                  )}
+                  {record.hallId && <p className="text-sm text-ocean/70 mt-1">{t.cancelledNote}</p>}
+                </div>
+              ) : (
+                record.movedFrom && (
+                  <p className="rounded-2xl bg-gold/15 text-ocean-dark text-sm px-4 py-3 mb-6">
+                    {t.movedFrom} {formatDateTime(record.movedFrom, locale === "kk" ? "kk-KZ" : "ru-RU")}
+                  </p>
+                )
+              )}
               <p className="text-ocean/70 text-base sm:text-lg leading-relaxed mb-6">
                 {event.description}
               </p>
@@ -147,7 +177,7 @@ export default async function EventDetailPage({
               </div>
 
               <div className="flex flex-wrap gap-3 mt-8">
-                {record.hallId && (
+                {record.hallId && !record.cancelledAt && (
                   <Link
                     href={`/afisha/${record.slug}/tickets`}
                     className="btn-primary inline-flex items-center justify-center px-6 py-3 text-sm font-semibold"

@@ -19,6 +19,10 @@ import { slugify } from "@/lib/slug";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import { applyHallSeatsToEvent } from "@/lib/hallDefaults";
 import { parseEventPrices, saveEventPrices } from "@/lib/eventPrices";
+import { listEventsWithTicketHistory } from "@/lib/bookingsAdmin";
+import { deleteBlockedUntil } from "@/lib/eventArchive";
+import { formatDateNumeric } from "@/lib/timeZone";
+import { notifyMovedEvent, settleCancelledEvent, type CancellationResult } from "@/lib/ticketing/eventChanges";
 
 export type FormState = { error: string | null };
 
@@ -236,6 +240,13 @@ export async function updateEvent(_prev: FormState, form: FormData): Promise<For
   if (existing && (await isForeignPaymentMethod(data.payment_method_id ?? null, existing.organizationId))) {
     return { error: FOREIGN_PAYMENT_METHOD };
   }
+  // Buyers have to hear about a new date: an event with tickets is moved with «Перенести», not here.
+  if (existing && new Date(data.event_date).getTime() !== new Date(existing.eventDate).getTime()) {
+    const sold = await listEventsWithTicketHistory([id]);
+    if (sold.has(id)) {
+      return { error: "На мероприятие уже выданы билеты. Чтобы сменить дату, нажмите «Перенести»: покупатели получат письмо." };
+    }
+  }
   const { prices, error: pricesError } = parseEventPrices(form);
   if (pricesError) return { error: pricesError };
 
@@ -280,9 +291,15 @@ export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: st
   const event = await getCultureEventById(id);
   if (!event) return { ok: false, error: "Мероприятие не найдено." };
 
+  const sold = await listEventsWithTicketHistory([id]);
+  const blockedUntil = deleteBlockedUntil(event, sold.has(id));
+  if (blockedUntil) return { ok: false, error: keptMessage(blockedUntil) };
+
   const supabase = await createClient();
   const { error, count } = await supabase.from("culture_events").delete({ count: "exact" }).eq("id", id);
 
+  // The database keeps the same rule, also for an order the check above did not see.
+  if (error?.message?.includes("event_has_tickets")) return { ok: false, error: keptMessage(null) };
   if (error) return { ok: false, error: `Не удалось удалить: ${error.message}` };
   if (count === 0) return { ok: false, error: "Недостаточно прав для удаления этого мероприятия." };
 
@@ -292,4 +309,100 @@ export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: st
 
   revalidateEvent(event.slug);
   return { ok: true };
+}
+
+function keptMessage(until: Date | null): string {
+  return (
+    "На мероприятие выдавались билеты: заказы хранятся в архиве 3 года после мероприятия" +
+    (until ? `, удалить можно с ${formatDateNumeric(until)}.` : ".") +
+    " Чтобы убрать его с сайта, переведите в архив."
+  );
+}
+
+export type EventChangeResult = { ok: boolean; message: string; notRefunded?: string[] };
+
+const CHANGE_REFUSED: Record<string, string> = {
+  not_authenticated: "Не авторизовано.",
+  event_not_found: "Мероприятие не найдено или недостаточно прав.",
+  already_cancelled: "Мероприятие уже отменено.",
+  event_finished: "День мероприятия прошёл: отменить его уже нельзя.",
+  reason_too_long: "Причина длиннее 500 знаков.",
+  event_cancelled: "Мероприятие отменено, перенести его нельзя.",
+  date_in_past: "Новая дата должна быть в будущем.",
+  same_date: "Это та же дата.",
+};
+
+function refusal(message: string | undefined): string {
+  const key = Object.keys(CHANGE_REFUSED).find((code) => message?.includes(code));
+  return key ? CHANGE_REFUSED[key] : "Не удалось выполнить действие.";
+}
+
+function revalidateEventChange(slug: string | null, id: string) {
+  revalidateEvent(slug);
+  revalidatePath(`/admin/culture-events/${id}`);
+  revalidatePath("/admin/tickets/stats", "layout");
+  revalidatePath("/admin/tickets/orders");
+  revalidatePath("/[locale]/my-ticket/[token]", "page");
+}
+
+function cancellationMessage(result: CancellationResult): EventChangeResult {
+  const parts = ["Мероприятие отменено, продажа закрыта."];
+  if (result.refunded > 0) parts.push(`Деньги вернулись по ${result.refunded} оплаченным заказам.`);
+  if (result.emailed > 0) parts.push(`Писем покупателям отправлено: ${result.emailed}.`);
+  if (result.notRefunded.length > 0) {
+    parts.push(`Банк пока не вернул деньги по ${result.notRefunded.length} заказам, сайт будет повторять сам.`);
+  }
+  return { ok: true, message: parts.join(" "), notRefunded: result.notRefunded };
+}
+
+/** «Отменить мероприятие»: sales stop, every order is closed and the money goes back. */
+export async function cancelEventAction(eventId: string, reason: string): Promise<EventChangeResult> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, message: "Профиль сотрудника не настроен." };
+  const event = await getCultureEventById(eventId);
+  if (!event) return { ok: false, message: CHANGE_REFUSED.event_not_found };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancel_event", { p_event_id: eventId, p_reason: reason.trim().slice(0, 500) });
+  if (error) return { ok: false, message: refusal(error.message) };
+
+  const result = await settleCancelledEvent(eventId);
+  revalidateEventChange(event.slug, eventId);
+  return cancellationMessage(result);
+}
+
+/** «Повторить возврат» on a cancelled event: the refunds and letters that did not go through yet. */
+export async function retryEventCancellation(eventId: string): Promise<EventChangeResult> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, message: "Профиль сотрудника не настроен." };
+  const event = await getCultureEventById(eventId);
+  if (!event?.cancelledAt) return { ok: false, message: CHANGE_REFUSED.event_not_found };
+
+  const result = await settleCancelledEvent(eventId);
+  revalidateEventChange(event.slug, eventId);
+  if (result.notRefunded.length > 0) {
+    return { ok: false, message: `Банк не вернул деньги по заказам: ${result.notRefunded.join(", ")}.`, notRefunded: result.notRefunded };
+  }
+  return { ok: true, message: result.refunded > 0 ? `Деньги вернулись по ${result.refunded} заказам.` : "Все деньги уже возвращены." };
+}
+
+/** «Перенести»: a new date; the tickets stand and every buyer gets them again with that date. */
+export async function moveEventAction(eventId: string, newDate: string): Promise<EventChangeResult> {
+  const identity = await getStaffIdentity();
+  if (!identity?.hasProfile) return { ok: false, message: "Профиль сотрудника не настроен." };
+  const event = await getCultureEventById(eventId);
+  if (!event) return { ok: false, message: CHANGE_REFUSED.event_not_found };
+  const iso = dateTimeInputToIso(newDate.trim() || null);
+  if (!iso) return { ok: false, message: "Укажите новую дату и время." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("move_event", { p_event_id: eventId, p_new_date: iso });
+  if (error) return { ok: false, message: refusal(error.message) };
+
+  const sent = await notifyMovedEvent(eventId);
+  revalidateEventChange(event.slug, eventId);
+  const parts = ["Мероприятие перенесено, билеты действуют на новую дату."];
+  if (sent.emailed > 0) parts.push(`Писем покупателям отправлено: ${sent.emailed}.`);
+  if (sent.emailFailed > 0) parts.push(`Не отправилось ${sent.emailFailed}, сайт повторит сам.`);
+  return { ok: true, message: parts.join(" ") };
 }

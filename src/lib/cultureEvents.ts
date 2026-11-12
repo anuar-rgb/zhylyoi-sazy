@@ -36,13 +36,18 @@ export type CultureEventRecord = {
   hallId: string | null;
   /** Restricts /my-ticket to this one organization_payment_methods row; null shows every enabled org-wide method. */
   paymentMethodId: string | null;
+  /** When staff cancelled the event (ISO), with the reason they gave; null while it stands. */
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  /** The first date of an event that was moved (ISO); null if it never was. */
+  movedFrom: string | null;
 };
 
 const COLUMNS =
   "id, organization_id, slug, status, title, title_kk, title_ru, " +
   "description_kk, description_ru, full_text_kk, full_text_ru, " +
   "location_kk, location_ru, event_date, end_date, categories, " +
-  "organizer_kk, organizer_ru, age_limit, images, hall_id, payment_method_id";
+  "organizer_kk, organizer_ru, age_limit, images, hall_id, payment_method_id, cancelled_at, cancel_reason, moved_from";
 
 type Row = Record<string, unknown>;
 
@@ -97,6 +102,9 @@ function toRecord(row: Row): CultureEventRecord {
     images: toImages(row.images),
     hallId: str(row.hall_id),
     paymentMethodId: str(row.payment_method_id),
+    cancelledAt: str(row.cancelled_at),
+    cancelReason: str(row.cancel_reason),
+    movedFrom: str(row.moved_from),
   };
 }
 
@@ -173,9 +181,9 @@ export const listPublicTicketedCultureEvents = cache(async (): Promise<CultureEv
  * the panel. RLS scopes the rows to the caller's institution.
  */
 export async function listAllTicketedCultureEvents(): Promise<{
-  /** Published and still to come — exactly what the public "Билеты" page shows. */
+  /** Published, not cancelled and still to come: what the public "Билеты" page sells. */
   current: CultureEventRecord[];
-  /** Finished, draft or archived: invisible to visitors. */
+  /** Finished, cancelled, draft or archived. */
   other: CultureEventRecord[];
 }> {
   const supabase = await createClient();
@@ -190,7 +198,7 @@ export async function listAllTicketedCultureEvents(): Promise<{
   const now = Date.now();
   const records = (data as unknown as Row[]).map(toRecord);
   const isCurrent = (event: CultureEventRecord) =>
-    event.status === "published" && new Date(event.eventDate).getTime() >= now;
+    event.status === "published" && !event.cancelledAt && new Date(event.eventDate).getTime() >= now;
   return {
     current: records.filter(isCurrent).reverse(),
     other: records.filter((event) => !isCurrent(event)),
@@ -209,6 +217,7 @@ export async function listCheckInEvents(): Promise<CultureEventRecord[]> {
     .select(COLUMNS)
     .not("hall_id", "is", null)
     .eq("status", "published")
+    .is("cancelled_at", null)
     .gte("event_date", since)
     .order("event_date", { ascending: true });
 

@@ -21,13 +21,19 @@ const meta: Record<Locale, Metadata> = {
   },
 };
 
-const content: Record<Locale, { title: string; subtitle: string; buy: string; emptyState: string; free: string }> = {
+const content: Record<
+  Locale,
+  { title: string; subtitle: string; buy: string; emptyState: string; free: string; cancelled: string; details: string; moved: string }
+> = {
   kk: {
     title: "Билеттер",
     subtitle: "Орындарды таңдап, билетті бірден сатып алыңыз",
     buy: "Билет сатып алу",
     emptyState: "Қазір билеті сатылатын іс-шаралар жоқ.",
     free: "Тегін",
+    cancelled: "Болдырылмады",
+    details: "Толығырақ",
+    moved: "Ауыстырылды",
   },
   ru: {
     title: "Билеты",
@@ -35,6 +41,9 @@ const content: Record<Locale, { title: string; subtitle: string; buy: string; em
     buy: "Купить билет",
     emptyState: "Сейчас нет мероприятий с продажей билетов.",
     free: "Бесплатно",
+    cancelled: "Отменено",
+    details: "Подробнее",
+    moved: "Перенесено",
   },
 };
 
@@ -64,6 +73,8 @@ export default async function TicketsPage() {
   const events = records.map((record) => ({
     ...toEventView(record, locale),
     price: priceLabel(summarizePriceRange(ticketTypesByEvent.get(record.id) ?? []), locale, t.free),
+    cancelled: Boolean(record.cancelledAt),
+    moved: Boolean(record.movedFrom),
   }));
 
   return (
@@ -101,13 +112,35 @@ export default async function TicketsPage() {
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
                     <h3 className="font-bold text-ocean text-lg mb-2">{event.title}</h3>
-                    {event.price && <p className="text-ocean/70 text-sm font-semibold mb-4">{event.price}</p>}
-                    <Link
-                      href={`/afisha/${event.slug}/tickets`}
-                      className="btn-primary mt-auto inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold"
-                    >
-                      {t.buy}
-                    </Link>
+                    {event.cancelled ? (
+                      <p className="mb-4">
+                        <span className="inline-block bg-red-50 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">{t.cancelled}</span>
+                      </p>
+                    ) : (
+                      <>
+                        {event.moved && (
+                          <p className="mb-2">
+                            <span className="inline-block bg-gold/15 text-ocean-dark text-xs font-semibold px-3 py-1 rounded-full">{t.moved}</span>
+                          </p>
+                        )}
+                        {event.price && <p className="text-ocean/70 text-sm font-semibold mb-4">{event.price}</p>}
+                      </>
+                    )}
+                    {event.cancelled ? (
+                      <Link
+                        href={`/afisha/${event.slug}`}
+                        className="mt-auto inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold rounded-[20px] border-2 border-ocean/20 text-ocean hover:border-ocean/40 hover:bg-cream/50 transition-colors"
+                      >
+                        {t.details}
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/afisha/${event.slug}/tickets`}
+                        className="btn-primary mt-auto inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold"
+                      >
+                        {t.buy}
+                      </Link>
+                    )}
                   </div>
                 </div>
               </FadeIn>

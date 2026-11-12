@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackProvider";
+import { formatDateNumeric } from "@/lib/timeZone";
 import { deleteEvent } from "./actions";
 
 export default function DeleteEventButton({
@@ -10,6 +11,7 @@ export default function DeleteEventButton({
   title,
   redirectHref,
   bookingCount = 0,
+  keptUntil = null,
 }: {
   id: string;
   title: string;
@@ -17,6 +19,8 @@ export default function DeleteEventButton({
   redirectHref?: string;
   /** Active (pending/confirmed) bookings against this event — bookings.event_id cascades on delete, so they'd be gone too, silently, without a louder warning than the plain-event one below. */
   bookingCount?: number;
+  /** The event sold tickets and its orders are kept until then (ISO): no delete before that date. */
+  keptUntil?: string | null;
 }) {
   const router = useRouter();
   const feedback = useFeedback();
@@ -59,6 +63,17 @@ export default function DeleteEventButton({
       setError(message);
       feedback.error(message);
     }
+  }
+
+  if (keptUntil) {
+    return (
+      <p
+        className="text-xs text-ocean/40 text-right max-w-[220px]"
+        title="Заказы и билеты хранятся в архиве 3 года после мероприятия. Убрать его с сайта можно переводом в архив."
+      >
+        Удалить можно с {formatDateNumeric(keptUntil)}
+      </p>
+    );
   }
 
   return (

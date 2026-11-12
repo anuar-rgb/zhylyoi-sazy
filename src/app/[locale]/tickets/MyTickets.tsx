@@ -21,6 +21,8 @@ const TEXTS = {
     free: "Билеты готовы",
     pending: "Ожидает оплаты",
     refunded: "Деньги возвращены",
+    annulled: "Билеты аннулированы",
+    eventCancelled: "Мероприятие отменено",
   },
   kk: {
     title: "Менің билеттерім",
@@ -36,6 +38,8 @@ const TEXTS = {
     free: "Билеттер дайын",
     pending: "Төлем күтілуде",
     refunded: "Ақша қайтарылды",
+    annulled: "Билеттердің күші жойылды",
+    eventCancelled: "Іс-шара болдырылмады",
   },
 } as const;
 
@@ -103,8 +107,17 @@ export default function MyTickets() {
 
   const card = (x: TicketSummary) => {
     const title = (locale === "kk" ? (x.titleKk ?? x.titleRu) : (x.titleRu ?? x.titleKk)) ?? "";
-    const label =
-      x.status === "PAID" ? t.paid : x.status === "FREE" ? t.free : x.status === "REFUNDED" ? t.refunded : t.pending;
+    const label = x.eventCancelled
+      ? t.eventCancelled
+      : x.status === "PAID"
+        ? t.paid
+        : x.status === "FREE"
+          ? t.free
+          : x.status === "REFUNDED"
+            ? x.amount > 0
+              ? t.refunded
+              : t.annulled
+            : t.pending;
     const href = `/my-ticket/${x.token}`;
     const primary = x.status === "PENDING" ? t.pay : x.status === "REFUNDED" ? t.details : t.open;
 
@@ -115,7 +128,7 @@ export default function MyTickets() {
             <h3 className="font-bold text-ocean">{title}</h3>
             <p className="text-xs text-ocean/50">{locale === "kk" ? x.whenKk : x.whenRu}</p>
           </div>
-          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${TONE[x.status] ?? TONE.REFUNDED}`}>{label}</span>
+          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${x.eventCancelled ? "bg-red-50 text-red-700" : (TONE[x.status] ?? TONE.REFUNDED)}`}>{label}</span>
         </div>
         <p className="text-xs text-ocean/50 mt-2">
           {t.order} {x.orderNumber} · {t.tickets(x.tickets)}

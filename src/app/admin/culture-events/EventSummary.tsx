@@ -7,7 +7,15 @@ import EventDetails from "./EventDetails";
  * A past or archived event without a hall (an Афиша one): its details, nothing to change, and the
  * delete button. One with a hall opens on its report instead (/admin/tickets/stats/[id]).
  */
-export default function EventSummary({ event, bookingCount }: { event: CultureEventRecord; bookingCount: number }) {
+export default function EventSummary({
+  event,
+  bookingCount,
+  keptUntil = null,
+}: {
+  event: CultureEventRecord;
+  bookingCount: number;
+  keptUntil?: string | null;
+}) {
   const backHref = event.hallId ? "/admin/tickets" : "/admin/culture-events";
 
   return (
@@ -32,6 +40,7 @@ export default function EventSummary({ event, bookingCount }: { event: CultureEv
           title={event.titleRu ?? event.titleKk ?? "мероприятие"}
           redirectHref={backHref}
           bookingCount={bookingCount}
+          keptUntil={keptUntil}
         />
       </div>
     </div>

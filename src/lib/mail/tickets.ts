@@ -2,6 +2,7 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderTicketsPdf } from "@/lib/tickets/render";
+import { escapeHtml as esc, mailConfig, mailConfigured, orderLink } from "./config";
 
 /**
  * The email with the buyer's tickets, sent once the order is confirmed: a link to the order page
@@ -12,23 +13,9 @@ import { renderTicketsPdf } from "@/lib/tickets/render";
  * tickets_emailed_at IS NULL before sending, so two confirmations never send two emails; a failed
  * send releases the claim and the payment reconciliation tries again later.
  */
-function config() {
-  const host = process.env.SMTP_HOST?.trim();
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASSWORD;
-  if (!host || !user || !pass) return null;
-  const port = Number(process.env.SMTP_PORT ?? 465) || 465;
-  return {
-    transport: { host, port, secure: port === 465, auth: { user, pass } },
-    from: user,
-    replyTo: process.env.MAIL_REPLY_TO?.trim() || undefined,
-    siteUrl: (process.env.SITE_URL ?? "https://dk-zhylyoi.kz").replace(/\/$/, ""),
-  };
-}
+const config = mailConfig;
 
-export function mailConfigured(): boolean {
-  return config() !== null;
-}
+export { mailConfigured };
 
 const TEXT = {
   ru: {
@@ -56,8 +43,6 @@ const TEXT = {
     refund: "Сұрақтар мен қайтару — сайттағы байланыс арқылы, тапсырыс нөмірін айтыңыз.",
   },
 };
-
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export type TicketEmailResult = "sent" | "skipped" | "not_configured" | "failed";
 
@@ -88,8 +73,7 @@ export async function sendTicketsEmail(bookingId: string): Promise<TicketEmailRe
       return "skipped";
     }
     const t = TEXT[lang];
-    // Kazakh is the default language and has no prefix in the address (i18n/routing.ts).
-    const link = `${cfg.siteUrl}${lang === "kk" ? "" : "/ru"}/my-ticket/${claimed.access_token}`;
+    const link = orderLink(cfg.siteUrl, lang, String(claimed.access_token));
     const lines = [
       `${t.event}: ${rendered.eventTitle}`,
       `${t.when}: ${rendered.when}`,

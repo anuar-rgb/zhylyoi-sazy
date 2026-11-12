@@ -66,6 +66,7 @@ export default function EventForm({
   prices = {},
   paymentMethods = [],
   bookingCount = 0,
+  keptUntil = null,
   action,
   heading,
 }: {
@@ -83,6 +84,8 @@ export default function EventForm({
   paymentMethods?: PaymentMethodRecord[];
   /** Active bookings against this event, so the delete button can warn before it takes them with it. */
   bookingCount?: number;
+  /** While its orders are kept (ISO): the event cannot be deleted until then. */
+  keptUntil?: string | null;
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   heading: string;
 }) {
@@ -365,6 +368,7 @@ export default function EventForm({
             title={event.titleRu ?? event.titleKk ?? "мероприятие"}
             redirectHref={cancelHref}
             bookingCount={bookingCount}
+            keptUntil={keptUntil}
           />
         )}
       </div>

@@ -6,10 +6,12 @@ import { listHalls, listHallsCategories } from "@/lib/halls";
 import { listEventTicketTypes } from "@/lib/eventTicketTypes";
 import { listEventPriceCategories, pricesOf } from "@/lib/eventPrices";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
-import { countActiveBookingsForEvent } from "@/lib/bookingsAdmin";
+import { countActiveBookingsForEvent, countTicketHolders, listEventsWithTicketHistory } from "@/lib/bookingsAdmin";
+import { canCancelEvent, canMoveEvent, deleteBlockedUntil } from "@/lib/eventArchive";
 import EventForm from "../EventForm";
 import EventSummary from "../EventSummary";
 import { updateEvent } from "../actions";
+import EventChangeControls from "../EventChangeControls";
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,7 +29,8 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   // hall map, sold tickets); an Афиша one on a plain list of its details.
   if (isEventLocked(event)) {
     if (event.hallId) redirect(`/admin/tickets/stats/${id}`);
-    return <EventSummary event={event} bookingCount={await countActiveBookingsForEvent(id)} />;
+    const [bookingCount, sold] = await Promise.all([countActiveBookingsForEvent(id), listEventsWithTicketHistory([id])]);
+    return <EventSummary event={event} bookingCount={bookingCount} keptUntil={deleteBlockedUntil(event, sold.has(id))?.toISOString() ?? null} />;
   }
 
   const organizationId = identity.organizationId ?? event.organizationId ?? (await getSiteOrganizationId());
@@ -37,11 +40,13 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   // event's form is informational, and saving it leaves those two untouched.
   const ticketing = Boolean(event.hallId);
 
-  const [activeHalls, paymentMethods, bookingCount, ticketTypes] = await Promise.all([
+  const [activeHalls, paymentMethods, bookingCount, ticketTypes, ticketHolders, sold] = await Promise.all([
     ticketing ? listHalls().then((rows) => rows.filter((hall) => hall.isActive)) : Promise.resolve([]),
     ticketing ? listPublicPaymentMethods(organizationId) : Promise.resolve([]),
     countActiveBookingsForEvent(id),
     ticketing ? listEventTicketTypes(id) : Promise.resolve([]),
+    ticketing ? countTicketHolders(id) : Promise.resolve(0),
+    listEventsWithTicketHistory([id]),
   ]);
 
   // Each hall's seat categories for the price fields; the event's own hall also lists the
@@ -56,7 +61,9 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     categories: hall.id === event.hallId ? ownCategories : (categories.get(hall.id) ?? []),
   }));
 
+  const title = event.titleRu ?? event.titleKk ?? "Мероприятие";
   return (
+    <>
     <EventForm
       event={event}
       organizationId={organizationId}
@@ -65,8 +72,19 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       prices={pricesOf(ticketTypes)}
       paymentMethods={paymentMethods}
       bookingCount={bookingCount}
+      keptUntil={deleteBlockedUntil(event, sold.has(id))?.toISOString() ?? null}
       action={updateEvent}
-      heading={event.titleRu ?? event.titleKk ?? "Мероприятие"}
+      heading={title}
     />
+    {ticketing && (
+      <EventChangeControls
+        eventId={id}
+        title={title}
+        canMove={canMoveEvent(event)}
+        canCancel={canCancelEvent(event)}
+        ticketsSold={ticketHolders}
+      />
+    )}
+    </>
   );
 }

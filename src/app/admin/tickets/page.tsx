@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
-import { listPendingPaidBookings, countActiveBookingsForEvents } from "@/lib/bookingsAdmin";
+import { listPendingPaidBookings, countActiveBookingsForEvents, listEventsWithTicketHistory } from "@/lib/bookingsAdmin";
+import { deleteBlockedUntil } from "@/lib/eventArchive";
 import { isEventLocked, listAllTicketedCultureEvents, type CultureEventRecord } from "@/lib/cultureEvents";
 import { EVENT_STATUS_LABELS, formatEventDateTime } from "@/lib/eventFields";
 import DeleteEventButton from "../culture-events/DeleteEventButton";
@@ -16,7 +17,8 @@ export default async function TicketsPage() {
     organizationId ? listPendingPaidBookings(organizationId).then((rows) => rows.length) : Promise.resolve(0),
     listAllTicketedCultureEvents(),
   ]);
-  const bookingCounts = await countActiveBookingsForEvents([...current, ...other].map((event) => event.id));
+  const eventIds = [...current, ...other].map((event) => event.id);
+  const [bookingCounts, sold] = await Promise.all([countActiveBookingsForEvents(eventIds), listEventsWithTicketHistory(eventIds)]);
 
 
   // A past or archived event opens read-only (isEventLocked); an upcoming one, a draft too, is still edited.
@@ -54,6 +56,7 @@ export default async function TicketsPage() {
             id={event.id}
             title={event.titleRu ?? event.titleKk ?? "мероприятие"}
             bookingCount={bookingCounts.get(event.id) ?? 0}
+            keptUntil={deleteBlockedUntil(event, sold.has(event.id))?.toISOString() ?? null}
           />
         </div>
       </div>
@@ -91,14 +94,17 @@ export default async function TicketsPage() {
       {other.length > 0 && (
         <>
           <h2 className="text-lg sm:text-xl font-bold text-ocean mt-10 mb-1">
-            Прошедшие и черновики <span className="text-ocean/40 font-normal text-base">({other.length})</span>
+            Прошедшие, отменённые и черновики <span className="text-ocean/40 font-normal text-base">({other.length})</span>
           </h2>
           <p className="text-sm text-ocean/60 mb-4">
-            Посетитель их не видит в разделе «Билеты». Здесь их можно открыть или удалить насовсем.
+            Билеты на них не продаются. Мероприятие, на которое выдавались билеты, хранится вместе с заказами 3 года, потом его можно удалить.
           </p>
           <div className="space-y-2">
             {other.map((event) =>
-              renderEvent(event, event.status === "published" ? "прошло" : (EVENT_STATUS_LABELS[event.status] ?? event.status))
+              renderEvent(
+                event,
+                event.cancelledAt ? "отменено" : event.status === "published" ? "прошло" : (EVENT_STATUS_LABELS[event.status] ?? event.status)
+              )
             )}
           </div>
         </>

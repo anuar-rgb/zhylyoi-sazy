@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { livePipeline } from "@/lib/payments/deps";
 import { reconcile } from "@/lib/payments/pipeline";
 import { retryTicketEmails } from "@/lib/mail/tickets";
+import { settleRecentEventChanges } from "@/lib/ticketing/eventChanges";
 
 /**
  * Asks the providers about payments that have waited too long for a notification.
@@ -30,7 +31,9 @@ async function run(request: Request) {
   const summary = await reconcile(deps);
   // Ticket emails that did not go out at confirmation are retried on the same schedule.
   const emails = await retryTicketEmails();
-  return Response.json({ ...summary, emails });
+  // Cancelled and moved events: refunds the bank did not make yet, and letters not sent yet.
+  const eventChanges = await settleRecentEventChanges();
+  return Response.json({ ...summary, emails, eventChanges });
 }
 
 export const GET = run;

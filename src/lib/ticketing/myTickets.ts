@@ -21,6 +21,8 @@ export type TicketSummary = {
   tickets: number;
   amount: number;
   currency: string;
+  /** The institution cancelled the event. */
+  eventCancelled: boolean;
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -49,7 +51,7 @@ export async function getTicketSummaries(tokens: string[], now = new Date()): Pr
     .from("bookings")
     .select(
       "access_token, public_order_id, status, total_amount, currency, " +
-        "culture_events(title_kk, title_ru, event_date), booking_items(released_at)"
+        "culture_events(title_kk, title_ru, event_date, cancelled_at), booking_items(released_at)"
     )
     .in("access_token", valid);
   if (error || !data) return [];
@@ -75,6 +77,7 @@ export async function getTicketSummaries(tokens: string[], now = new Date()): Pr
       tickets: live ? items.filter((item) => item.released_at === null).length : items.length,
       amount,
       currency: String(row.currency ?? "KZT"),
+      eventCancelled: Boolean(event?.cancelled_at),
     };
   });
 }

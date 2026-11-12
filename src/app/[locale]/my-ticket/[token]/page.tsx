@@ -9,7 +9,7 @@ import { BOOKING_STATUS_BADGE, BOOKING_STATUS_PUBLIC, isHold } from "@/lib/booki
 import { seatName } from "@/lib/hallSections";
 import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import { getOrderSnapshot } from "@/lib/payments/orderStatus";
-import { formatTime } from "@/lib/timeZone";
+import { formatDateTime, formatTime } from "@/lib/timeZone";
 import Countdown from "./Countdown";
 import TicketQr from "./TicketQr";
 import PayButton from "./PayButton";
@@ -61,7 +61,27 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
   const returnedSum = returned.reduce((sum, item) => sum + item.priceAtBooking, 0);
   const eventTitle = event ? (lang === "kk" ? (event.titleKk ?? event.titleRu) : (event.titleRu ?? event.titleKk)) : null;
   const sum = `${booking.totalAmount} ₸`;
-  const after = AFTER[booking.status]?.[lang];
+  // The institution cancelled or moved the event: said above everything else about the order.
+  const paid = booking.totalAmount > 0;
+  const eventNote = event?.cancelledAt
+    ? booking.status === "refunded" || booking.status === "confirmed" || booking.status === "late_payment"
+      ? lang === "kk"
+        ? `Іс-шара болдырылмады.${event.cancelReason ? ` Себебі: ${event.cancelReason}.` : ""} ${
+            !paid ? "Билеттердің күші жойылды." : booking.status === "refunded" ? "Ақша төлем жасаған картаңызға қайтарылды." : "Ақша төлем жасаған картаңызға қайтарылады."
+          }`
+        : `Мероприятие отменено.${event.cancelReason ? ` Причина: ${event.cancelReason}.` : ""} ${
+            !paid ? "Билеты аннулированы." : booking.status === "refunded" ? "Деньги возвращены на карту, с которой вы платили." : "Деньги вернутся на карту, с которой вы платили."
+          }`
+      : lang === "kk"
+        ? "Іс-шара болдырылмады."
+        : "Мероприятие отменено."
+    : event?.movedFrom && isConfirmed
+      ? lang === "kk"
+        ? `Іс-шара ${formatDateTime(event.movedFrom, "kk-KZ")} күнінен ${formatDateTime(event.eventDate, "kk-KZ")} күніне ауыстырылды. Билеттер жаңа күнге жарамды.`
+        : `Мероприятие перенесено с ${formatDateTime(event.movedFrom)} на ${formatDateTime(event.eventDate)}. Билеты действуют на новую дату.`
+      : null;
+  // After a cancellation the event note says it all.
+  const after = event?.cancelledAt ? undefined : AFTER[booking.status]?.[lang];
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -147,6 +167,13 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
               </p>
             )}
 
+            {eventNote && (
+              <p
+                className={`text-sm mt-5 rounded-2xl px-4 py-3 ${event?.cancelledAt ? "bg-red-50 text-red-700" : "bg-gold/15 text-ocean-dark"}`}
+              >
+                {eventNote}
+              </p>
+            )}
             {after && <p className="text-sm text-ocean/70 mt-5 bg-cream/40 rounded-2xl px-4 py-3">{after}</p>}
           </div>
         </FadeIn>

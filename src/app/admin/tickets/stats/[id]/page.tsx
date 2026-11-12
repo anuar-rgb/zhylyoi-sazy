@@ -14,6 +14,9 @@ import NoProfile from "../../NoProfile";
 import OccupancyMap from "./OccupancyMap";
 import SoldTickets from "./SoldTickets";
 import EventDetails from "../../../culture-events/EventDetails";
+import CancelledNotice from "./CancelledNotice";
+import { createClient } from "@/lib/supabase/server";
+import { formatDateTime } from "@/lib/timeZone";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 const SECTION = "text-lg font-bold text-ocean mb-3";
@@ -41,6 +44,18 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
     listSeatBlocks(id),
   ]);
   const locked = isEventLocked(event);
+  // A cancelled event: the paid orders whose money is still with the institution.
+  let notRefunded: string[] = [];
+  if (event.cancelledAt) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("bookings")
+      .select("public_order_id")
+      .eq("event_id", id)
+      .in("status", ["confirmed", "late_payment"])
+      .gt("total_amount", 0);
+    notRefunded = (data ?? []).map((row) => String(row.public_order_id));
+  }
   const prices = pricesOf(ticketTypes);
   // Hidden seats stay off the map, unless a ticket was sold for one before it was hidden.
   const shown = seats.filter((seat) => seat.isActive || occupants.has(seat.id));
@@ -97,8 +112,18 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
       <p className="text-sm text-ocean/60 mb-6">
         {formatEventDateTime(event.eventDate)}
         {hallName && ` · ${hallName}`}
-        {locked && (event.status === "archived" ? " · в архиве" : " · прошло")}
+        {event.movedFrom && ` · перенесено с ${formatEventDateTime(event.movedFrom)}`}
+        {locked && (event.cancelledAt ? " · отменено" : event.status === "archived" ? " · в архиве" : " · прошло")}
       </p>
+
+      {event.cancelledAt && (
+        <CancelledNotice
+          eventId={id}
+          cancelledAt={formatDateTime(event.cancelledAt)}
+          reason={event.cancelReason}
+          notRefunded={notRefunded}
+        />
+      )}
 
       <h2 className={SECTION}>Сведения о мероприятии</h2>
       <div className="mb-8">

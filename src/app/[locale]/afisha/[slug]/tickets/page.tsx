@@ -68,7 +68,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
     );
   }
 
-  if (hasEventStarted(event)) {
+  if (event.cancelledAt || hasEventStarted(event)) {
     return (
       <section className="py-12 sm:py-16 lg:py-20">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -76,9 +76,13 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
             {backLink}
             <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-8">
               <p className="text-ocean/70">
-                {locale === "kk"
-                  ? "Бұл іс-шараға билет сату аяқталды."
-                  : "Продажа билетов на это мероприятие завершена."}
+                {event.cancelledAt
+                  ? locale === "kk"
+                    ? "Іс-шара болдырылмады, билет сатылмайды."
+                    : "Мероприятие отменено, билеты не продаются."
+                  : locale === "kk"
+                    ? "Бұл іс-шараға билет сату аяқталды."
+                    : "Продажа билетов на это мероприятие завершена."}
               </p>
             </div>
           </FadeIn>
