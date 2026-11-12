@@ -4,15 +4,9 @@ import FadeIn from "@/components/FadeIn";
 import { getSiteOrganization, localizedOrganization } from "@/lib/organization";
 import { telHref } from "@/lib/contactLinks";
 import { getSiteText } from "@/lib/orgContent";
+import { mapsLink, osmEmbedUrl } from "@/lib/mapPoint";
 import SectionTitle from "@/components/SectionTitle";
 import type { Locale } from "@/i18n/routing";
-
-const mapSearchQuery = encodeURIComponent(
-  "Атырау облысы, Жылыой ауданы, Құлсары қаласы, Махамбет даңғылы 37, Кең Жылыой мәдениет үйі"
-);
-// Құлсары қаласының орталық координаттары (нақты ғимарат координаттары туралы дерек жоқ болғандықтан шамамен)
-const OSM_BBOX = "53.9929,46.9501,54.0329,46.9741";
-const OSM_MARKER = "46.9621483,54.0129176";
 
 const content: Record<
   Locale,
@@ -34,7 +28,7 @@ const content: Record<
     hours: "Дүйсенбі – Жұма: 09:00 – 18:30",
     lunch: "Түскі үзіліс: 13:00 – 14:30",
     contactBtn: "Байланысу",
-    mapTitle: "Құлсары қаласының картасы",
+    mapTitle: "Мекенжай картада",
     openInGoogle: "Google Картадан ашу",
   },
   ru: {
@@ -44,7 +38,7 @@ const content: Record<
     hours: "Понедельник – Пятница: 09:00 – 18:30",
     lunch: "Обеденный перерыв: 13:00 – 14:30",
     contactBtn: "Связаться",
-    mapTitle: "Карта города Кульсары",
+    mapTitle: "Адрес на карте",
     openInGoogle: "Открыть в Google Картах",
   },
 };
@@ -57,6 +51,8 @@ export default async function ContactsMapSection() {
   const text = await getSiteText(locale);
   const organization = await getSiteOrganization();
   const address = (organization && localizedOrganization(organization, locale, "address")) ?? t.address;
+  // The map point is set in Админка → Настройки; without one the block shows only the details.
+  const point = organization?.mapPoint ?? null;
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-white">
@@ -66,7 +62,7 @@ export default async function ContactsMapSection() {
         </FadeIn>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8">
-          <FadeIn className="lg:col-span-2">
+          <FadeIn className={point ? "lg:col-span-2" : "lg:col-span-5"}>
             <div className="bg-cream/40 rounded-3xl p-6 sm:p-8 border border-cream-dark h-full flex flex-col">
               <ul className="space-y-5 text-sm sm:text-base flex-1">
                 <li className="flex items-start gap-3">
@@ -109,16 +105,17 @@ export default async function ContactsMapSection() {
             </div>
           </FadeIn>
 
+          {point && (
           <FadeIn delay={150} className="lg:col-span-3">
             <div className="relative rounded-3xl overflow-hidden border border-cream-dark shadow-sm h-80 lg:h-full min-h-80">
               <iframe
                 title={t.mapTitle}
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${OSM_BBOX}&layer=mapnik&marker=${OSM_MARKER}`}
+                src={osmEmbedUrl(point)}
                 className="w-full h-full"
                 loading="lazy"
               />
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${mapSearchQuery}`}
+                href={mapsLink(point, null) ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary absolute bottom-3 right-3 text-xs sm:text-sm font-semibold px-3 py-2"
@@ -127,6 +124,7 @@ export default async function ContactsMapSection() {
               </a>
             </div>
           </FadeIn>
+          )}
         </div>
       </div>
     </section>

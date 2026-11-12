@@ -4,6 +4,7 @@ import { useActionToast } from "@/components/feedback/FeedbackProvider";
 import { useActionState } from "react";
 import type { OrganizationRecord } from "@/lib/organization";
 import BilingualField from "@/components/admin/BilingualField";
+import { formatMapPoint, mapsLink } from "@/lib/mapPoint";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -82,7 +83,53 @@ export default function SettingsForm({
           <Field name="email" label="Электронная почта" defaultValue={organization.email} type="email" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
-          Эти данные подставляются в подвал, в блок контактов на главной и на страницу «Контакты».
+          Подставляются в подвал каждой страницы, в блок контактов на главной, на страницу «Контакты» и в форму
+          «Отправить сообщение» (письма идут на эту почту). Адрес вместе с названием предлагается местом проведения
+          для новых мероприятий.
+        </p>
+      </div>
+
+      <div className={CARD}>
+        <p className="text-sm font-semibold text-ocean mb-4">Точка на карте</p>
+        <Field
+          name="map_point"
+          label="Ссылка с карты или координаты"
+          defaultValue={organization.mapPoint ? formatMapPoint(organization.mapPoint) : null}
+          placeholder="https://maps.app.goo.gl/… или 46.9621, 54.0129"
+        />
+        <p className="text-xs text-ocean/40 mt-2">
+          Найдите здание в Google Картах, 2ГИС или Яндекс Картах, нажмите «Поделиться» и вставьте ссылку сюда.
+          После сохранения здесь будут координаты. Пустое поле убирает карту с главной.
+          {organization.mapPoint && (
+            <>
+              {" "}
+              <a
+                href={mapsLink(organization.mapPoint, null) ?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-ocean/60 underline hover:text-gold-dark"
+              >
+                Проверить на карте
+              </a>
+            </>
+          )}
+        </p>
+      </div>
+
+      <div className={CARD}>
+        <p className="text-sm font-semibold text-ocean mb-4">Официальные реквизиты</p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field name="legal_name_kk" label="Полное наименование (қаз.)" defaultValue={organization.legalNameKk} textarea />
+          <Field name="legal_name_ru" label="Полное наименование (рус.)" defaultValue={organization.legalNameRu} textarea />
+          <Field name="bin" label="БИН" defaultValue={organization.bin} inputMode="numeric" maxLength={14} placeholder="12 цифр" />
+          <Field name="director" label="Руководитель (ФИО)" defaultValue={organization.director} />
+          <Field name="founder_kk" label="Учредитель (қаз.)" defaultValue={organization.founderKk} textarea />
+          <Field name="founder_ru" label="Учредитель (рус.)" defaultValue={organization.founderRu} textarea />
+        </div>
+        <p className="text-xs text-ocean/40 mt-2">
+          Показываются на странице «Контакты» в блоке «Официальные реквизиты учреждения». Пишите как в
+          регистрационных документах: банк сверяет их с договором. Автоперевода здесь нет: если поле на одном
+          языке пустое, на сайте покажется другой язык.
         </p>
       </div>
 

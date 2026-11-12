@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganizationId } from "@/lib/organization";
 import { translateFieldPair } from "@/lib/autoTranslate";
+import { resolveMapPoint } from "@/lib/mapLinks";
 
 export type FormState = { error: string | null; saved: boolean };
 
@@ -35,6 +36,14 @@ function payload(form: FormData) {
     address_ru: field(form, "address_ru"),
     phone: field(form, "phone"),
     email: field(form, "email"),
+    // Official names are copied from the registration documents, never machine-translated:
+    // a side left blank stays blank and the page shows the other language.
+    legal_name_kk: field(form, "legal_name_kk"),
+    legal_name_ru: field(form, "legal_name_ru"),
+    bin: field(form, "bin")?.replace(/s+/g, "") ?? null,
+    director: field(form, "director"),
+    founder_kk: field(form, "founder_kk"),
+    founder_ru: field(form, "founder_ru"),
   };
 }
 
@@ -58,12 +67,24 @@ export async function updateOrganization(_prev: FormState, form: FormData): Prom
 
   const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите название хотя бы на одном языке.", saved: false };
+  if (data.bin && !/^d{12}$/.test(data.bin)) return { error: "БИН — это 12 цифр.", saved: false };
+
+  const mapInput = field(form, "map_point");
+  const mapPoint = mapInput ? await resolveMapPoint(mapInput) : null;
+  if (mapInput && !mapPoint) {
+    return {
+      error:
+        "Не удалось найти точку по ссылке на карту. Откройте здание в Google Картах или 2ГИС, скопируйте ссылку " +
+        "из адресной строки или координаты (например 46.9621, 54.0129) и вставьте ещё раз.",
+      saved: false,
+    };
+  }
 
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение.", saved: false };
 
   const supabase = await createClient();
-  const { error, count } = await supabase.from("organizations").update(data, { count: "exact" }).eq("id", organizationId);
+  const { error, count } = await supabase.from("organizations").update({ ...data, map_lat: mapPoint?.lat ?? null, map_lng: mapPoint?.lng ?? null }, { count: "exact" }).eq("id", organizationId);
 
   if (error) return { error: `Не удалось сохранить: ${error.message}`, saved: false };
 

@@ -7,22 +7,19 @@ import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Байланыс",
-    description:
-      "«Кең Жылыой» Жылыой аудандық мәдениет үйімен байланысу — мекенжай, телефон, жұмыс уақыты. Атырау облысы, Жылыой ауданы, Құлсары қаласы, Махамбет даңғылы, 37.",
-  },
-  ru: {
-    title: "Контакты",
-    description:
-      "Связаться с домом культуры «Кен Жылыой» Жылыойского района — адрес, телефон, часы работы. Атырауская область, Жылыойский район, г. Кульсары, проспект Махамбет, 37.",
-  },
+const meta: Record<Locale, { title: string; about: string }> = {
+  kk: { title: "Байланыс", about: "мекенжай, телефон, жұмыс уақыты" },
+  ru: { title: "Контакты", about: "адрес, телефон, часы работы" },
 };
 
+/** The search snippet names the institution and its address from its card (Админка → Настройки). */
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  const organization = await getSiteOrganization();
+  const name = organization && localizedOrganization(organization, locale, "name");
+  const address = organization && localizedOrganization(organization, locale, "address");
+  const description = [name ? `${name}: ${meta[locale].about}.` : null, address].filter(Boolean).join(" ");
+  return { title: meta[locale].title, ...(description ? { description } : {}) };
 }
 
 const content = {
@@ -52,12 +49,9 @@ const content = {
     rehearsalNote: "* Концерт алдында қосымша репетициялар болуы мүмкін",
     legalTitle: "Мекеменің ресми деректері",
     legalFullNameLabel: "Толық атауы",
-    legalFullName: "«Кең Жылыой» Жылыой аудандық мәдениет үйі» коммуналдық мемлекеттік қазыналық кәсіпорыны",
     bsnLabel: "БСН",
     directorLabel: "Басшысы",
-    director: "Темирханов Алибек Жумаханович",
     founderLabel: "Құрылтайшы",
-    founder: "Жылыой ауданы мәдениет, тілдерді дамыту, дене шынықтыру және спорт бөлімі",
   },
   ru: {
     title: "Контакты",
@@ -85,13 +79,9 @@ const content = {
     rehearsalNote: "* Перед концертами возможны дополнительные репетиции",
     legalTitle: "Официальные реквизиты учреждения",
     legalFullNameLabel: "Полное наименование",
-    legalFullName:
-      "Коммунальное государственное казенное предприятие «Жылыойский районный дом культуры «Кен Жылыой»»",
     bsnLabel: "БИН",
     directorLabel: "Руководитель",
-    director: "Темирханов Алибек Жумаханович",
     founderLabel: "Учредитель",
-    founder: "Отдел культуры, развития языков, физической культуры и спорта Жылыойского района",
   },
 } satisfies Record<Locale, unknown>;
 
@@ -107,6 +97,14 @@ export default async function ContactsPage() {
   }));
   const organization = await getSiteOrganization();
   const address = (organization && localizedOrganization(organization, locale, "address")) ?? t.address.join(", ");
+  const requisites = organization
+    ? [
+        { label: t.legalFullNameLabel, value: localizedOrganization(organization, locale, "legalName") },
+        { label: t.bsnLabel, value: organization.bin },
+        { label: t.directorLabel, value: organization.director },
+        { label: t.founderLabel, value: localizedOrganization(organization, locale, "founder") },
+      ].filter((row): row is { label: string; value: string } => Boolean(row.value))
+    : [];
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -189,11 +187,12 @@ export default async function ContactsPage() {
 
           <FadeIn delay={150}>
           <div className="space-y-4 sm:space-y-6">
+            {organization?.email && (
             <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-cream-dark">
               <h3 className="font-bold text-ocean text-lg mb-4">{t.formTitle}</h3>
               <form
                 className="space-y-4"
-                action="mailto:dk.kenzhylyoi@gmail.com"
+                action={`mailto:${organization.email}`}
                 method="post"
                 encType="text/plain"
               >
@@ -241,6 +240,7 @@ export default async function ContactsPage() {
                 </button>
               </form>
             </div>
+            )}
 
             <div className="bg-gold/10 rounded-3xl p-6 border border-gold/20">
               <h3 className="font-bold text-ocean mb-2">{t.rehearsalTitle}</h3>
@@ -260,29 +260,21 @@ export default async function ContactsPage() {
           </FadeIn>
         </div>
 
+        {requisites.length > 0 && (
         <FadeIn delay={250}>
           <div className="mt-6 sm:mt-8 bg-white rounded-3xl p-6 shadow-sm border border-cream-dark">
             <h3 className="font-bold text-ocean text-lg mb-4">{t.legalTitle}</h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-              <div>
-                <dt className="text-ocean/50">{t.legalFullNameLabel}</dt>
-                <dd className="text-ocean/80 mt-0.5">{text("contacts.legalFullName")}</dd>
-              </div>
-              <div>
-                <dt className="text-ocean/50">{t.bsnLabel}</dt>
-                <dd className="text-ocean/80 mt-0.5">010240004070</dd>
-              </div>
-              <div>
-                <dt className="text-ocean/50">{t.directorLabel}</dt>
-                <dd className="text-ocean/80 mt-0.5">{text("contacts.director")}</dd>
-              </div>
-              <div>
-                <dt className="text-ocean/50">{t.founderLabel}</dt>
-                <dd className="text-ocean/80 mt-0.5">{text("contacts.founder")}</dd>
-              </div>
+              {requisites.map((row) => (
+                <div key={row.label}>
+                  <dt className="text-ocean/50">{row.label}</dt>
+                  <dd className="text-ocean/80 mt-0.5">{row.value}</dd>
+                </div>
+              ))}
             </dl>
           </div>
         </FadeIn>
+        )}
       </div>
     </section>
   );

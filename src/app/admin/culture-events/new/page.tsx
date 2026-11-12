@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getStaffIdentity } from "@/lib/profile";
-import { getSiteOrganizationId } from "@/lib/organization";
+import { getSiteOrganization, getSiteOrganizationId } from "@/lib/organization";
 import { listHalls, listHallsCategories } from "@/lib/halls";
 import { listPublicPaymentMethods } from "@/lib/paymentMethods";
 import EventForm from "../EventForm";
@@ -39,6 +39,11 @@ export default async function NewEventPage({
   // Only a hall this person can actually see is honoured. The id comes from the
   // address bar, and preselecting one that is not in the list would show a
   // picker whose value is not among its options.
+  // The place a new event starts with: the institution itself, «name, address», from its card.
+  const site = await getSiteOrganization();
+  const place = (name: string | null, address: string | null) => [name, address].filter(Boolean).join(", ") || null;
+  const defaultPlace = site ? { kk: place(site.nameKk, site.addressKk), ru: place(site.nameRu, site.addressRu) } : undefined;
+
   const defaultHallId = hallId && halls.some((hall) => hall.id === hallId) ? hallId : undefined;
 
   return (
@@ -48,6 +53,7 @@ export default async function NewEventPage({
       halls={halls}
       defaultHallId={defaultHallId}
       paymentMethods={paymentMethods}
+      defaultPlace={defaultPlace}
       action={createEvent}
       heading={ticketing ? "Новое мероприятие с билетами" : "Новое мероприятие"}
     />

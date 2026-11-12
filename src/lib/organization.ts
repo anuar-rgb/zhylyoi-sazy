@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import type { Locale } from "@/i18n/routing";
+import type { MapPoint } from "@/lib/mapPoint";
 
 /**
  * The institution this site belongs to. A constant while the platform serves one
@@ -19,9 +20,20 @@ export type OrganizationRecord = {
   addressRu: string | null;
   phone: string | null;
   email: string | null;
+  /** Official requisites shown on Contacts: the registered full name, BIN, director and founder. */
+  legalNameKk: string | null;
+  legalNameRu: string | null;
+  bin: string | null;
+  director: string | null;
+  founderKk: string | null;
+  founderRu: string | null;
+  /** The building on the map, or null when staff have not set it. */
+  mapPoint: MapPoint | null;
 };
 
-const COLUMNS = "id, slug, type, name, name_kk, name_ru, address, address_kk, address_ru, phone, email";
+const COLUMNS =
+  "id, slug, type, name, name_kk, name_ru, address, address_kk, address_ru, phone, email, " +
+  "legal_name_kk, legal_name_ru, bin, director, founder_kk, founder_ru, map_lat, map_lng";
 
 function str(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
@@ -42,6 +54,14 @@ function toRecord(row: Record<string, unknown>): OrganizationRecord {
     addressRu: str(row.address_ru),
     phone: str(row.phone),
     email: str(row.email),
+    legalNameKk: str(row.legal_name_kk),
+    legalNameRu: str(row.legal_name_ru),
+    bin: str(row.bin),
+    director: str(row.director),
+    founderKk: str(row.founder_kk),
+    founderRu: str(row.founder_ru),
+    mapPoint:
+      typeof row.map_lat === "number" && typeof row.map_lng === "number" ? { lat: row.map_lat, lng: row.map_lng } : null,
   };
 }
 
@@ -84,9 +104,10 @@ export const getSiteOrganizationId = cache(async (): Promise<string | null> => {
 export function localizedOrganization(
   organization: OrganizationRecord,
   locale: Locale,
-  field: "name" | "address"
+  field: "name" | "address" | "legalName" | "founder"
 ): string | null {
-  const kk = field === "name" ? organization.nameKk : organization.addressKk;
-  const ru = field === "name" ? organization.nameRu : organization.addressRu;
+  // Field names here map one to one onto the record: nameKk/nameRu, addressKk/addressRu and so on.
+  const kk = organization[`${field}Kk`];
+  const ru = organization[`${field}Ru`];
   return locale === "kk" ? (kk ?? ru) : (ru ?? kk);
 }

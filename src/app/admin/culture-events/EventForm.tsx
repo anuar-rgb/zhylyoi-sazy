@@ -67,10 +67,13 @@ export default function EventForm({
   paymentMethods = [],
   bookingCount = 0,
   keptUntil = null,
+  defaultPlace,
   action,
   heading,
 }: {
   event?: CultureEventRecord;
+  /** A new event starts with the institution's own name and address as its place (Админка → Настройки). */
+  defaultPlace?: { kk: string | null; ru: string | null };
   organizationId: string;
   /** Shows the hall and payment method: a new event from «Билеты», or one that already has a hall. */
   ticketing?: boolean;
@@ -163,7 +166,7 @@ export default function EventForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <DateTimeField name="event_date" label="Начало" required defaultValue={isoToDateTimeInput(event?.eventDate ?? null)} />
           <DateTimeField name="end_date" label="Окончание (необязательно)" defaultValue={isoToDateTimeInput(event?.endDate ?? null)} />
-          <BilingualField kkName="location_kk" ruName="location_ru" label="Место" defaultKk={event?.locationKk} defaultRu={event?.locationRu} />
+          <BilingualField kkName="location_kk" ruName="location_ru" label="Место" defaultKk={event ? event.locationKk : defaultPlace?.kk} defaultRu={event ? event.locationRu : defaultPlace?.ru} />
           <BilingualField
             kkName="organizer_kk"
             ruName="organizer_ru"
