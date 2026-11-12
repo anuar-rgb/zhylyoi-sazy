@@ -31,7 +31,20 @@ const RESULT_TEXT: Record<CheckInFailure, string> = {
  * support it at all (notably Safari/iOS lacks the native BarcodeDetector,
  * which is why this doesn't rely on it as the only path).
  */
-export default function ScannerClient({ events }: { events: ScanEvent[] }) {
+export default function ScannerClient({
+  events,
+  initialEventId,
+  onEventChange,
+  onChecked,
+}: {
+  events: ScanEvent[];
+  /** The event to start on; the first one otherwise. */
+  initialEventId?: string;
+  /** Told when the door switches to another event (the hall map follows it). */
+  onEventChange?: (eventId: string) => void;
+  /** Told after every check, so the hall map can show the seat as entered. */
+  onChecked?: () => void;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -43,7 +56,13 @@ export default function ScannerClient({ events }: { events: ScanEvent[] }) {
   const [manualCode, setManualCode] = useState("");
   const [result, setResult] = useState<CheckInResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [eventId, setEventId] = useState(events[0]?.id ?? "");
+  const [eventId, setEventId] = useState(
+    events.some((event) => event.id === initialEventId) ? (initialEventId as string) : (events[0]?.id ?? "")
+  );
+  const onCheckedRef = useRef(onChecked);
+  useEffect(() => {
+    onCheckedRef.current = onChecked;
+  }, [onChecked]);
   // The scan loop is created once; it reads the chosen event through a ref so changing the event
   // never restarts the camera.
   const eventIdRef = useRef(eventId);
@@ -60,6 +79,7 @@ export default function ScannerClient({ events }: { events: ScanEvent[] }) {
       setSubmitting(false);
       setCheckedAt(new Date());
       setResult(res);
+      onCheckedRef.current?.();
       dismissTimer.current = window.setTimeout(() => {
         setResult(null);
         pausedRef.current = false;
@@ -136,6 +156,7 @@ export default function ScannerClient({ events }: { events: ScanEvent[] }) {
   function chooseEvent(id: string) {
     setEventId(id);
     eventIdRef.current = id;
+    onEventChange?.(id);
   }
 
   function handleManualSubmit(e: React.FormEvent) {

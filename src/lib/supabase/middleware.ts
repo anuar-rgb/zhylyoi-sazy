@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!user && pathname.startsWith("/admin")) {
+  if (!user && (pathname.startsWith("/admin") || pathname.startsWith("/door"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";

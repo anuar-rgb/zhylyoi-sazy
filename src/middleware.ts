@@ -9,7 +9,7 @@ const intlMiddleware = createMiddleware(routing);
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/admin") || pathname === "/login") {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/door") || pathname === "/login" || pathname.startsWith("/login/")) {
     return updateSession(request);
   }
 

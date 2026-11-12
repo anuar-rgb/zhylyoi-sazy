@@ -4,15 +4,22 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Mirrors the role CHECK constraint on public.profiles.
  *
- * Three roles by design: the platform owner, one administrator per region, one per
+ * Three staff roles by design: the platform owner, one administrator per region, one per
  * institution. There is no "prepares but cannot publish" role — whoever holds a
- * profile does everything within their scope.
+ * staff profile does everything within their scope.
+ *
+ * And the door: a controller (CONTROLLER_ROLE) only checks tickets at /door. To the staff area
+ * a controller is not staff at all — getStaffIdentity reports no profile, the admin layout sends
+ * them to /door, and the database refuses them through is_staff_of.
  */
 const ROLE_LABELS: Record<string, string> = {
   platform_admin: "Администратор платформы",
   regional_admin: "Администратор области",
   organization_admin: "Администратор учреждения",
+  controller: "Контролёр",
 };
+
+export const CONTROLLER_ROLE = "controller";
 
 export type StaffIdentity = {
   /** The account's id, for journals that record who did what. */
@@ -63,7 +70,40 @@ export const getStaffIdentity = cache(async (): Promise<StaffIdentity | null> =>
     role: profile?.role ?? null,
     organizationId: profile?.organization_id ?? null,
     // A failed query reads as "no profile" too. That errs toward the setup notice
-    // rather than a dashboard of zeros that would look like real data.
-    hasProfile: Boolean(profile),
+    // rather than a dashboard of zeros that would look like real data. A controller is no
+    // staff here: every admin action that checks hasProfile refuses them.
+    hasProfile: Boolean(profile) && profile?.role !== CONTROLLER_ROLE,
+  };
+});
+
+export type DoorIdentity = {
+  userId: string;
+  displayName: string;
+  /** The institution whose tickets this person checks; null for a platform admin (the site's own then). */
+  organizationId: string | null;
+  isController: boolean;
+};
+
+/**
+ * Who may work at the door (/door): an active controller, or any staff member. Null otherwise,
+ * including a controller whose access was switched off.
+ */
+export const getDoorIdentity = cache(async (): Promise<DoorIdentity | null> => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, role, organization_id, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile || profile.is_active === false) return null;
+  return {
+    userId: user.id,
+    displayName: profile.full_name?.trim() || user.email || "Сотрудник",
+    organizationId: profile.organization_id ?? null,
+    isController: profile.role === CONTROLLER_ROLE,
   };
 });

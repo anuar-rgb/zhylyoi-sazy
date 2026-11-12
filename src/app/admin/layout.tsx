@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
-import { getStaffIdentity } from "@/lib/profile";
+import { CONTROLLER_ROLE, getStaffIdentity } from "@/lib/profile";
 import { countUnseenApplications } from "@/lib/applications";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
 import ScrollTopButton from "@/components/ScrollTopButton";
@@ -35,6 +35,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // that it is seen while working on something else. RLS scopes the count to what
   // this person may read, so nobody is told about another institution's applications.
   const [identity, newApplications] = await Promise.all([getStaffIdentity(), countUnseenApplications()]);
+  // A controller works at the door only; nothing of the staff area is theirs.
+  if (identity?.role === CONTROLLER_ROLE) redirect("/door");
 
   return (
     <html lang="ru" className={`${montserrat.variable} h-full antialiased`}>

@@ -18,6 +18,7 @@ const GROUPS = [
     links: [
       { href: "/admin/tickets/scan", label: "Сканер билетов", badge: false },
       { href: "/admin/tickets/checkins", label: "Журнал входов", badge: false },
+      { href: "/admin/tickets/controllers", label: "Контролёры", badge: false },
     ],
   },
   {

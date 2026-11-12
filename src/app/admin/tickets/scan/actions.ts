@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { PARTER, sectionLabel, toSection } from "@/lib/hallSections";
 
 export type CheckInDetails = {
@@ -50,11 +51,14 @@ const FAILURES: ReadonlySet<string> = new Set([
 /**
  * The section of a ticket's seat, named for the door («Балкон»), or null for the parter.
  * check_in_ticket predates sections and returns only row and seat; read after it, and only for a
- * ticket it found, so a guessed code learns nothing more than before. Any failure reads as the
- * parter: it only adds a word to the screen, it never decides who goes in.
+ * ticket it found, so a guessed code learns nothing more than before. Read by the server key: a
+ * controller has no read rights on orders. Any failure reads as the parter: it only adds a word to
+ * the screen, it never decides who goes in.
  */
-async function sectionOfTicket(supabase: Awaited<ReturnType<typeof createClient>>, code: string): Promise<string | null> {
-  const { data, error } = await supabase.from("booking_items").select("hall_seats(section)").eq("ticket_code", code).maybeSingle();
+async function sectionOfTicket(code: string): Promise<string | null> {
+  const admin = createAdminClient();
+  if (!admin) return null;
+  const { data, error } = await admin.from("booking_items").select("hall_seats(section)").eq("ticket_code", code).maybeSingle();
   if (error || !data) return null;
   const seat = (Array.isArray(data.hall_seats) ? data.hall_seats[0] : data.hall_seats) as { section?: string } | null;
   const section = toSection(seat?.section);
@@ -88,7 +92,7 @@ export async function checkInTicket(code: string, eventId?: string | null): Prom
   if (!row) return { ok: false, reason: "failed" };
 
   const details: CheckInDetails = {
-    seatSection: row.seat_row_label ? await sectionOfTicket(supabase, trimmed) : null,
+    seatSection: row.seat_row_label ? await sectionOfTicket(trimmed) : null,
     seatRowLabel: row.seat_row_label,
     seatNumber: row.seat_number,
     eventTitle: row.event_title_ru ?? row.event_title_kk,
