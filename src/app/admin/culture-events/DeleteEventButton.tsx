@@ -69,7 +69,7 @@ export default function DeleteEventButton({
     return (
       <p
         className="text-xs text-ocean/40 text-right max-w-[220px]"
-        title="Заказы и билеты хранятся в архиве 3 года после мероприятия. Убрать его с сайта можно переводом в архив."
+        title="Заказы и билеты хранятся в архиве 5 лет после мероприятия. Убрать его с сайта можно переводом в архив."
       >
         Удалить можно с {formatDateNumeric(keptUntil)}
       </p>

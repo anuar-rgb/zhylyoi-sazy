@@ -313,7 +313,7 @@ export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: st
 
 function keptMessage(until: Date | null): string {
   return (
-    "На мероприятие выдавались билеты: заказы хранятся в архиве 3 года после мероприятия" +
+    "На мероприятие выдавались билеты: заказы хранятся в архиве 5 лет после мероприятия" +
     (until ? `, удалить можно с ${formatDateNumeric(until)}.` : ".") +
     " Чтобы убрать его с сайта, переведите в архив."
   );

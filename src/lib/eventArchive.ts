@@ -9,8 +9,11 @@ import { INSTITUTION_OFFSET_MS } from "@/lib/timeZone";
  * orders are kept.
  */
 
-/** Years an event's orders and tickets are kept after it ends (the Privacy Policy's period). */
-export const TICKET_ARCHIVE_YEARS = 3;
+/**
+ * Years an event's orders and tickets are kept after it ends: 5, as the bank's acquiring contract
+ * requires (Halyk «Договор присоединения к интернет-эквайрингу», п. 7.3.4).
+ */
+export const TICKET_ARCHIVE_YEARS = 5;
 
 type Dated = { eventDate: string; endDate: string | null };
 

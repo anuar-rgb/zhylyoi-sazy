@@ -97,7 +97,7 @@ export default async function TicketsPage() {
             Прошедшие, отменённые и черновики <span className="text-ocean/40 font-normal text-base">({other.length})</span>
           </h2>
           <p className="text-sm text-ocean/60 mb-4">
-            Билеты на них не продаются. Мероприятие, на которое выдавались билеты, хранится вместе с заказами 3 года, потом его можно удалить.
+            Билеты на них не продаются. Мероприятие, на которое выдавались билеты, хранится вместе с заказами 5 лет, потом его можно удалить.
           </p>
           <div className="space-y-2">
             {other.map((event) =>

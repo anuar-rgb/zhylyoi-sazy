@@ -30,16 +30,16 @@ describe("moving an event", () => {
 });
 
 describe("the ticket archive", () => {
-  it("keeps orders three years after the event ends", () => {
-    expect(ticketArchiveUntil(EVENT).toISOString()).toBe("2029-12-01T15:00:00.000Z");
+  it("keeps orders five years after the event ends", () => {
+    expect(ticketArchiveUntil(EVENT).toISOString()).toBe("2031-12-01T15:00:00.000Z");
     expect(ticketArchiveUntil({ eventDate: EVENT.eventDate, endDate: "2026-12-01T17:00:00Z" }).toISOString()).toBe(
-      "2029-12-01T17:00:00.000Z"
+      "2031-12-01T17:00:00.000Z"
     );
   });
 
   it("blocks deleting an event that sold tickets until then", () => {
-    expect(deleteBlockedUntil(EVENT, true, at("2027-01-01T00:00:00Z"))?.toISOString()).toBe("2029-12-01T15:00:00.000Z");
-    expect(deleteBlockedUntil(EVENT, true, at("2029-12-02T00:00:00Z"))).toBeNull();
+    expect(deleteBlockedUntil(EVENT, true, at("2027-01-01T00:00:00Z"))?.toISOString()).toBe("2031-12-01T15:00:00.000Z");
+    expect(deleteBlockedUntil(EVENT, true, at("2031-12-02T00:00:00Z"))).toBeNull();
   });
 
   it("lets an event that never sold tickets go at once", () => {
