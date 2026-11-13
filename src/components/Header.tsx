@@ -29,7 +29,6 @@ const content: Record<
     more: [
       { href: "/#clubs", label: "Шығармашылық үйірмелер мен секциялар" },
       { href: "/news", label: "Жаңалықтар" },
-      { href: "/plan", label: "Даму жоспары" },
       { href: "/staff", label: "Қызметкерлер" },
       { href: "/contacts", label: "Байланыс" },
     ],
@@ -51,7 +50,6 @@ const content: Record<
     more: [
       { href: "/#clubs", label: "Творческие кружки и секции" },
       { href: "/news", label: "Новости" },
-      { href: "/plan", label: "План развития" },
       { href: "/staff", label: "Сотрудники" },
       { href: "/contacts", label: "Контакты" },
     ],

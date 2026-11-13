@@ -10,7 +10,6 @@ const content: Record<
   {
     brand: string;
     tagline: string;
-    about: string;
     navTitle: string;
     nav: { href: string; label: string }[];
     contactsTitle: string;
@@ -21,15 +20,12 @@ const content: Record<
   kk: {
     brand: "Кең Жылыой",
     tagline: "Жылыой аудандық мәдениет үйі",
-    about:
-      "Жылыой ауданының мәдениет үйі. «Жылыой сазы» фольклорлық ансамблі. Қазақ халқының музыкалық мұрасын сақтау мен насихаттау.",
     navTitle: "Навигация",
     nav: [
       { href: "/honored", label: "Халықтық үлгілі атағы бар ұжымдар" },
       { href: "/collectives", label: "Ұжымдар" },
       { href: "/afisha", label: "Афиша" },
       { href: "/video", label: "Бейне" },
-      { href: "/plan", label: "Даму жоспары" },
       { href: "/contacts", label: "Байланыс" },
     ],
     contactsTitle: "Байланыс",
@@ -39,15 +35,12 @@ const content: Record<
   ru: {
     brand: "Кен Жылыой",
     tagline: "Дом культуры Жылыойского района",
-    about:
-      "Дом культуры Жылыойского района. Фольклорный ансамбль «Жылыой сазы». Сохранение и популяризация музыкального наследия казахского народа.",
     navTitle: "Навигация",
     nav: [
       { href: "/honored", label: "Коллективы со званием «Народный»" },
       { href: "/collectives", label: "Коллективы" },
       { href: "/afisha", label: "Афиша" },
       { href: "/video", label: "Видео" },
-      { href: "/plan", label: "План развития" },
       { href: "/contacts", label: "Контакты" },
     ],
     contactsTitle: "Контакты",
@@ -69,7 +62,7 @@ export default async function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
                 <Image src="/images/gallery/logo.png" alt={t.brand} fill quality={95} className="object-cover" sizes="48px" />
               </div>
@@ -78,7 +71,6 @@ export default async function Footer() {
                 <div className="text-cream/50 text-xs">{t.tagline}</div>
               </div>
             </div>
-            <p className="text-sm leading-relaxed">{t.about}</p>
           </div>
 
           <div>
