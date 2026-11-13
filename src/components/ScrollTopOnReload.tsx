@@ -10,6 +10,10 @@
  * retrying that restoration after the load event as images and fonts grow the page, so "auto" comes
  * back only at the visitor's first own action (a tap, click, key or wheel). By then the browser has
  * given up restoring, and every later Back/Forward step restores as usual.
+ *
+ * On a first, uncached load Chrome can still restore the old position after all of this, so until the
+ * visitor acts (or for 10 seconds) any scroll away from the top is undone: nobody but the browser is
+ * scrolling the page at that point.
  */
 const SCRIPT = `(function(){try{
 var nav=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0];
@@ -19,9 +23,12 @@ var top=function(){window.scrollTo(0,0)};
 top();
 document.addEventListener("DOMContentLoaded",top,{once:true});
 window.addEventListener("load",top,{once:true});
+var guard=function(){if(window.scrollY>0)top()};
+window.addEventListener("scroll",guard,{passive:true});
 var events=["pointerdown","keydown","wheel","touchstart"];
-var back=function(){history.scrollRestoration="auto";events.forEach(function(e){window.removeEventListener(e,back,true)})};
+var back=function(){history.scrollRestoration="auto";window.removeEventListener("scroll",guard);events.forEach(function(e){window.removeEventListener(e,back,true)})};
 events.forEach(function(e){window.addEventListener(e,back,{capture:true,passive:true})});
+setTimeout(function(){window.removeEventListener("scroll",guard)},10000);
 }catch(e){}})();`;
 
 export default function ScrollTopOnReload() {
