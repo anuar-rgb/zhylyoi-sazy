@@ -29,8 +29,10 @@ export default function ScrollTopButton({ label }: { label: string }) {
   const [dragging, setDragging] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: number; startX: number; startY: number; from: Offset; base: DOMRect; moved: boolean } | null>(null);
-  // Set when a press turned into a drag, so the click the browser fires on release does not scroll.
-  const swallowClick = useRef(false);
+  // A press is handled on release (pointerup), not on the click event: after a finger drag, Chrome
+  // on phones can skip the click of the next tap. The click that does follow a press is ignored for
+  // a moment, so it neither scrolls twice nor undoes a drag. The keyboard (Enter, Space) still clicks.
+  const ignoreClickUntil = useRef(0);
 
   useEffect(() => {
     const update = () => setVisible(window.scrollY > SHOW_AFTER);
@@ -55,11 +57,12 @@ export default function ScrollTopButton({ label }: { label: string }) {
     return () => window.removeEventListener("resize", keepInside);
   }, []);
 
+  function onClick() {
+    if (performance.now() < ignoreClickUntil.current) return;
+    toTop();
+  }
+
   function toTop() {
-    if (swallowClick.current) {
-      swallowClick.current = false;
-      return;
-    }
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
   }
@@ -76,7 +79,6 @@ export default function ScrollTopButton({ label }: { label: string }) {
       base: new DOMRect(rect.left - offset.x, rect.top - offset.y, rect.width, rect.height),
       moved: false,
     };
-    swallowClick.current = false;
     // Captured at once, not at the first move: a quick flick leaves the button before the next
     // pointermove, and without capture those moves would go to whatever is underneath.
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -98,7 +100,9 @@ export default function ScrollTopButton({ label }: { label: string }) {
   function endDrag(e: React.PointerEvent<HTMLButtonElement>) {
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
-    if (d.moved) swallowClick.current = true;
+    ignoreClickUntil.current = performance.now() + 600;
+    // A press that did not move is a tap: scroll now (not on a cancelled press, e.g. the page took it).
+    if (!d.moved && e.type === "pointerup") toTop();
     drag.current = null;
     setDragging(false);
     if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
@@ -114,7 +118,7 @@ export default function ScrollTopButton({ label }: { label: string }) {
     >
       <button
         type="button"
-        onClick={toTop}
+        onClick={onClick}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
