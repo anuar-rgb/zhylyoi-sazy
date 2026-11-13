@@ -4,6 +4,10 @@ import { useFeedback } from "@/components/feedback/FeedbackProvider";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { submitClubApplication } from "@/app/actions/applications";
+import { clearDraft, isBlankDraft, readDraft, sessionDraftStorage, writeDraft } from "@/lib/formDraft";
+
+/** What survives a reload while the form is being filled in (consent is asked for again). */
+type ApplicationDraft = { childName: string; age: string; phone: string; comment: string };
 
 export type ApplyFormLabels = {
   modalHeading: string;
@@ -62,6 +66,15 @@ export default function ClubApplyButton({
   const feedback = useFeedback();
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error" | "consent">("idle");
+  const draftKey = `club-application:${clubSlug ?? clubTitle}`;
+
+  // Keep what is typed while the form is open; reopening it after a reload brings it back.
+  useEffect(() => {
+    if (!open || status === "success") return;
+    const draft: ApplicationDraft = { childName, age, phone, comment };
+    if (isBlankDraft(draft)) clearDraft(sessionDraftStorage(), draftKey);
+    else writeDraft(sessionDraftStorage(), draftKey, draft);
+  }, [open, status, childName, age, phone, comment, draftKey]);
 
   useEffect(() => {
     if (!open) return;
@@ -79,10 +92,11 @@ export default function ClubApplyButton({
   }, [open]);
 
   function openModal() {
-    setChildName("");
-    setAge("");
-    setPhone("");
-    setComment("");
+    const draft = readDraft<ApplicationDraft>(sessionDraftStorage(), draftKey);
+    setChildName(draft?.childName ?? "");
+    setAge(draft?.age ?? "");
+    setPhone(draft?.phone ?? "");
+    setComment(draft?.comment ?? "");
     setConsent(false);
     setStatus("idle");
     setOpen(true);
@@ -104,6 +118,7 @@ export default function ClubApplyButton({
       comment,
       consent,
     });
+    if (result.ok) clearDraft(sessionDraftStorage(), draftKey);
     setStatus(result.ok ? "success" : "error");
     if (result.ok) feedback.success(successMessage);
     else feedback.error(errorMessage);

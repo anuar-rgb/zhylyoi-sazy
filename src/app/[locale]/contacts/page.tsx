@@ -5,6 +5,7 @@ import { telHref } from "@/lib/contactLinks";
 import { getSiteText } from "@/lib/orgContent";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
+import DraftForm from "@/components/DraftForm";
 import type { Locale } from "@/i18n/routing";
 
 const meta: Record<Locale, { title: string; about: string }> = {
@@ -190,7 +191,8 @@ export default async function ContactsPage() {
             {organization?.email && (
             <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-cream-dark">
               <h3 className="font-bold text-ocean text-lg mb-4">{t.formTitle}</h3>
-              <form
+              <DraftForm
+                draftKey="contact-message"
                 className="space-y-4"
                 action={`mailto:${organization.email}`}
                 method="post"
@@ -238,7 +240,7 @@ export default async function ContactsPage() {
                 >
                   {t.submit}
                 </button>
-              </form>
+              </DraftForm>
             </div>
             )}
 

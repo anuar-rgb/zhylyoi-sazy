@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useFeedback } from "@/components/feedback/FeedbackProvider";
@@ -11,6 +11,10 @@ import SeatMap, { assignCategoryColors, type SeatMapRow, type SeatMapSeat } from
 import { sectionLabel, seatName } from "@/lib/hallSections";
 import { categoryLabel } from "@/lib/seatCategories";
 import { isEmail } from "@/lib/email";
+import { clearDraft, isBlankDraft, readDraft, sessionDraftStorage, writeDraft } from "@/lib/formDraft";
+
+/** What survives a reload of this page: the chosen seats and the email (not the consent). */
+type SeatDraft = { seatIds: string[]; email: string };
 
 export type SeatOption = {
   id: string;
@@ -48,6 +52,8 @@ type Texts = {
   noOnlinePayment: string;
   confirm: string;
   consent: string;
+  restored: string;
+  restoredSomeTaken: string;
 };
 
 // The wording is fixed here, not in a translation file: it is one screen and it changes with the code.
@@ -80,6 +86,8 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     noOnlinePayment: "Оплата картой онлайн пока не подключена. Купить билеты можно будет позже.",
     confirm: "Подтвердить",
     consent: "Даю согласие на обработку персональных данных",
+    restored: "Ваш выбор восстановлен.",
+    restoredSomeTaken: "Ваш выбор восстановлен, но часть мест уже заняли. Выберите вместо них другие.",
   },
   kk: {
     errors: {
@@ -109,6 +117,8 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     noOnlinePayment: "Картамен онлайн төлем әзірге қосылмаған. Билетті кейінірек сатып алуға болады.",
     confirm: "Растау",
     consent: "Дербес деректерді өңдеуге келісім беремін",
+    restored: "Таңдауыңыз қалпына келтірілді.",
+    restoredSomeTaken: "Таңдауыңыз қалпына келтірілді, бірақ кейбір орындарды алып қойыпты. Орнына басқаларын таңдаңыз.",
   },
 };
 
@@ -147,6 +157,10 @@ export default function SeatPicker({
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [notice, setNotice] = useState<string | null>(null);
+  const draftKey = `seats:${eventId}`;
+  // Saving starts only once the saved draft has been read, so the first, empty render cannot overwrite it.
+  const draftRead = useRef(false);
 
   const allSeats = rows.flatMap((r) => r.seats);
   const selectedSeats = allSeats.filter((s) => selected.has(s.id));
@@ -161,8 +175,39 @@ export default function SeatPicker({
   // buyer needs to tell categories apart at a glance just as much as staff do.
   const categoryColors = assignCategoryColors(allSeats.map((seat) => seat.category));
 
+  // After a reload, offer back the seats and email chosen in this tab. The map was just drawn from the
+  // server's current state, so a seat someone else has taken meanwhile is marked taken and is dropped
+  // here; createBooking checks every seat again in any case.
+  useEffect(() => {
+    const draft = readDraft<SeatDraft>(sessionDraftStorage(), draftKey);
+    draftRead.current = true;
+    if (!draft) return;
+    const free = (draft.seatIds ?? []).filter((id) => {
+      const seat = seatsById.get(id);
+      return seat && !seat.taken && seat.price !== null;
+    });
+    /* eslint-disable react-hooks/set-state-in-effect -- restoring from browser storage has to wait for
+       hydration: reading it during render would make the server and client markup differ. */
+    if (free.length > 0) setSelected(new Set(free));
+    if (draft.email) setBuyerEmail(draft.email);
+    if ((draft.seatIds ?? []).length > 0) setNotice(free.length < draft.seatIds.length ? t.restoredSomeTaken : t.restored);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // On a phone the order card sits below the map, so a lost seat is also said where it is seen at once.
+    if (free.length < (draft.seatIds ?? []).length) feedback.error(t.restoredSomeTaken);
+    // Once, on arrival: seatsById and the texts are rebuilt every render but describe the same page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftRead.current) return;
+    const draft: SeatDraft = { seatIds: [...selected], email: buyerEmail };
+    if (isBlankDraft(draft)) clearDraft(sessionDraftStorage(), draftKey);
+    else writeDraft(sessionDraftStorage(), draftKey, draft);
+  }, [selected, buyerEmail, draftKey]);
+
   function toggleSeat(seat: SeatOption) {
     if (seat.taken || seat.price === null) return;
+    setNotice(null);
     setSelected((current) => {
       const next = new Set(current);
       if (next.has(seat.id)) next.delete(seat.id);
@@ -245,6 +290,8 @@ export default function SeatPicker({
       }
 
       rememberTicket(result.accessToken);
+      // The order exists and holds the seats: from here the order page is the way back, not the draft.
+      clearDraft(sessionDraftStorage(), draftKey);
 
       // The seats are held from here on. Should the form not open, the order page offers it again.
       if (bankMethodId && total > 0) {
@@ -301,6 +348,11 @@ export default function SeatPicker({
       </div>
 
       <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6 lg:sticky lg:top-24">
+        {notice && (
+          <p role="status" className="text-sm text-ocean bg-gold/10 border border-gold/30 rounded-2xl px-4 py-3 mb-4">
+            {notice}
+          </p>
+        )}
         <p className="font-bold text-ocean mb-3">
           {t.selected}: {selectedSeats.length}
         </p>

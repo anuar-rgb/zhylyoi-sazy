@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
 import ScrollTopButton from "@/components/ScrollTopButton";
+import ScrollTopOnReload from "@/components/ScrollTopOnReload";
 import "../globals.css";
 
 const montserrat = Montserrat({
@@ -91,6 +92,9 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={`${montserrat.variable} h-full antialiased`}>
+      <head>
+        <ScrollTopOnReload />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale}>
           <FeedbackProvider>
