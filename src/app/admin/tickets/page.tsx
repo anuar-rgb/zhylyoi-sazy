@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { getStaffIdentity } from "@/lib/profile";
-import { getSiteOrganizationId } from "@/lib/organization";
-import { listPendingPaidBookings, countActiveBookingsForEvents, listEventsWithTicketHistory } from "@/lib/bookingsAdmin";
+import { countActiveBookingsForEvents, listEventsWithTicketHistory } from "@/lib/bookingsAdmin";
 import { deleteBlockedUntil } from "@/lib/eventArchive";
 import { isEventLocked, listAllTicketedCultureEvents, type CultureEventRecord } from "@/lib/cultureEvents";
 import { EVENT_STATUS_LABELS, formatEventDateTime } from "@/lib/eventFields";
@@ -11,12 +9,7 @@ import MoreMenu from "./MoreMenu";
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-6";
 
 export default async function TicketsPage() {
-  const identity = await getStaffIdentity();
-  const organizationId = identity?.organizationId ?? (await getSiteOrganizationId());
-  const [pendingCount, { current, other }] = await Promise.all([
-    organizationId ? listPendingPaidBookings(organizationId).then((rows) => rows.length) : Promise.resolve(0),
-    listAllTicketedCultureEvents(),
-  ]);
+  const { current, other } = await listAllTicketedCultureEvents();
   const eventIds = [...current, ...other].map((event) => event.id);
   const [bookingCounts, sold] = await Promise.all([countActiveBookingsForEvents(eventIds), listEventsWithTicketHistory(eventIds)]);
 
@@ -49,6 +42,12 @@ export default async function TicketsPage() {
           </p>
         </div>
         <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-2">
+          {/* The event's orders, refunds, hall map and figures. A locked event's card opens there already. */}
+          {!locked && (
+            <Link href={`/admin/tickets/stats/${event.id}`} className="text-xs font-semibold text-ocean hover:text-gold-dark">
+              Заказы и статистика
+            </Link>
+          )}
           <Link href={openHref} className="text-xs font-semibold text-ocean hover:text-gold-dark">
             {openLabel}
           </Link>
@@ -70,8 +69,23 @@ export default async function TicketsPage() {
         {/* Every admin action (pending payments, scanner, halls, payment
             methods) lives here now — this page opens straight on the events
             themselves, not a menu of places to go. */}
-        <MoreMenu pendingCount={pendingCount} />
+        <MoreMenu />
       </div>
+
+      {/* A buyer calls with their order number: this opens the order on its event's page. */}
+      <form action="/admin/tickets/find" className="flex gap-2 mb-8">
+        <input
+          name="number"
+          required
+          placeholder="Найти заказ по номеру, например DK-000154"
+          aria-label="Номер заказа"
+          autoComplete="off"
+          className="min-w-0 flex-1 px-4 py-2.5 border border-cream-dark rounded-full bg-white text-sm text-ocean focus:outline-none focus:ring-2 focus:ring-gold"
+        />
+        <button type="submit" className="btn-primary shrink-0 px-5 py-2.5 text-sm font-semibold">
+          Найти
+        </button>
+      </form>
 
       <h2 className="text-lg sm:text-xl font-bold text-ocean mb-1">
         Актуальные мероприятия <span className="text-ocean/40 font-normal text-base">({current.length})</span>

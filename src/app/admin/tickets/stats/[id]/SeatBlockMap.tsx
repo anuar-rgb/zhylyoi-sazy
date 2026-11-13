@@ -23,10 +23,20 @@ const STYLE: Record<string, { className: string; label: string }> = {
   off: { className: "bg-ocean/10 text-ocean/30", label: "Не продаётся" },
 };
 
+function money(amount: number): string {
+  return amount === 0 ? "бесплатно" : `${new Intl.NumberFormat("ru-RU").format(amount)} ₸`;
+}
+
+/** The anchor of an order's card further down the event page. */
+export function orderAnchor(orderNumber: string): string {
+  return `order-${orderNumber}`;
+}
+
 /**
- * The event's hall in «Заказы»: what is sold, held, free — and which seats are closed from sale
- * for this event. Free and closed seats can be picked (several at once) and closed as «Бронь» or
- * «Неисправно», or opened again; a sold or held seat only says whose it is.
+ * The event's hall, the one map of it in the admin: what is sold, held, free, and which seats are
+ * closed from sale for this event. Free and closed seats can be picked (several at once) and closed
+ * as «Бронь» or «Неисправно», or opened again; a sold or held seat says whose it is and leads to its
+ * order below. Re-reads the server every 30 seconds while nothing is picked.
  */
 export default function SeatBlockMap({
   eventId,
@@ -121,9 +131,11 @@ export default function SeatBlockMap({
       .filter((category) => category in prices)
       .map((category) => ({ swatchClassName: colors.get(category)!.solid.split(" ")[0], label: `${categoryLabel(category)}, свободно` })),
     { swatchClassName: "bg-red-500", label: "Продано" },
+    { swatchClassName: "bg-gray-500", label: "Вошёл" },
     { swatchClassName: "bg-orange-200", label: "Ожидает оплаты" },
     { swatchClassName: "bg-purple-500", label: "Бронь" },
     { swatchClassName: "bg-gray-300", label: "Неисправно" },
+    ...(seats.some((seat) => !(seat.category in prices)) ? [{ swatchClassName: "bg-ocean/10", label: "Не продаётся" }] : []),
   ];
 
   const infoSeat = seats.find((seat) => seat.id === info) ?? null;
@@ -149,11 +161,29 @@ export default function SeatBlockMap({
 
       {infoSeat && (
         <div className="mt-4 bg-cream/40 border border-cream-dark rounded-2xl p-4 text-sm text-ocean" role="status">
-          <p className="font-semibold">{seatName(infoSeat)}</p>
-          <p className="mt-1">
-            {occupant ? STYLE[occupant.state].label : block ? STYLE[block.kind].label : "Свободно"}
-            {occupant?.orderNumber && <> · заказ {occupant.orderNumber}</>}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold">{seatName(infoSeat)}</p>
+              <p className="text-ocean/60">
+                {categoryLabel(infoSeat.category)} · {infoSeat.category in prices ? money(prices[infoSeat.category]) : "не продаётся"}
+              </p>
+            </div>
+            <button type="button" onClick={() => setInfo(null)} className="text-ocean/40 hover:text-ocean text-lg leading-none" aria-label="Закрыть">
+              ×
+            </button>
+          </div>
+          <p className="mt-2">
+            {occupant ? STYLE[occupant.state].label : block ? STYLE[block.kind].label : infoSeat.category in prices ? "Свободно" : "Не продаётся"}
+            {occupant?.orderNumber && (
+              <>
+                {" · "}
+                <a href={`#${orderAnchor(occupant.orderNumber)}`} className="font-semibold underline-offset-2 hover:underline hover:text-gold-dark">
+                  заказ {occupant.orderNumber}
+                </a>
+              </>
+            )}
             {occupant?.buyerName && <span className="text-ocean/60"> · {occupant.buyerName}</span>}
+            {occupant && occupant.paid !== null && <span className="text-ocean/60"> · куплено за {money(occupant.paid)}</span>}
             {block?.note && <span className="text-ocean/60"> · {block.note}</span>}
           </p>
         </div>

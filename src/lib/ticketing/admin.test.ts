@@ -5,7 +5,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/lib/profile", () => ({ getStaffIdentity: vi.fn() }));
 vi.mock("@/lib/organization", () => ({ getSiteOrganizationId: vi.fn() }));
 
-import { summarizeEvent } from "./admin";
+import { summarizeEvent, totalStats, type EventStats } from "./admin";
 
 const order = (status: string, total: number, entered: boolean[]) => ({
   status,
@@ -42,5 +42,36 @@ describe("summarizeEvent", () => {
   it("keeps sold = entered + not came", () => {
     const s = summarizeEvent("e", [order("confirmed", 4500, [true, true, false])]);
     expect(s.sold).toBe(s.checkedIn + s.notCame);
+  });
+});
+
+describe("totalStats", () => {
+  const event = (eventId: string, sold: number, checkedIn: number, revenue: number, refunded = 0): EventStats => ({
+    eventId,
+    sold,
+    waiting: 0,
+    cancelled: 0,
+    refunded,
+    checkedIn,
+    notCame: sold - checkedIn,
+    revenue,
+  });
+
+  it("adds the events up and says how many came", () => {
+    const t = totalStats([event("a", 10, 8, 50000, 1), event("b", 30, 21, 90000), event("c", 0, 0, 0)]);
+    expect(t).toEqual({
+      events: 3,
+      eventsWithSales: 2,
+      sold: 40,
+      checkedIn: 29,
+      refunded: 1,
+      revenue: 140000,
+      attendance: 73,
+      averageRevenue: 70000,
+    });
+  });
+
+  it("has no shares to show when nothing was sold", () => {
+    expect(totalStats([])).toMatchObject({ events: 0, sold: 0, attendance: null, averageRevenue: null });
   });
 });

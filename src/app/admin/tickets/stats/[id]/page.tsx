@@ -8,11 +8,13 @@ import { pricesOf } from "@/lib/eventPrices";
 import { getHallById, listHallRowLayouts, rowLayoutsForMap } from "@/lib/halls";
 import { categoryLabel, categoryOptions } from "@/lib/seatCategories";
 import { formatTime } from "@/lib/timeZone";
-import { listSeatBlocks, listSeatOccupants, listSoldTickets } from "@/lib/ticketing/occupancy";
-import { formatMoney, getEventStats, getTicketingScope } from "@/lib/ticketing/admin";
+import { listSeatBlocks, listSeatOccupants } from "@/lib/ticketing/occupancy";
+import { formatMoney, getEventStats, getTicketingScope, listOnlinePayments, listOrders } from "@/lib/ticketing/admin";
 import NoProfile from "../../NoProfile";
-import OccupancyMap from "./OccupancyMap";
-import SoldTickets from "./SoldTickets";
+import BackToTickets from "../../BackToTickets";
+import SeatBlockMap, { orderAnchor } from "./SeatBlockMap";
+import OrderCard from "./OrderCard";
+import OrderList, { type OrderGroup } from "./OrderList";
 import EventDetails from "../../../culture-events/EventDetails";
 import CancelledNotice from "./CancelledNotice";
 import { createClient } from "@/lib/supabase/server";
@@ -21,9 +23,19 @@ import { formatDateTime } from "@/lib/timeZone";
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 const SECTION = "text-lg font-bold text-ocean mb-3";
 
+/** Which filter of the order list an order's status falls under. */
+function groupOf(status: string): OrderGroup {
+  if (status === "confirmed") return "paid";
+  if (status === "refunded") return "refunded";
+  if (["pending", "payment_reported", "late_payment"].includes(status)) return "pending";
+  return "closed";
+}
+
 /**
- * One event's report, top to bottom: what the event is, its figures, its hall seat by seat (sold,
- * held, free) and the list of sold tickets. A past or archived event opens here, not on its form.
+ * One event, all in one place, top to bottom: what the event is, its figures, its hall seat by seat
+ * (sold, held, free, and seats closed for a guest or out of order) and its orders with refunds.
+ * There is no separate orders page: an order is found from here, from the hall map or by its number
+ * on the Билеты page. A past or archived event opens here too, read-only.
  */
 export default async function EventOccupancyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,17 +45,19 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
   const event = await getCultureEventById(id);
   if (!event) notFound();
 
-  const [seats, occupants, ticketTypes, hall, stats, sold, rowLayouts, blocks] = await Promise.all([
+  const [seats, occupants, ticketTypes, hall, stats, orders, rowLayouts, blocks] = await Promise.all([
     event.hallId ? listEventSeatsForAdmin(id, event.hallId) : Promise.resolve([]),
     listSeatOccupants(id),
     listEventTicketTypes(id),
     event.hallId ? getHallById(event.hallId) : Promise.resolve(null),
     getEventStats(scope.organizationId),
-    listSoldTickets(id),
+    // Every order of the event, not the last 100 of the institution.
+    listOrders(scope.organizationId, "all", id, 5000),
     event.hallId ? listHallRowLayouts(event.hallId) : Promise.resolve([]),
     listSeatBlocks(id),
   ]);
   const locked = isEventLocked(event);
+  const online = await listOnlinePayments(orders.map((order) => order.id));
   // A cancelled event: the paid orders whose money is still with the institution.
   let notRefunded: string[] = [];
   if (event.cancelledAt) {
@@ -90,15 +104,8 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
 
   return (
     <div>
-      <Link
-        href="/admin/tickets/stats"
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-ocean/50 hover:text-ocean mb-3"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-        </svg>
-        Статистика
-      </Link>
+      {/* Back to Билеты: the event's page is opened from its card there, from the statistics or by an order number. */}
+      <BackToTickets />
 
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
         <h1 className="text-xl sm:text-2xl font-bold text-ocean">{title}</h1>
@@ -155,7 +162,8 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
             </p>
           </div>
 
-          <OccupancyMap
+          <SeatBlockMap
+            eventId={id}
             seats={shown.map((seat) => ({
               id: seat.id,
               section: seat.section,
@@ -164,12 +172,12 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
               category: seat.category,
             }))}
             occupants={Object.fromEntries(occupants)}
+            blocks={Object.fromEntries(blocks)}
             prices={prices}
-            ordersHref={`/admin/tickets/orders?event=${id}`}
+            locked={locked}
             rowShape={hall?.rowShape}
             numbering={hall?.seatNumbering}
             rowLayouts={rowLayoutsForMap(rowLayouts)}
-            blocks={Object.fromEntries(blocks)}
           />
 
           <ul className="mt-5 pt-4 border-t border-cream-dark grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
@@ -196,12 +204,21 @@ export default async function EventOccupancyPage({ params }: { params: Promise<{
         </section>
       )}
 
-      <h2 className={`${SECTION} mt-8`}>
-        Проданные билеты <span className="text-ocean/40 font-normal text-base">({sold.length})</span>
+      <h2 id="orders" className={`${SECTION} mt-8 scroll-mt-24`}>
+        Заказы <span className="text-ocean/40 font-normal text-base">({orders.length})</span>
       </h2>
-      <section className={`${CARD} overflow-hidden`}>
-        <SoldTickets tickets={sold} />
-      </section>
+      <p className="text-sm text-ocean/60 mb-4">
+        Покупатели платят картой на странице банка, билеты выдаются сами. Возврат оформляется здесь: за весь заказ или за
+        отдельные места, деньги возвращает банк.
+      </p>
+      <OrderList
+        items={orders.map((order) => ({
+          key: order.id,
+          anchor: orderAnchor(order.orderNumber),
+          group: groupOf(order.status),
+          card: <OrderCard order={order} online={online.get(order.id)} />,
+        }))}
+      />
     </div>
   );
 }

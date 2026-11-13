@@ -370,16 +370,58 @@ export function summarizeEvent(
   return stats;
 }
 
+/** Rows read per request: the API returns at most this many at once, so the rest is read page by page. */
+const STATS_PAGE = 1000;
+
+/** The figures of several events added up, for the statistics page's summary. */
+export type StatsTotals = {
+  events: number;
+  /** Events that sold at least one ticket. */
+  eventsWithSales: number;
+  sold: number;
+  checkedIn: number;
+  refunded: number;
+  revenue: number;
+  /** Share of sold tickets used at the door, 0..100, or null with nothing sold. */
+  attendance: number | null;
+  /** Revenue per event that sold anything, or null. */
+  averageRevenue: number | null;
+};
+
+export function totalStats(stats: EventStats[]): StatsTotals {
+  const sum = (key: "sold" | "checkedIn" | "refunded" | "revenue") => stats.reduce((total, s) => total + s[key], 0);
+  const sold = sum("sold");
+  const revenue = sum("revenue");
+  const eventsWithSales = stats.filter((s) => s.sold > 0 || s.revenue > 0).length;
+  return {
+    events: stats.length,
+    eventsWithSales,
+    sold,
+    checkedIn: sum("checkedIn"),
+    refunded: sum("refunded"),
+    revenue,
+    attendance: sold > 0 ? Math.round((sum("checkedIn") / sold) * 100) : null,
+    averageRevenue: eventsWithSales > 0 ? Math.round(revenue / eventsWithSales) : null,
+  };
+}
+
 export async function getEventStats(organizationId: string): Promise<Map<string, EventStats>> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("bookings")
-    .select("event_id, status, total_amount, refunded_amount, booking_items(checked_in_at, refunded_at)")
-    .eq("organization_id", organizationId);
-  if (error || !data) return new Map();
+  const data: Row[] = [];
+  for (let from = 0; ; from += STATS_PAGE) {
+    const { data: page, error } = await supabase
+      .from("bookings")
+      .select("event_id, status, total_amount, refunded_amount, booking_items(checked_in_at, refunded_at)")
+      .eq("organization_id", organizationId)
+      .order("id")
+      .range(from, from + STATS_PAGE - 1);
+    if (error || !page) return new Map();
+    data.push(...(page as unknown as Row[]));
+    if (page.length < STATS_PAGE) break;
+  }
 
   const byEvent = new Map<string, { status: string; total: number; refunded: number; items: { checkedIn: boolean; refunded: boolean }[] }[]>();
-  for (const row of data as unknown as Row[]) {
+  for (const row of data) {
     const id = String(row.event_id);
     const list = byEvent.get(id) ?? [];
     list.push({

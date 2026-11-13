@@ -30,16 +30,25 @@ const REFUND_REFUSED: Record<string, string> = {
   amount_exceeds_payment: "Сумма возврата больше оплаченной. Обновите страницу.",
 };
 
+/** A staff member of the institution. A controller (door staff) is signed in too, but has no profile here. */
+async function isStaff(): Promise<boolean> {
+  const identity = await getStaffIdentity();
+  return Boolean(identity?.hasProfile);
+}
+
+/** Every page that shows an order or a seat: the event's own page, the Билеты list and the statistics. */
+function revalidateOrders() {
+  revalidatePath("/admin/tickets");
+  revalidatePath("/admin/tickets/stats", "layout");
+}
+
 async function run(
   bookingId: string,
   fn: string,
   args: Record<string, unknown>
 ): Promise<OrderActionResult> {
+  if (!(await isStaff())) return { ok: false, message: "Не авторизовано." };
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, message: "Не авторизовано." };
   if (!/^[0-9a-f-]{36}$/i.test(bookingId)) return { ok: false, message: "Заказ не найден." };
   if (await isBookingEventLocked(bookingId)) return { ok: false, message: EVENT_LOCKED_MESSAGE };
 
@@ -51,10 +60,7 @@ async function run(
     };
   }
 
-  revalidatePath("/admin/tickets/orders");
-  // The red count of orders to check sits on the «⋯» menu of the Билеты page.
-  revalidatePath("/admin/tickets");
-  revalidatePath("/admin/tickets/stats", "layout");
+  revalidateOrders();
   return MESSAGES[String(data)] ?? { ok: false, message: "Действие не выполнено." };
 }
 
@@ -63,12 +69,6 @@ const text = (value: string | undefined, max: number) => (value ?? "").trim().sl
 /** «Аннулировать билеты» of a free order: no money moved, so nothing goes back. */
 export async function markOrderRefunded(bookingId: string, note?: string) {
   return run(bookingId, "mark_booking_refunded", { p_note: text(note, 500) });
-}
-
-function revalidateOrders() {
-  revalidatePath("/admin/tickets/orders");
-  revalidatePath("/admin/tickets");
-  revalidatePath("/admin/tickets/stats", "layout");
 }
 
 /**
@@ -144,6 +144,7 @@ const NO_BLOCKS_MESSAGE = "Закрытие мест ещё не включен�
  */
 export async function blockSeats(eventId: string, seatIds: string[], kind: "reserved" | "broken", note?: string): Promise<OrderActionResult> {
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || seatIds.length === 0) return { ok: false, message: "Выберите места." };
+  if (!(await isStaff())) return { ok: false, message: "Не авторизовано." };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("block_event_seats", {
     p_event_id: eventId,
@@ -156,8 +157,7 @@ export async function blockSeats(eventId: string, seatIds: string[], kind: "rese
     if (error.message?.includes("event_finished")) return { ok: false, message: EVENT_LOCKED_MESSAGE };
     return { ok: false, message: "Не удалось закрыть места." };
   }
-  revalidatePath("/admin/tickets/orders");
-  revalidatePath("/admin/tickets/stats", "layout");
+  revalidateOrders();
   const count = Number(data ?? 0);
   const skipped = seatIds.length - count;
   return {
@@ -172,6 +172,7 @@ export async function blockSeats(eventId: string, seatIds: string[], kind: "rese
 /** Opens closed seats of one event for sale again. */
 export async function unblockSeats(eventId: string, seatIds: string[]): Promise<OrderActionResult> {
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || seatIds.length === 0) return { ok: false, message: "Выберите места." };
+  if (!(await isStaff())) return { ok: false, message: "Не авторизовано." };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("unblock_event_seats", { p_event_id: eventId, p_seat_ids: seatIds });
   if (error) {
@@ -179,7 +180,6 @@ export async function unblockSeats(eventId: string, seatIds: string[]): Promise<
     if (error.message?.includes("event_finished")) return { ok: false, message: EVENT_LOCKED_MESSAGE };
     return { ok: false, message: "Не удалось открыть места." };
   }
-  revalidatePath("/admin/tickets/orders");
-  revalidatePath("/admin/tickets/stats", "layout");
+  revalidateOrders();
   return { ok: true, message: `Открыто для продажи мест: ${Number(data ?? 0)}` };
 }

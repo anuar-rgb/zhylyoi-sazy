@@ -1,18 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { ACTIVE_STATUSES, CASHIER_QUEUE_STATUSES } from "@/lib/bookingStatus";
-
-export type PendingPaidBooking = {
-  id: string;
-  buyerEmail: string;
-  buyerName: string;
-  buyerPhone: string;
-  totalAmount: number;
-  expiresAt: string | null;
-  createdAt: string;
-  eventTitle: string;
-};
-
-type Row = Record<string, unknown>;
+import { ACTIVE_STATUSES } from "@/lib/bookingStatus";
 
 /**
  * Active (pending or confirmed) bookings for one event — used to warn before
@@ -48,41 +35,6 @@ export async function countActiveBookingsForEvents(eventIds: string[]): Promise<
     counts.set(row.event_id, (counts.get(row.event_id) ?? 0) + 1);
   }
   return counts;
-}
-
-/**
- * Paid bookings still waiting on staff to confirm the payment — the admin
- * counterpart to /my-ticket's "оплатите и дождитесь подтверждения" message.
- * Scoped to the caller's organization by is_staff_of via bookings_staff_read;
- * total_amount > 0 excludes free bookings, which confirm themselves at creation.
- */
-export async function listPendingPaidBookings(organizationId: string): Promise<PendingPaidBooking[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("bookings")
-    .select("id, buyer_name, buyer_phone, buyer_email, total_amount, expires_at, created_at, culture_events(title_kk, title_ru)")
-    .eq("organization_id", organizationId)
-    .in("status", CASHIER_QUEUE_STATUSES)
-    .gt("total_amount", 0)
-    .order("created_at");
-
-  if (error || !data) return [];
-
-  return (data as unknown as Row[]).map((row) => {
-    const event = row.culture_events as Row | null;
-    const eventTitle = event ? String(event.title_ru ?? event.title_kk ?? "") : "";
-
-    return {
-      id: String(row.id),
-      buyerEmail: row.buyer_email ? String(row.buyer_email) : "",
-      buyerName: row.buyer_name ? String(row.buyer_name) : "",
-      buyerPhone: row.buyer_phone ? String(row.buyer_phone) : "",
-      totalAmount: Number(row.total_amount) || 0,
-      expiresAt: (row.expires_at as string | null) ?? null,
-      createdAt: String(row.created_at),
-      eventTitle,
-    };
-  });
 }
 
 /**

@@ -8,25 +8,23 @@ const GROUPS = [
   {
     title: "Мероприятия и продажи",
     links: [
-      { href: "/admin/culture-events/new?for=tickets", label: "Добавить мероприятие", badge: false },
-      // Unpaid orders are confirmed from Заказы, so it carries their count.
-      { href: "/admin/tickets/orders", label: "Заказы", badge: true },
+      { href: "/admin/culture-events/new?for=tickets", label: "Добавить мероприятие" },
     ],
   },
   {
     title: "Вход на мероприятие",
     links: [
-      { href: "/admin/tickets/scan", label: "Сканер билетов", badge: false },
-      { href: "/admin/tickets/checkins", label: "Журнал входов", badge: false },
-      { href: "/admin/tickets/controllers", label: "Контролёры", badge: false },
+      { href: "/admin/tickets/scan", label: "Сканер билетов" },
+      { href: "/admin/tickets/checkins", label: "Журнал входов" },
+      { href: "/admin/tickets/controllers", label: "Контролёры" },
     ],
   },
   {
     title: "Аналитика и настройки",
     links: [
-      { href: "/admin/tickets/stats", label: "Статистика", badge: false },
-      { href: "/admin/tickets/halls", label: "Залы и места", badge: false },
-      { href: "/admin/tickets/payments", label: "Платёжные системы", badge: false },
+      { href: "/admin/tickets/stats", label: "Статистика" },
+      { href: "/admin/tickets/halls", label: "Залы и места" },
+      { href: "/admin/tickets/payments", label: "Платёжные системы" },
     ],
   },
 ];
@@ -34,11 +32,10 @@ const GROUPS = [
 /**
  * Every admin action for this section, tucked away so "Билеты" opens
  * straight on the events list. Same interaction pattern as the public
- * Header's "Ещё" dropdown: click-outside and Escape both close it. The
- * trigger itself carries the pending-payments badge — the one thing staff
- * would otherwise lose at-a-glance by hiding its card.
+ * Header's "Ещё" dropdown: click-outside and Escape both close it. Orders are
+ * not here: they live on each event's page.
  */
-export default function MoreMenu({ pendingCount }: { pendingCount: number }) {
+export default function MoreMenu() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -74,11 +71,6 @@ export default function MoreMenu({ pendingCount }: { pendingCount: number }) {
           <circle cx="10" cy="10" r="1.8" />
           <circle cx="16" cy="10" r="1.8" />
         </svg>
-        {pendingCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-red-600 text-white text-[10px] font-bold leading-none">
-            {pendingCount}
-          </span>
-        )}
       </button>
 
       {open && (
@@ -94,17 +86,11 @@ export default function MoreMenu({ pendingCount }: { pendingCount: number }) {
               {group.links.map((link) => (
                 <Link
                   key={link.href}
-                  // With unpaid orders waiting, open straight on them.
-                  href={link.badge && pendingCount > 0 ? `${link.href}?status=pending` : link.href}
+                  href={link.href}
                   onClick={() => setOpen(false)}
                   className="flex items-center justify-between gap-2 px-4 py-2 rounded-full text-sm font-medium text-ocean hover:bg-cream/60 transition-colors"
                 >
                   {link.label}
-                  {link.badge && pendingCount > 0 && (
-                    <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-none">
-                      {pendingCount}
-                    </span>
-                  )}
                 </Link>
               ))}
             </div>

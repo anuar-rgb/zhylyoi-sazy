@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
 /**
- * «Ожидают оплаты» was merged into «Заказы»: unpaid orders are confirmed there now. Kept as a
- * redirect so a saved link or bookmark still lands on the same list.
+ * «Ожидают оплаты» became part of «Заказы», which is now part of each event's page. Kept as a
+ * redirect so a saved link or bookmark still lands on the Билеты page.
  */
 export default function PendingBookingsPage() {
-  redirect("/admin/tickets/orders?status=pending");
+  redirect("/admin/tickets");
 }

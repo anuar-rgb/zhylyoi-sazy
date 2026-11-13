@@ -341,7 +341,6 @@ function revalidateEventChange(slug: string | null, id: string) {
   revalidateEvent(slug);
   revalidatePath(`/admin/culture-events/${id}`);
   revalidatePath("/admin/tickets/stats", "layout");
-  revalidatePath("/admin/tickets/orders");
   revalidatePath("/[locale]/my-ticket/[token]", "page");
 }
 
