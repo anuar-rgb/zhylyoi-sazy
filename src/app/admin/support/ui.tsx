@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useFeedback } from "@/components/feedback/FeedbackProvider";
@@ -68,51 +68,90 @@ async function uploadImages(files: File[], requestId?: string): Promise<{ ok: tr
   return { ok: true, paths: slots.value.map((s) => s.path) };
 }
 
+/** A small preview of a chosen picture; the object URL is released when it goes. */
+function Thumb({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const img = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const u = URL.createObjectURL(file);
+    if (img.current) img.current.src = u;
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  return (
+    <li className="relative">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img ref={img} alt={file.name} className="h-20 w-20 rounded-xl border border-cream-dark object-cover bg-cream/40" />
+      <button
+        type="button"
+        aria-label={`Убрать ${file.name}`}
+        onClick={onRemove}
+        className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white border border-cream-dark text-ocean/70 shadow-sm text-base leading-none"
+      >
+        ×
+      </button>
+    </li>
+  );
+}
+
+/**
+ * The file field sits inside its label rather than hidden and clicked from code: a tap on the label
+ * opens the phone's picker natively, which some Android browsers did not do reliably the other way.
+ * `image/*` lets the gallery offer every photo; the type is checked after shrinking.
+ */
 function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: File[]) => void }) {
-  const input = useRef<HTMLInputElement>(null);
+  const id = useId();
   return (
     <div>
-      <input
-        ref={input}
-        type="file"
-        accept={SUPPORT_IMAGE_TYPES.join(",")}
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          const picked = Array.from(e.target.files ?? []);
-          onChange([...files, ...picked].slice(0, SUPPORT_MAX_IMAGES));
-          e.target.value = "";
-        }}
-      />
       {files.length > 0 && (
-        <ul className="flex flex-wrap gap-2 mb-2">
+        <ul className="flex flex-wrap gap-3 mb-3 pt-2">
           {files.map((f, i) => (
-            <li key={`${f.name}-${i}`} className="flex items-center gap-2 rounded-full bg-cream/60 border border-cream-dark pl-3 pr-1 py-1 text-xs text-ocean max-w-full">
-              <span className="truncate max-w-[12rem]">{f.name}</span>
-              <button
-                type="button"
-                aria-label={`Убрать ${f.name}`}
-                onClick={() => onChange(files.filter((_, j) => j !== i))}
-                className="w-6 h-6 rounded-full hover:bg-ocean/10 text-ocean/60"
-              >
-                ×
-              </button>
-            </li>
+            <Thumb key={`${f.name}-${f.size}-${i}`} file={f} onRemove={() => onChange(files.filter((_, j) => j !== i))} />
           ))}
         </ul>
       )}
       {files.length < SUPPORT_MAX_IMAGES && (
-        <button
-          type="button"
-          onClick={() => input.current?.click()}
-          className="px-4 py-2 rounded-full border border-cream-dark bg-white text-sm font-semibold text-ocean hover:bg-cream/50"
+        <label
+          htmlFor={id}
+          className="inline-block cursor-pointer px-4 py-2 rounded-full border border-cream-dark bg-white text-sm font-semibold text-ocean hover:bg-cream/50 focus-within:ring-2 focus-within:ring-gold"
         >
           Прикрепить скриншот
-        </button>
+          <input
+            id={id}
+            type="file"
+            accept="image/*"
+            multiple
+            className="sr-only"
+            onChange={(e) => {
+              const picked = Array.from(e.currentTarget.files ?? []);
+              e.currentTarget.value = "";
+              if (picked.length) onChange([...files, ...picked].slice(0, SUPPORT_MAX_IMAGES));
+            }}
+          />
+        </label>
       )}
       <p className="text-xs text-ocean/50 mt-1.5">До {SUPPORT_MAX_IMAGES} картинок. Мы уменьшим их перед отправкой.</p>
     </div>
   );
+}
+
+/**
+ * Keeps a support page current without a manual reload: re-reads it from the server every few
+ * seconds while the tab is visible, and at once when the person comes back to it. A refresh keeps
+ * what is being typed in the forms.
+ */
+export function LiveRefresh({ seconds }: { seconds: number }) {
+  const router = useRouter();
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const timer = window.setInterval(tick, seconds * 1000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [router, seconds]);
+  return null;
 }
 
 /** The institution's new request: subject, text, screenshots. */

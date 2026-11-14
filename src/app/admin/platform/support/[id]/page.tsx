@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getSupportThread, supportContext } from "@/lib/support";
-import { PlatformRequestButtons, ReplyForm } from "../../../support/ui";
+import { LiveRefresh, PlatformRequestButtons, ReplyForm } from "../../../support/ui";
 import { CARD, Thread, ThreadHeader } from "../../../support/views";
 
 export const metadata = { title: "Обращение" };
@@ -13,6 +13,7 @@ export default async function PlatformSupportRequestPage({ params }: { params: P
 
   return (
     <div className="space-y-5">
+      <LiveRefresh seconds={5} />
       <ThreadHeader thread={thread} back="/admin/platform/support" backLabel="Поддержка" showInstitution />
       <PlatformRequestButtons requestId={thread.id} closed={thread.status === "closed"} />
       <Thread thread={thread} ownSide="platform" />

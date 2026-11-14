@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { listSupportRequests, supportContext } from "@/lib/support";
+import { LiveRefresh } from "../../support/ui";
 import { CARD, RequestList } from "../../support/views";
 
 export const metadata = { title: "Поддержка" };
@@ -12,6 +13,7 @@ export default async function PlatformSupportPage() {
 
   return (
     <div>
+      <LiveRefresh seconds={15} />
       <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-2">Поддержка</h1>
       <p className="text-sm text-ocean/60 mb-6">
         Обращения учреждений. Красная точка: учреждение написало, а вы ещё не открыли. Закрытое обращение можно удалить

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { listSupportRequests, supportContext } from "@/lib/support";
-import { NewRequestForm } from "./ui";
+import { LiveRefresh, NewRequestForm } from "./ui";
 import { CARD, RequestList } from "./views";
 
 export const metadata = { title: "Поддержка" };
@@ -13,6 +13,7 @@ export default async function SupportPage() {
 
   return (
     <div className="space-y-6">
+      <LiveRefresh seconds={15} />
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-2">Поддержка</h1>
         <p className="text-sm text-ocean/60">
