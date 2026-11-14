@@ -27,14 +27,14 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
   offer: {
     id: "offer",
     href: "/offer",
-    version: "2026-11-13",
+    version: "2026-11-14",
     title: { kk: "Жария оферта", ru: "Публичная оферта" },
     text: offer,
   },
   terms: {
     id: "terms",
     href: "/terms",
-    version: "2026-11-13",
+    version: "2026-11-14",
     title: { kk: "Пайдаланушы келісімі", ru: "Пользовательское соглашение" },
     text: terms,
   },
