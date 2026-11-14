@@ -21,17 +21,28 @@ const items = [
   { href: "/admin/settings", label: "Настройки" },
 ];
 
-/** «Учреждения»: the platform owner's whole panel. They do not work on any institution's content. */
-const PLATFORM_ITEM = { href: "/admin/platform", label: "Учреждения" };
+/** The platform owner's whole panel. They do not work on any institution's content. */
+const INSTITUTIONS_HREF = "/admin/platform";
+const STATS_HREF = "/admin/platform/stats";
+const platformItems = [
+  { href: INSTITUTIONS_HREF, label: "Учреждения" },
+  { href: STATS_HREF, label: "Статистика" },
+];
+
+function isActive(href: string, pathname: string): boolean {
+  if (pathname === href) return true;
+  // An institution's own page (/admin/platform/<id>, /new) belongs to «Учреждения».
+  return href === INSTITUTIONS_HREF && pathname.startsWith(`${INSTITUTIONS_HREF}/`) && !pathname.startsWith(STATS_HREF);
+}
 
 export default function AdminNav({ newApplications = 0, isPlatformAdmin = false }: { newApplications?: number; isPlatformAdmin?: boolean }) {
   const pathname = usePathname();
-  const shown = isPlatformAdmin ? [PLATFORM_ITEM] : items;
+  const shown = isPlatformAdmin ? platformItems : items;
 
   return (
     <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0">
       {shown.map((item) => {
-        const active = pathname === item.href || (item.href === PLATFORM_ITEM.href && pathname.startsWith(`${PLATFORM_ITEM.href}/`));
+        const active = isActive(item.href, pathname);
         // The count moved onto Дашборд with the Заявки item it used to sit on.
         // The point of it is to be seen while working on something else, and the
         // dashboard is now the only way through to the applications.

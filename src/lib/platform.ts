@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStaffIdentity } from "@/lib/profile";
 import { cleanDomain, normalizeHost } from "@/lib/siteHost";
 import { mailBody, mailConfigFor } from "@/lib/mail/config";
+import type { StatApplication, StatBooking, StatEvent } from "@/lib/platformStats";
 
 /**
  * The platform owner's side of the admin: the institutions on the platform, their sites, their
@@ -249,4 +250,93 @@ export async function isInstitutionDomain(rawDomain: string | null): Promise<boo
   if (!admin) return false;
   const { data } = await admin.from("organizations").select("id").eq("domain", domain).maybeSingle();
   return Boolean(data);
+}
+
+/** Every page of a select (the API stops at 1000 rows a request). */
+async function allRows<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[] | null> {
+  const out: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await page(from, from + 999);
+    if (error || !data) return null;
+    out.push(...data);
+    if (data.length < 1000) return out;
+  }
+}
+
+export type PlatformStatsInput = {
+  bookings: StatBooking[];
+  events: StatEvent[];
+  applications: StatApplication[];
+  /** Each institution's most recent staff sign-in. */
+  lastSignIn: Map<string, string>;
+};
+
+/**
+ * The rows «Статистика» counts, read from the period's start on (the arithmetic is in platformStats).
+ * Null when any read failed, so the page says so instead of showing zeros as if they were real.
+ */
+export async function platformStatsInput(admin: Admin, from: Date | null): Promise<PlatformStatsInput | null> {
+  const since = from?.toISOString() ?? null;
+  const [bookings, events, applications, { data: profiles }, users] = await Promise.all([
+    allRows((a, b) => {
+      let q = admin
+        .from("bookings")
+        .select("organization_id, status, total_amount, confirmed_at, refunded_at, refunded_amount, booking_items(released_at)")
+        .in("status", ["confirmed", "refunded"]);
+      if (since) q = q.or(`confirmed_at.gte.${since},refunded_at.gte.${since}`);
+      return q.order("id").range(a, b);
+    }),
+    allRows((a, b) => {
+      let q = admin.from("culture_events").select("organization_id, status, event_date, cancelled_at").eq("status", "published");
+      if (since) q = q.gte("event_date", since);
+      return q.order("id").range(a, b);
+    }),
+    allRows((a, b) => {
+      let q = admin.from("applications").select("organization_id, created_at");
+      if (since) q = q.gte("created_at", since);
+      return q.order("id").range(a, b);
+    }),
+    admin.from("profiles").select("id, organization_id").not("organization_id", "is", null),
+    lastSignIns(admin),
+  ]);
+  if (!bookings || !events || !applications || !profiles) return null;
+
+  const lastSignIn = new Map<string, string>();
+  for (const p of profiles) {
+    const at = users.get(String(p.id));
+    const org = String(p.organization_id);
+    if (at && (!lastSignIn.has(org) || at > lastSignIn.get(org)!)) lastSignIn.set(org, at);
+  }
+
+  return {
+    bookings: bookings.map((r) => ({
+      organizationId: String(r.organization_id),
+      status: String(r.status),
+      totalAmount: r.total_amount === null ? null : Number(r.total_amount),
+      confirmedAt: (r.confirmed_at as string | null) ?? null,
+      refundedAt: (r.refunded_at as string | null) ?? null,
+      refundedAmount: r.refunded_amount === null ? null : Number(r.refunded_amount),
+      tickets: ((r.booking_items as { released_at: string | null }[] | null) ?? []).filter((i) => !i.released_at).length,
+    })),
+    events: events.map((r) => ({
+      organizationId: String(r.organization_id),
+      status: String(r.status),
+      eventDate: (r.event_date as string | null) ?? null,
+      cancelledAt: (r.cancelled_at as string | null) ?? null,
+    })),
+    applications: applications.map((r) => ({ organizationId: String(r.organization_id), createdAt: String(r.created_at) })),
+    lastSignIn,
+  };
+}
+
+/** Every auth user's last sign-in (ISO), by user id. */
+async function lastSignIns(admin: Admin): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error || !data) break;
+    for (const u of data.users) if (u.last_sign_in_at) map.set(u.id, u.last_sign_in_at);
+    if (data.users.length < 200) break;
+  }
+  return map;
 }
