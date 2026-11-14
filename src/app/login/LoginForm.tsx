@@ -17,7 +17,8 @@ function friendlyError(message: string): string {
   return "Не удалось выполнить вход.";
 }
 
-export default function LoginForm() {
+/** institution: the full name of the site's institution, from its card. */
+export default function LoginForm({ institution }: { institution: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,7 +55,7 @@ export default function LoginForm() {
       <div className="w-full max-w-sm">
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
           <h1 className="text-xl font-bold text-ocean mb-1">Вход для сотрудников</h1>
-          <p className="text-sm text-ocean/60 mb-6">«Кең Жылыой» мәдениет үйі</p>
+          <p className="text-sm text-ocean/60 mb-6">{institution}</p>
 
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-ocean/70 mb-1">

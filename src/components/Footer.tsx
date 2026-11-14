@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getSiteOrganization, localizedOrganization } from "@/lib/organization";
+import { getSiteOrganization, localizedOrganization, siteBrand } from "@/lib/organization";
+import OrgLogo from "@/components/OrgLogo";
 import { telHref } from "@/lib/contactLinks";
 import { LEGAL_DOCS } from "@/lib/legalDocs";
 import type { Locale } from "@/i18n/routing";
@@ -9,18 +9,13 @@ import type { Locale } from "@/i18n/routing";
 const content: Record<
   Locale,
   {
-    brand: string;
-    tagline: string;
     navTitle: string;
     nav: { href: string; label: string }[];
     contactsTitle: string;
     phoneLabel: string;
-    copyright: string;
   }
 > = {
   kk: {
-    brand: "Кең Жылыой",
-    tagline: "Жылыой аудандық мәдениет үйі",
     navTitle: "Навигация",
     nav: [
       { href: "/honored", label: "Халықтық үлгілі атағы бар ұжымдар" },
@@ -31,11 +26,8 @@ const content: Record<
     ],
     contactsTitle: "Байланыс",
     phoneLabel: "Тел",
-    copyright: "«Кең Жылыой» Жылыой аудандық мәдениет үйі",
   },
   ru: {
-    brand: "Кен Жылыой",
-    tagline: "Дом культуры Жылыойского района",
     navTitle: "Навигация",
     nav: [
       { href: "/honored", label: "Коллективы со званием «Народный»" },
@@ -46,7 +38,6 @@ const content: Record<
     ],
     contactsTitle: "Контакты",
     phoneLabel: "Тел",
-    copyright: "Дом культуры «Кен Жылыой» Жылыойского района",
   },
 };
 
@@ -57,6 +48,9 @@ export default async function Footer() {
   // до подвала на каждой странице.
   const organization = await getSiteOrganization();
   const address = organization ? localizedOrganization(organization, locale, "address") : null;
+  const region = organization ? localizedOrganization(organization, locale, "regionLabel") : null;
+  // The layout shows «Сайт не найден» instead of the footer when there is no institution.
+  const brand = organization ? siteBrand(organization, locale) : { name: "", fullName: "", tagline: "", logoUrl: null };
 
   return (
     <footer className="bg-ocean-dark text-cream/80 mt-auto">
@@ -65,11 +59,11 @@ export default async function Footer() {
           <div>
             <div className="flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
-                <Image src="/images/gallery/logo.png" alt={t.brand} fill quality={95} className="object-cover" sizes="48px" />
+                <OrgLogo src={brand.logoUrl} name={brand.name} sizes="48px" />
               </div>
               <div>
-                <div className="text-gold font-bold text-lg">{t.brand}</div>
-                <div className="text-cream/50 text-xs">{t.tagline}</div>
+                <div className="text-gold font-bold text-lg">{brand.name}</div>
+                <div className="text-cream/50 text-xs">{brand.tagline}</div>
               </div>
             </div>
           </div>
@@ -123,8 +117,8 @@ export default async function Footer() {
         </ul>
 
         <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-cream/40">
-          <span>&copy; {new Date().getFullYear()} {t.copyright}</span>
-          <span>Жылыой ауданы, Атырау облысы</span>
+          <span>&copy; {new Date().getFullYear()} {brand.fullName}</span>
+          {region && <span>{region}</span>}
         </div>
       </div>
     </footer>

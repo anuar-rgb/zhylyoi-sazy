@@ -4,7 +4,8 @@ import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { CONTROLLER_ROLE, getStaffIdentity } from "@/lib/profile";
 import { countUnseenApplications } from "@/lib/applications";
-import { getSiteOrganization } from "@/lib/organization";
+import { getSiteOrganization, siteBrand } from "@/lib/organization";
+import { staffAreaMetadata } from "@/lib/staffAreaMetadata";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import AdminNav from "./AdminNav";
@@ -17,10 +18,9 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-export const metadata = {
-  title: "Панель управления",
-  robots: { index: false, follow: false },
-};
+export function generateMetadata() {
+  return staffAreaMetadata("Панель управления");
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Second line of defence: the middleware already redirects anonymous requests,
@@ -81,7 +81,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-bold text-gold leading-tight">Панель управления</p>
-              <p className="text-xs text-cream/60">«Кең Жылыой» мәдениет үйі</p>
+              <p className="text-xs text-cream/60">{siteOrganization ? siteBrand(siteOrganization, "ru").fullName : ""}</p>
             </div>
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               {/* Plain next/link, not the next-intl one: staff routes are outside the

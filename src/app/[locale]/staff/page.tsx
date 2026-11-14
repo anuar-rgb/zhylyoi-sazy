@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { institutionPageMetadata, type PageMeta } from "@/lib/pageMetadata";
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
@@ -8,20 +9,13 @@ import { listPublicCultureStaff, localizedStaff } from "@/lib/cultureStaff";
 import { telHref } from "@/lib/contactLinks";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Қызметкерлер",
-    description: "«Кең Жылыой» Жылыой аудандық мәдениет үйінің басшылығы мен қызметкерлері.",
-  },
-  ru: {
-    title: "Сотрудники",
-    description: "Руководство и сотрудники Дома культуры «Кен Жылыой» Жылыойского района.",
-  },
+const meta: PageMeta = {
+  kk: { title: "Қызметкерлер", description: (name) => `${name}: басшылық пен қызметкерлер.` },
+  ru: { title: "Сотрудники", description: (name) => `Руководство и сотрудники — ${name}.` },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  return institutionPageMetadata(meta);
 }
 
 /** Initials stand in for a missing photo, so a card without one is still a person. */

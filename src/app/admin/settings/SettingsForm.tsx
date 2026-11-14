@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import type { OrganizationRecord } from "@/lib/organization";
 import BilingualField from "@/components/admin/BilingualField";
 import { formatMapPoint, mapsLink } from "@/lib/mapPoint";
+import ImageField from "./ImageField";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -65,7 +66,48 @@ export default function SettingsForm({
       <div className={CARD}>
         <p className="text-sm font-semibold text-ocean mb-4">Название</p>
         <BilingualField kkName="name_kk" ruName="name_ru" label="Название" defaultKk={organization.nameKk} defaultRu={organization.nameRu} />
-        <p className="text-xs text-ocean/40 mt-2">Показывается в подвале сайта и на странице «Контакты».</p>
+        <p className="text-xs text-ocean/40 mt-2">
+          Полное название: заголовок сайта во вкладке браузера и в поиске, подвал, страница «Контакты», вход в панель.
+        </p>
+      </div>
+
+      <div className={CARD}>
+        <p className="text-sm font-semibold text-ocean mb-4">Название в шапке и логотип</p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <BilingualField
+            kkName="short_name_kk"
+            ruName="short_name_ru"
+            label="Короткое название"
+            defaultKk={organization.shortNameKk}
+            defaultRu={organization.shortNameRu}
+          />
+          <BilingualField
+            kkName="tagline_kk"
+            ruName="tagline_ru"
+            label="Подпись под названием"
+            defaultKk={organization.taglineKk}
+            defaultRu={organization.taglineRu}
+          />
+          <ImageField
+            name="logo_url"
+            label="Логотип"
+            hint="Круглая картинка в шапке и подвале, она же значок вкладки браузера. Лучше квадратная, от 256×256, PNG."
+            organizationId={organization.id}
+            defaultValue={organization.logoUrl}
+            round
+          />
+          <ImageField
+            name="share_image_url"
+            label="Картинка для ссылок"
+            hint="Её показывают WhatsApp и Telegram, когда отправляют ссылку на сайт. Пусто — покажется логотип."
+            organizationId={organization.id}
+            defaultValue={organization.shareImageUrl}
+          />
+        </div>
+        <p className="text-xs text-ocean/40 mt-3">
+          Короткое название и подпись — в шапке сайта, например «Кең Жылыой» и «Жылыой аудандық мәдениет үйі». Пустое
+          короткое название — покажется полное. Без логотипа в кружке будут первые буквы названия.
+        </p>
       </div>
 
       <div className={CARD}>
@@ -79,12 +121,21 @@ export default function SettingsForm({
             defaultRu={organization.addressRu}
             textarea
           />
+          <BilingualField
+            kkName="region_label_kk"
+            ruName="region_label_ru"
+            label="Район и область"
+            defaultKk={organization.regionLabelKk}
+            defaultRu={organization.regionLabelRu}
+            placeholderKk="Жылыой ауданы, Атырау облысы"
+            placeholderRu="Жылыойский район, Атырауская область"
+          />
           <Field name="phone" label="Телефон" defaultValue={organization.phone} placeholder="+7 778 927 63 87" />
           <Field name="email" label="Электронная почта" defaultValue={organization.email} type="email" />
         </div>
         <p className="text-xs text-ocean/40 mt-2">
           Подставляются в подвал каждой страницы, в блок контактов на главной, на страницу «Контакты» и в форму
-          «Отправить сообщение» (письма идут на эту почту). Адрес вместе с названием предлагается местом проведения
+          «Отправить сообщение» (письма идут на эту почту). Район и область — внизу подвала справа. Адрес вместе с названием предлагается местом проведения
           для новых мероприятий.
         </p>
       </div>
@@ -138,7 +189,7 @@ export default function SettingsForm({
         <dl className="grid sm:grid-cols-3 gap-4 text-sm">
           <div>
             <dt className="text-xs text-ocean/40 mb-0.5">Адрес сайта учреждения</dt>
-            <dd className="text-ocean/70 font-medium">{organization.slug}</dd>
+            <dd className="text-ocean/70 font-medium break-all">{organization.domain ?? "не задан"}</dd>
           </div>
           <div>
             <dt className="text-xs text-ocean/40 mb-0.5">Тип учреждения</dt>

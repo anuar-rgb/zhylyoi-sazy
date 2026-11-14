@@ -177,8 +177,8 @@ export default function VideoForm({
             label="Место и год"
             defaultKk={video?.venueKk}
             defaultRu={video?.venueRu}
-            placeholderKk="«Кең Жылыой» мәдениет үйі, 2026 жыл"
-            placeholderRu="Дом культуры «Кен Жылыой», 2026 год"
+            placeholderKk="Мәдениет үйі, 2026 жыл"
+            placeholderRu="Дом культуры, 2026 год"
           />
         </div>
         <p className="text-xs text-ocean/40 mt-2">

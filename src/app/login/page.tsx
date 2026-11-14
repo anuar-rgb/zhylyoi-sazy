@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LoginForm from "./LoginForm";
+import { getSiteOrganization, siteBrand } from "@/lib/organization";
 
 export default async function LoginPage() {
   const supabase = await createClient();
@@ -10,5 +11,6 @@ export default async function LoginPage() {
 
   if (user) redirect("/admin");
 
-  return <LoginForm />;
+  const organization = await getSiteOrganization();
+  return <LoginForm institution={organization ? siteBrand(organization, "ru").fullName : ""} />;
 }

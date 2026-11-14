@@ -23,7 +23,9 @@ export type MediaSection =
   | "culture-news"
   | "culture-staff"
   | "culture-members"
-  | "payments";
+  | "payments"
+  // The institution's own pictures: its logo and the link preview picture (Настройки).
+  | "organizations";
 
 /** Builds the upload path for a new file. The name is random so two uploads never collide. */
 export function mediaPath(organizationId: string, section: MediaSection, fileName: string): string {

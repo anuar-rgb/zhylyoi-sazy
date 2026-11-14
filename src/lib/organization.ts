@@ -30,8 +30,21 @@ export type OrganizationRecord = {
   domain: string | null;
   nameKk: string | null;
   nameRu: string | null;
+  /** The name in the site's header and footer («Кең Жылыой»); the full name when empty. */
+  shortNameKk: string | null;
+  shortNameRu: string | null;
+  /** The line under the short name in the header («Жылыой аудандық мәдениет үйі»). */
+  taglineKk: string | null;
+  taglineRu: string | null;
+  /** Header, footer and browser tab icon: a site path or a Storage URL; null shows the initials. */
+  logoUrl: string | null;
+  /** The picture messengers show for a link to the site; the logo when null. */
+  shareImageUrl: string | null;
   addressKk: string | null;
   addressRu: string | null;
+  /** District and region in the footer («Жылыой ауданы, Атырау облысы»). */
+  regionLabelKk: string | null;
+  regionLabelRu: string | null;
   phone: string | null;
   email: string | null;
   /** Official requisites shown on Contacts: the registered full name, BIN, director and founder. */
@@ -46,7 +59,7 @@ export type OrganizationRecord = {
 };
 
 const COLUMNS =
-  "id, slug, type, domain, name, name_kk, name_ru, address, address_kk, address_ru, phone, email, " +
+  "id, slug, type, domain, name, name_kk, name_ru, short_name_kk, short_name_ru, tagline_kk, tagline_ru, logo_url, share_image_url, region_label_kk, region_label_ru, address, address_kk, address_ru, phone, email, " +
   "legal_name_kk, legal_name_ru, bin, director, founder_kk, founder_ru, map_lat, map_lng";
 
 function str(value: unknown): string | null {
@@ -65,8 +78,16 @@ function toRecord(row: Record<string, unknown>): OrganizationRecord {
     // it be translated.
     nameKk: str(row.name_kk),
     nameRu: str(row.name_ru),
+    shortNameKk: str(row.short_name_kk),
+    shortNameRu: str(row.short_name_ru),
+    taglineKk: str(row.tagline_kk),
+    taglineRu: str(row.tagline_ru),
+    logoUrl: str(row.logo_url),
+    shareImageUrl: str(row.share_image_url),
     addressKk: str(row.address_kk),
     addressRu: str(row.address_ru),
+    regionLabelKk: str(row.region_label_kk),
+    regionLabelRu: str(row.region_label_ru),
     phone: str(row.phone),
     email: str(row.email),
     legalNameKk: str(row.legal_name_kk),
@@ -121,10 +142,32 @@ export const getSiteOrganizationId = cache(async (): Promise<string | null> => {
 export function localizedOrganization(
   organization: OrganizationRecord,
   locale: Locale,
-  field: "name" | "address" | "legalName" | "founder"
+  field: "name" | "shortName" | "tagline" | "address" | "regionLabel" | "legalName" | "founder"
 ): string | null {
   // Field names here map one to one onto the record: nameKk/nameRu, addressKk/addressRu and so on.
   const kk = organization[`${field}Kk`];
   const ru = organization[`${field}Ru`];
   return locale === "kk" ? (kk ?? ru) : (ru ?? kk);
+}
+
+/** What the site shows as the institution's identity: in the header, footer, page titles, admin. */
+export type SiteBrand = {
+  /** «Кең Жылыой»: the short name, else the full one. */
+  name: string;
+  /** The full name: «"Кең Жылыой" Жылыой аудандық мәдениет үйі». */
+  fullName: string;
+  /** The line under the name in the header; may be empty. */
+  tagline: string;
+  logoUrl: string | null;
+};
+
+/** The institution's name and logo in one language, each falling back so that something shows. */
+export function siteBrand(organization: OrganizationRecord, locale: Locale): SiteBrand {
+  const fullName = localizedOrganization(organization, locale, "name") ?? organization.slug;
+  return {
+    name: localizedOrganization(organization, locale, "shortName") ?? fullName,
+    fullName,
+    tagline: localizedOrganization(organization, locale, "tagline") ?? "",
+    logoUrl: organization.logoUrl,
+  };
 }

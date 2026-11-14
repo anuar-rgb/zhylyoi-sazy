@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { institutionPageMetadata, type PageMeta } from "@/lib/pageMetadata";
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -8,20 +9,13 @@ import { listPublicCultureNews } from "@/lib/cultureNews";
 import { toNewsView } from "@/lib/newsView";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Жаңалықтар",
-    description: "«Кең Жылыой» мәдениет үйінің соңғы жаңалықтары мен оқиғалары.",
-  },
-  ru: {
-    title: "Новости",
-    description: "Последние новости и события Дома культуры «Кен Жылыой».",
-  },
+const meta: PageMeta = {
+  kk: { title: "Жаңалықтар", description: (name) => `${name}: соңғы жаңалықтар мен оқиғалар.` },
+  ru: { title: "Новости", description: (name) => `Последние новости и события — ${name}.` },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  return institutionPageMetadata(meta);
 }
 
 const content: Record<Locale, { title: string; subtitle: string; more: string }> = {

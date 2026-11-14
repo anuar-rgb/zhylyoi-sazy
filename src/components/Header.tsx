@@ -1,6 +1,7 @@
 "use client";
 
-import Image from "next/image";
+import OrgLogo from "@/components/OrgLogo";
+import type { SiteBrand } from "@/lib/organization";
 // Staff routes live outside the [locale] segment, so they use a plain link (no locale prefix).
 import NextLink from "next/link";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -10,11 +11,9 @@ import type { Locale } from "@/i18n/routing";
 
 const content: Record<
   Locale,
-  { brand: string; tagline: string; nav: { href: string; label: string }[]; more: { href: string; label: string }[]; menuLabel: string; closeLabel: string; moreLabel: string; loginLabel: string }
+  { nav: { href: string; label: string }[]; more: { href: string; label: string }[]; menuLabel: string; closeLabel: string; moreLabel: string; loginLabel: string }
 > = {
   kk: {
-    brand: "Кең Жылыой",
-    tagline: "Жылыой аудандық мәдениет үйі",
     menuLabel: "Мәзір",
     closeLabel: "Мәзірді жабу",
     moreLabel: "Тағы да",
@@ -34,8 +33,6 @@ const content: Record<
     ],
   },
   ru: {
-    brand: "Кен Жылыой",
-    tagline: "Дом культуры Жылыойского района",
     menuLabel: "Меню",
     closeLabel: "Закрыть меню",
     moreLabel: "Ещё",
@@ -72,7 +69,8 @@ function LanguageSwitcher({ pathname, className = "" }: { pathname: string; clas
   );
 }
 
-export default function Header() {
+/** The institution's name, tagline and logo come from its card (Настройки), through the layout. */
+export default function Header({ brand }: { brand: Pick<SiteBrand, "name" | "tagline" | "logoUrl"> }) {
   const pathname = usePathname();
   const locale = useLocale() as Locale;
   const t = content[locale];
@@ -165,18 +163,11 @@ export default function Header() {
           <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-cream shrink-0 overflow-hidden ring-2 ring-gold/60">
-              <Image
-                src="/images/gallery/logo.png"
-                alt={t.brand}
-                fill
-                quality={95}
-                className="object-cover"
-                sizes="56px"
-              />
+              <OrgLogo src={brand.logoUrl} name={brand.name} sizes="56px" />
             </div>
             <div className="min-w-0">
-              <div className="text-gold font-bold text-sm sm:text-base lg:text-lg leading-tight truncate">{t.brand}</div>
-              <div className="text-cream/70 text-[10px] sm:text-[11px] lg:text-xs leading-snug truncate">{t.tagline}</div>
+              <div className="text-gold font-bold text-sm sm:text-base lg:text-lg leading-tight truncate">{brand.name}</div>
+              <div className="text-cream/70 text-[10px] sm:text-[11px] lg:text-xs leading-snug truncate">{brand.tagline}</div>
             </div>
           </Link>
 
@@ -287,8 +278,8 @@ export default function Header() {
       >
         <div className="shrink-0 flex items-center justify-between gap-3 h-14 sm:h-16 px-4 sm:px-6 border-b border-white/10">
           <div className="min-w-0">
-            <div className="text-gold font-bold text-sm sm:text-base leading-tight truncate">{t.brand}</div>
-            <div className="text-cream/70 text-[10px] sm:text-[11px] leading-snug truncate">{t.tagline}</div>
+            <div className="text-gold font-bold text-sm sm:text-base leading-tight truncate">{brand.name}</div>
+            <div className="text-cream/70 text-[10px] sm:text-[11px] leading-snug truncate">{brand.tagline}</div>
           </div>
           <button
             onClick={() => setMenuOpen(false)}

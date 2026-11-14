@@ -13,7 +13,8 @@ const MIN_LENGTH = 8;
  * Opens the one-time link from the email (verifyOtp with its token), then lets the person choose a
  * password. The link works once: a second visit, or one after a day, says so and asks for a new one.
  */
-export default function SetPasswordForm() {
+/** institution: the full name of the site's institution, from its card. */
+export default function SetPasswordForm({ institution }: { institution: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const started = useRef(false);
@@ -56,7 +57,7 @@ export default function SetPasswordForm() {
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
           <h1 className="text-xl font-bold text-ocean mb-1">Новый пароль</h1>
-          <p className="text-sm text-ocean/60 mb-6">«Кең Жылыой» мәдениет үйі</p>
+          <p className="text-sm text-ocean/60 mb-6">{institution}</p>
 
           {state === "checking" && <p className="text-sm text-ocean/60">Проверяем ссылку…</p>}
 

@@ -1,40 +1,23 @@
 import { getImageProps } from "next/image";
 import { getLocale } from "next-intl/server";
 import { getSiteText } from "@/lib/orgContent";
+import { getSiteOrganization, siteBrand } from "@/lib/organization";
 import type { Locale } from "@/i18n/routing";
 
-const content: Record<
-  Locale,
-  { eyebrow: string; titleGold: string; titleCream: string; subtitle: string; afisha: string; about: string; scroll: string; imageAlt: string }
-> = {
-  kk: {
-    eyebrow: "Атырау облысы, Жылыой ауданы",
-    titleGold: "«Кең Жылыой»",
-    titleCream: "мәдениет үйі",
-    subtitle: "Жылыой ауданының мәдени өмірінің ордасы — концерттер, шығармашылық үйірмелер мен ансамбльдер, ұлттық өнерді сақтау және дамыту",
-    afisha: "Афиша",
-    about: "Біз туралы",
-    scroll: "Төмен айналдыру",
-    imageAlt: "«Кең Жылыой» мәдениет үйінің ғимараты",
-  },
-  ru: {
-    eyebrow: "Атырауская область, Жылыойский район",
-    titleGold: "«Кен Жылыой»",
-    titleCream: "дом культуры",
-    subtitle: "Центр культурной жизни Жылыойского района — концерты, творческие коллективы и ансамбли, сохранение и развитие национального искусства",
-    afisha: "Афиша",
-    about: "О нас",
-    scroll: "Прокрутить вниз",
-    imageAlt: "Здание дома культуры «Кен Жылыой»",
-  },
+// The title, subtitle and eyebrow are the institution's own texts (Тексты сайта → Первый экран).
+const content: Record<Locale, { afisha: string; about: string; scroll: string; imageAlt: (name: string) => string }> = {
+  kk: { afisha: "Афиша", about: "Біз туралы", scroll: "Төмен айналдыру", imageAlt: (name) => `${name} ғимараты` },
+  ru: { afisha: "Афиша", about: "О нас", scroll: "Прокрутить вниз", imageAlt: (name) => `Здание: ${name}` },
 };
 
 export default async function Hero() {
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
   const text = await getSiteText(locale);
+  const organization = await getSiteOrganization();
+  const imageAlt = t.imageAlt(organization ? siteBrand(organization, locale).fullName : "");
 
-  const common = { alt: t.imageAlt, sizes: "100vw", quality: 80 };
+  const common = { alt: imageAlt, sizes: "100vw", quality: 80 };
   const {
     props: { srcSet: desktopSrcSet },
   } = getImageProps({
@@ -60,7 +43,7 @@ export default async function Hero() {
           <source media="(max-width: 1023px)" srcSet={mobileSrcSet} />
           <img
             {...mobileImgProps}
-            alt={t.imageAlt}
+            alt={imageAlt}
             fetchPriority="high"
             className="absolute inset-0 h-full w-full object-cover"
           />

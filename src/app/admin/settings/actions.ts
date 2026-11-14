@@ -34,22 +34,44 @@ function payload(form: FormData) {
     name_ru: nameRu,
     address_kk: field(form, "address_kk"),
     address_ru: field(form, "address_ru"),
+    region_label_kk: field(form, "region_label_kk"),
+    region_label_ru: field(form, "region_label_ru"),
     phone: field(form, "phone"),
     email: field(form, "email"),
     // Official names are copied from the registration documents, never machine-translated:
     // a side left blank stays blank and the page shows the other language.
     legal_name_kk: field(form, "legal_name_kk"),
     legal_name_ru: field(form, "legal_name_ru"),
-    bin: field(form, "bin")?.replace(/s+/g, "") ?? null,
+    bin: field(form, "bin")?.replace(/\s+/g, "") ?? null,
     director: field(form, "director"),
     founder_kk: field(form, "founder_kk"),
     founder_ru: field(form, "founder_ru"),
+    short_name_kk: field(form, "short_name_kk"),
+    short_name_ru: field(form, "short_name_ru"),
+    tagline_kk: field(form, "tagline_kk"),
+    tagline_ru: field(form, "tagline_ru"),
+    logo_url: field(form, "logo_url"),
+    share_image_url: field(form, "share_image_url"),
   };
+}
+
+/**
+ * A picture address the site may show for this institution: a file in its own Storage folder, or
+ * one of the site's own files for institutions (/images/orgs/…). Anything else is refused — the
+ * image component would fail on a host it does not know, and the site would show a stranger's file.
+ */
+function isOwnPicture(url: string, organizationId: string): boolean {
+  if (/^\/images\/orgs\/[a-z0-9-]+\/[\w.-]+$/.test(url)) return true;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  return Boolean(base) && url.startsWith(`${base}/storage/v1/object/public/org-media/${organizationId}/`);
 }
 
 const FIELD_PAIRS = [
   ["name_kk", "name_ru"],
   ["address_kk", "address_ru"],
+  ["region_label_kk", "region_label_ru"],
+  ["short_name_kk", "short_name_ru"],
+  ["tagline_kk", "tagline_ru"],
 ] as const;
 
 async function fillTranslations(data: ReturnType<typeof payload>): Promise<ReturnType<typeof payload>> {
@@ -67,7 +89,7 @@ export async function updateOrganization(_prev: FormState, form: FormData): Prom
 
   const data = await fillTranslations(payload(form));
   if (!data.name) return { error: "Укажите название хотя бы на одном языке.", saved: false };
-  if (data.bin && !/^d{12}$/.test(data.bin)) return { error: "БИН — это 12 цифр.", saved: false };
+  if (data.bin && !/^\d{12}$/.test(data.bin)) return { error: "БИН — это 12 цифр.", saved: false };
 
   const mapInput = field(form, "map_point");
   const mapPoint = mapInput ? await resolveMapPoint(mapInput) : null;
@@ -82,6 +104,9 @@ export async function updateOrganization(_prev: FormState, form: FormData): Prom
 
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение.", saved: false };
+  for (const url of [data.logo_url, data.share_image_url]) {
+    if (url && !isOwnPicture(url, organizationId)) return { error: "Картинку нужно загрузить кнопкой «Загрузить».", saved: false };
+  }
 
   const supabase = await createClient();
   const { error, count } = await supabase.from("organizations").update({ ...data, map_lat: mapPoint?.lat ?? null, map_lng: mapPoint?.lng ?? null }, { count: "exact" }).eq("id", organizationId);

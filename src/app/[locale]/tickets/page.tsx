@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { institutionPageMetadata, type PageMeta } from "@/lib/pageMetadata";
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -10,15 +11,9 @@ import { toEventView } from "@/lib/eventView";
 import MyTickets from "./MyTickets";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Билеттер",
-    description: "«Кең Жылыой» мәдениет үйінің билеттері сатылатын іс-шаралары.",
-  },
-  ru: {
-    title: "Билеты",
-    description: "Мероприятия Дома культуры «Кен Жылыой», на которые продаются билеты.",
-  },
+const meta: PageMeta = {
+  kk: { title: "Билеттер", description: (name) => `${name}: билеттері сатылатын іс-шаралар.` },
+  ru: { title: "Билеты", description: (name) => `Мероприятия с продажей билетов — ${name}.` },
 };
 
 const content: Record<
@@ -59,8 +54,7 @@ function priceLabel(range: PriceRange, locale: Locale, freeLabel: string): strin
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  return institutionPageMetadata(meta);
 }
 
 export default async function TicketsPage() {

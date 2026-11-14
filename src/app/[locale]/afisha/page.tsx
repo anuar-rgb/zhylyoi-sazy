@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { institutionPageMetadata, type PageMeta } from "@/lib/pageMetadata";
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
@@ -8,20 +9,13 @@ import { toEventView } from "@/lib/eventView";
 import type { EventCategory } from "@/lib/eventFields";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Афиша",
-    description: "«Кең Жылыой» мәдениет үйінің жақын арадағы концерттері, спектакльдері мен көрмелері.",
-  },
-  ru: {
-    title: "Афиша",
-    description: "Ближайшие концерты, спектакли и выставки Дома культуры «Кен Жылыой».",
-  },
+const meta: PageMeta = {
+  kk: { title: "Афиша", description: (name) => `${name}: жақын арадағы концерттер, спектакльдер мен көрмелер.` },
+  ru: { title: "Афиша", description: (name) => `Ближайшие концерты, спектакли и выставки — ${name}.` },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  return institutionPageMetadata(meta);
 }
 
 const content: Record<
