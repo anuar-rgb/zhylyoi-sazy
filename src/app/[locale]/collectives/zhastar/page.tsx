@@ -32,6 +32,8 @@ const meta: Record<Locale, Metadata> = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
+  // The description speaks of «Кең Жылыой»'s theatre: nothing of it where the page is switched off.
+  if (!(await siteHasSection("zhastar"))) return {};
   const locale = (await getLocale()) as Locale;
   return meta[locale];
 }
