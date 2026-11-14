@@ -20,7 +20,7 @@ export default async function PlatformPage() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-        <h1 className="text-xl sm:text-2xl font-bold text-ocean">Платформа</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-ocean">Учреждения</h1>
         <Link href="/admin/platform/new" className="btn-primary px-5 py-2.5 text-sm font-semibold">
           Добавить учреждение
         </Link>

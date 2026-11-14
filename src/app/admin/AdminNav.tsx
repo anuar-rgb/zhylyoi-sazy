@@ -21,12 +21,12 @@ const items = [
   { href: "/admin/settings", label: "Настройки" },
 ];
 
-/** «Платформа»: the platform owner's own section, after the institution's items. */
-const PLATFORM_ITEM = { href: "/admin/platform", label: "Платформа" };
+/** «Учреждения»: the platform owner's whole panel. They do not work on any institution's content. */
+const PLATFORM_ITEM = { href: "/admin/platform", label: "Учреждения" };
 
 export default function AdminNav({ newApplications = 0, isPlatformAdmin = false }: { newApplications?: number; isPlatformAdmin?: boolean }) {
   const pathname = usePathname();
-  const shown = isPlatformAdmin ? [...items, PLATFORM_ITEM] : items;
+  const shown = isPlatformAdmin ? [PLATFORM_ITEM] : items;
 
   return (
     <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0">

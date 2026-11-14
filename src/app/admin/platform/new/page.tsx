@@ -11,7 +11,7 @@ export default async function NewInstitutionPage() {
   return (
     <div>
       <Link href="/admin/platform" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ocean/50 hover:text-ocean mb-3">
-        ← Платформа
+        ← Учреждения
       </Link>
       <h1 className="text-xl sm:text-2xl font-bold text-ocean mb-5">Новое учреждение</h1>
       <NewInstitutionForm />

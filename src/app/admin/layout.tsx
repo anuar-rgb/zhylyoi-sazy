@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { CONTROLLER_ROLE, getStaffIdentity } from "@/lib/profile";
@@ -38,6 +39,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const [identity, newApplications] = await Promise.all([getStaffIdentity(), countUnseenApplications()]);
   // A controller works at the door only; nothing of the staff area is theirs.
   if (identity?.role === CONTROLLER_ROLE) redirect("/door");
+
+  // The platform owner looks after institutions, not their content: each institution keeps its own
+  // collectives, posters, texts and tickets. Every other page of the panel sends them to «Платформа».
+  const isPlatformAdmin = identity?.role === "platform_admin";
+  if (isPlatformAdmin) {
+    const path = (await headers()).get("x-admin-path") ?? "";
+    if (path !== "/admin/platform" && !path.startsWith("/admin/platform/")) redirect("/admin/platform");
+  }
 
   // Each institution's admin works on its own domain. One institution's staff signed in on another
   // institution's address would see that site's admin with nothing of theirs in it (RLS lets them
@@ -80,8 +89,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <header className="bg-ocean-dark text-cream">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-bold text-gold leading-tight">Панель управления</p>
-              <p className="text-xs text-cream/60">{siteOrganization ? siteBrand(siteOrganization, "ru").fullName : ""}</p>
+              <p className="font-bold text-gold leading-tight">{isPlatformAdmin ? "Платформа" : "Панель управления"}</p>
+              <p className="text-xs text-cream/60">
+                {isPlatformAdmin ? "Учреждения культуры" : siteOrganization ? siteBrand(siteOrganization, "ru").fullName : ""}
+              </p>
             </div>
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               {/* Plain next/link, not the next-intl one: staff routes are outside the
@@ -108,7 +119,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {/* min-w-0: without it the grid item's default min-width:auto stretches to the
               nav's full content width, so the nav's horizontal scroll never engages on mobile. */}
           <aside className="min-w-0 lg:sticky lg:top-8 lg:self-start">
-            <AdminNav newApplications={newApplications} isPlatformAdmin={identity?.role === "platform_admin"} />
+            <AdminNav newApplications={newApplications} isPlatformAdmin={isPlatformAdmin} />
           </aside>
           <main className="min-w-0">{children}</main>
         </div>
