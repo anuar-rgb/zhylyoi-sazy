@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { signOut } from "./actions";
 
-export default function LogoutButton() {
+/** «Выйти». Styled for the dark header by default; a light page passes its own look. */
+export default function LogoutButton({
+  className = "text-sm font-semibold text-cream/70 hover:text-gold transition-colors disabled:opacity-50",
+}: {
+  className?: string;
+}) {
   const [busy, setBusy] = useState(false);
 
   return (
@@ -16,7 +21,7 @@ export default function LogoutButton() {
       <button
         type="submit"
         disabled={busy}
-        className="text-sm font-semibold text-cream/70 hover:text-gold transition-colors disabled:opacity-50"
+        className={className}
       >
         Выйти
       </button>

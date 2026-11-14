@@ -8,6 +8,8 @@ import Footer from "@/components/Footer";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import ScrollTopOnReload from "@/components/ScrollTopOnReload";
+import SiteNotFound from "@/components/SiteNotFound";
+import { getSiteDomain, getSiteOrganization } from "@/lib/organization";
 import "../globals.css";
 
 const montserrat = Montserrat({
@@ -31,13 +33,6 @@ const meta = {
   },
 } as const;
 
-/**
- * The site's own address, so the link preview image (opengraph-image.jpg) is given to messengers
- * as a full URL. Pages are rendered ahead of time, so it cannot come from the request; SITE_URL at
- * build time overrides it for another institution's domain.
- */
-const SITE_URL = process.env.SITE_URL ?? "https://dk-zhylyoi.kz";
-
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -50,8 +45,16 @@ export async function generateMetadata({
   const { locale } = await params;
   const m = hasLocale(routing.locales, locale) ? meta[locale] : meta.kk;
 
+  // The site's own address, so the link preview image is given to messengers as a full URL: the
+  // institution's domain, which this request came in on.
+  const domain = await getSiteDomain();
+  // A domain no active institution has: nothing to describe, and nothing for search engines.
+  if (!(await getSiteOrganization())) {
+    return { title: locale === "kk" ? "Сайт табылмады" : "Сайт не найден", robots: { index: false, follow: false } };
+  }
+
   return {
-    metadataBase: new URL(SITE_URL),
+    metadataBase: new URL(`https://${domain ?? "dk-zhylyoi.kz"}`),
     title: { default: m.title, template: `%s | Кең Жылыой` },
     description: m.description,
     keywords: [
@@ -84,6 +87,19 @@ export default async function RootLayout({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) {
     notFound();
+  }
+
+  // A domain that no active institution has: the server answers for it (a site switched off, an
+  // address pointed here by mistake), but there is nothing of anyone's to show.
+  const organization = await getSiteOrganization();
+  if (!organization) {
+    return (
+      <html lang={locale} className={`${montserrat.variable} h-full antialiased`}>
+        <body className="min-h-full flex flex-col">
+          <SiteNotFound locale={locale} />
+        </body>
+      </html>
+    );
   }
 
   return (

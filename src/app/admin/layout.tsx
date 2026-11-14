@@ -4,6 +4,7 @@ import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { CONTROLLER_ROLE, getStaffIdentity } from "@/lib/profile";
 import { countUnseenApplications } from "@/lib/applications";
+import { getSiteOrganization } from "@/lib/organization";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import AdminNav from "./AdminNav";
@@ -37,6 +38,40 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const [identity, newApplications] = await Promise.all([getStaffIdentity(), countUnseenApplications()]);
   // A controller works at the door only; nothing of the staff area is theirs.
   if (identity?.role === CONTROLLER_ROLE) redirect("/door");
+
+  // Each institution's admin works on its own domain. One institution's staff signed in on another
+  // institution's address would see that site's admin with nothing of theirs in it (RLS lets them
+  // read and change nothing there): send them to their own. The platform and regional admins look
+  // after several institutions and may work on any of their addresses.
+  const siteOrganization = await getSiteOrganization();
+  const ownOrganizationId = identity?.organizationId ?? null;
+  const worksAcrossInstitutions = identity?.role === "platform_admin" || identity?.role === "regional_admin";
+  if (!worksAcrossInstitutions && ownOrganizationId && ownOrganizationId !== siteOrganization?.id) {
+    const { data: own } = await supabase.from("organizations").select("domain").eq("id", ownOrganizationId).maybeSingle();
+    const ownDomain = (own as { domain: string | null } | null)?.domain ?? null;
+    return (
+      <html lang="ru" className={`${montserrat.variable} h-full antialiased`}>
+        <body className="min-h-full bg-cream/30 flex items-center justify-center px-4">
+          <div className="max-w-md text-center bg-white rounded-3xl border border-cream-dark shadow-sm p-8">
+            <p className="font-bold text-ocean text-lg mb-2">Это панель другого учреждения</p>
+            <p className="text-sm text-ocean/70 mb-5">
+              {ownDomain ? (
+                <>
+                  Ваша панель управления открывается на адресе вашего сайта:{" "}
+                  <a href={`https://${ownDomain}/admin`} className="font-semibold text-ocean underline">
+                    {ownDomain}/admin
+                  </a>
+                </>
+              ) : (
+                "У вашего учреждения ещё нет адреса сайта. Обратитесь в поддержку платформы."
+              )}
+            </p>
+            <LogoutButton className="btn-primary px-6 py-2.5 text-sm font-semibold disabled:opacity-50" />
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="ru" className={`${montserrat.variable} h-full antialiased`}>
