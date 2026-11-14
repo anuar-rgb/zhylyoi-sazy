@@ -3,6 +3,7 @@ import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getSiteOrganization, localizedOrganization } from "@/lib/organization";
 import { telHref } from "@/lib/contactLinks";
+import { LEGAL_DOCS } from "@/lib/legalDocs";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -109,7 +110,19 @@ export default async function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-cream/10 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-cream/40">
+        {/* The platform's documents: the offer and the policy are also linked from the order and
+            application forms, where they are accepted. */}
+        <ul className="border-t border-cream/10 mt-8 pt-6 flex flex-wrap justify-center sm:justify-start gap-x-6 gap-y-2 text-xs text-cream/60">
+          {Object.values(LEGAL_DOCS).map((doc) => (
+            <li key={doc.id}>
+              <Link href={doc.href} className="hover:text-gold transition-colors">
+                {doc.title[locale]}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-cream/40">
           <span>&copy; {new Date().getFullYear()} {t.copyright}</span>
           <span>Жылыой ауданы, Атырау облысы</span>
         </div>

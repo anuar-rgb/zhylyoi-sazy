@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { LEGAL_DOCS } from "@/lib/legalDocs";
 
 /** Mirrors the CHECK constraint on applications.status. */
 export const APPLICATION_STATUSES = ["new", "in_progress", "completed", "rejected"] as const;
@@ -153,6 +154,8 @@ export async function appendApplication(
     club_title: input.clubTitle,
     message: input.comment || null,
     consent_given: true,
+    // Which edition of the privacy policy the consent was given under (policy 10.3).
+    privacy_version: LEGAL_DOCS.privacy.version,
     status: "new",
   });
 

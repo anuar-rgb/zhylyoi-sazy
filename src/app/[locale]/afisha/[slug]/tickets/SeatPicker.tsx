@@ -12,8 +12,9 @@ import { sectionLabel, seatName } from "@/lib/hallSections";
 import { categoryLabel } from "@/lib/seatCategories";
 import { isEmail } from "@/lib/email";
 import { clearDraft, isBlankDraft, readDraft, sessionDraftStorage, writeDraft } from "@/lib/formDraft";
+import AgreementCheckbox, { type AgreementText } from "@/components/AgreementCheckbox";
 
-/** What survives a reload of this page: the chosen seats and the email (not the consent). */
+/** What survives a reload of this page: the chosen seats and the email (not the two ticks). */
 type SeatDraft = { seatIds: string[]; email: string };
 
 export type SeatOption = {
@@ -51,7 +52,8 @@ type Texts = {
   pay: string;
   noOnlinePayment: string;
   confirm: string;
-  consent: string;
+  offer: AgreementText;
+  consent: AgreementText;
   restored: string;
   restoredSomeTaken: string;
 };
@@ -61,6 +63,7 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
   ru: {
     errors: {
       email: "Введите электронную почту, например: name@mail.kz",
+      offer: "Для оформления заказа нужно принять условия публичной оферты.",
       consent: "Для оформления заказа нужно дать согласие на обработку данных.",
       no_seats: "Выберите хотя бы одно место.",
       unavailable: "Билеты для этого мероприятия сейчас недоступны.",
@@ -85,13 +88,20 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     pay: "Перейти к оплате",
     noOnlinePayment: "Оплата картой онлайн пока не подключена. Купить билеты можно будет позже.",
     confirm: "Подтвердить",
-    consent: "Даю согласие на обработку персональных данных",
+    offer: { before: "Принимаю условия ", link: "публичной оферты", after: "", href: "/offer" },
+    consent: {
+      before: "Даю согласие на обработку персональных данных в соответствии с ",
+      link: "Политикой конфиденциальности",
+      after: "",
+      href: "/privacy",
+    },
     restored: "Ваш выбор восстановлен.",
     restoredSomeTaken: "Ваш выбор восстановлен, но часть мест уже заняли. Выберите вместо них другие.",
   },
   kk: {
     errors: {
       email: "Электрондық поштаңызды енгізіңіз, мысалы: name@mail.kz",
+      offer: "Тапсырыс беру үшін жария оферта шарттарын қабылдау қажет.",
       consent: "Тапсырыс беру үшін деректерді өңдеуге келісім беру қажет.",
       no_seats: "Кемінде бір орынды таңдаңыз.",
       unavailable: "Бұл іс-шараға билеттер қазір қолжетімсіз.",
@@ -116,7 +126,8 @@ const TEXTS: Record<"ru" | "kk", Texts> = {
     pay: "Төлемге өту",
     noOnlinePayment: "Картамен онлайн төлем әзірге қосылмаған. Билетті кейінірек сатып алуға болады.",
     confirm: "Растау",
-    consent: "Дербес деректерді өңдеуге келісім беремін",
+    offer: { before: "", link: "Жария оферта", after: " шарттарын қабылдаймын", href: "/offer" },
+    consent: { before: "", link: "Құпиялылық саясатына", after: " сәйкес дербес деректерімді өңдеуге келісім беремін", href: "/privacy" },
     restored: "Таңдауыңыз қалпына келтірілді.",
     restoredSomeTaken: "Таңдауыңыз қалпына келтірілді, бірақ кейбір орындарды алып қойыпты. Орнына басқаларын таңдаңыз.",
   },
@@ -154,6 +165,8 @@ export default function SeatPicker({
   const t = TEXTS[lang];
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [buyerEmail, setBuyerEmail] = useState("");
+  // Two ticks, not one: accepting the offer and consenting to personal data are separate (policy 9.4).
+  const [offer, setOffer] = useState(false);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -280,6 +293,7 @@ export default function SeatPicker({
         buyerEmail,
         locale: lang,
         seatIds: [...selected],
+        offer,
         consent,
       });
 
@@ -396,22 +410,15 @@ export default function SeatPicker({
             </p>
           </div>
 
-          <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
-            />
-            <span>{t.consent}</span>
-          </label>
+          <AgreementCheckbox checked={offer} onChange={setOffer} text={t.offer} />
+          <AgreementCheckbox checked={consent} onChange={setConsent} text={t.consent} />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           {total > 0 && !bankMethodId && <p className="text-sm text-ocean bg-red-50 border border-red-200 rounded-2xl px-4 py-3">{t.noOnlinePayment}</p>}
 
           <button
             type="submit"
-            disabled={pending || selectedSeats.length === 0 || !consent || (total > 0 && !bankMethodId)}
+            disabled={pending || selectedSeats.length === 0 || !offer || !consent || (total > 0 && !bankMethodId)}
             className="btn-primary w-full py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {pending ? t.working : total > 0 ? t.pay : t.confirm}

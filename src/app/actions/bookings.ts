@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isEmail, normalizeEmail } from "@/lib/email";
 import { sendTicketsEmail } from "@/lib/mail/tickets";
+import { LEGAL_DOCS } from "@/lib/legalDocs";
 
 export type CreateBookingInput = {
   eventId: string;
@@ -13,13 +14,15 @@ export type CreateBookingInput = {
   seatIds: string[];
   /** The page's language: the email and the PDF come in it. */
   locale: "kk" | "ru";
-  /** The buyer ticked the consent to personal data processing. */
+  /** The buyer ticked acceptance of the public offer. */
+  offer: boolean;
+  /** The buyer ticked the consent to personal data processing (a separate tick, privacy policy 9.4). */
   consent: boolean;
 };
 
 export type CreateBookingResult =
   | { ok: true; accessToken: string }
-  | { ok: false; error: "email" | "consent" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
+  | { ok: false; error: "email" | "offer" | "consent" | "no_seats" | "unavailable" | "seat_taken" | "failed" };
 
 /**
  * The only way a booking is ever created. Everything that matters — price,
@@ -32,6 +35,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
   const buyerEmail = normalizeEmail(input.buyerEmail);
   // The form checks the address too; checked again here, where it counts, and by the database.
   if (!isEmail(buyerEmail)) return { ok: false, error: "email" };
+  if (input.offer !== true) return { ok: false, error: "offer" };
   if (input.consent !== true) return { ok: false, error: "consent" };
   if (input.seatIds.length === 0) return { ok: false, error: "no_seats" };
 
@@ -60,13 +64,20 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.access_token) return { ok: false, error: "failed" };
 
-  // Keep the proof that consent was given. Best effort on purpose: the booking already exists and
-  // holds the seats, so a failure here must never turn into a failed booking for the buyer.
+  // Keep the proof of both ticks and of which editions they were given to (offer 4.3, policy 10.3).
+  // Best effort on purpose: the booking already exists and holds the seats, so a failure here must
+  // never turn into a failed booking for the buyer.
   if (row.booking_id) {
     try {
+      const now = new Date().toISOString();
       await createAdminClient()
         ?.from("bookings")
-        .update({ consent_given_at: new Date().toISOString() })
+        .update({
+          consent_given_at: now,
+          privacy_version: LEGAL_DOCS.privacy.version,
+          offer_accepted_at: now,
+          offer_version: LEGAL_DOCS.offer.version,
+        })
         .eq("id", row.booking_id as string);
     } catch {
       // not recorded; the booking stands

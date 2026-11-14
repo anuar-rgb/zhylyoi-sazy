@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { submitClubApplication } from "@/app/actions/applications";
 import { clearDraft, isBlankDraft, readDraft, sessionDraftStorage, writeDraft } from "@/lib/formDraft";
+import AgreementCheckbox, { type AgreementText } from "@/components/AgreementCheckbox";
 
 /** What survives a reload while the form is being filled in (consent is asked for again). */
 type ApplicationDraft = { childName: string; age: string; phone: string; comment: string };
@@ -20,7 +21,8 @@ export type ApplyFormLabels = {
   phonePlaceholder: string;
   commentLabel: string;
   commentPlaceholder: string;
-  consentLabel: string;
+  /** The consent tick, with the privacy policy linked inside the sentence. */
+  consentLabel: AgreementText;
   submitLabel: string;
   cancelLabel: string;
   successMessage: string;
@@ -204,18 +206,14 @@ export default function ClubApplyButton({
                         className="w-full px-5 py-3 border border-cream-dark rounded-3xl focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent bg-cream/30 resize-none"
                       />
                     </div>
-                    <label className="flex items-start gap-2.5 text-sm text-ocean/70 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={consent}
-                        onChange={(e) => {
-                          setConsent(e.target.checked);
-                          if (status === "consent") setStatus("idle");
-                        }}
-                        className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
-                      />
-                      <span>{consentLabel}</span>
-                    </label>
+                    <AgreementCheckbox
+                      checked={consent}
+                      onChange={(checked) => {
+                        setConsent(checked);
+                        if (status === "consent") setStatus("idle");
+                      }}
+                      text={consentLabel}
+                    />
 
                     {status === "consent" && <p className="text-sm text-red-600">{consentRequiredMessage}</p>}
                     {status === "error" && <p className="text-sm text-red-600">{errorMessage}</p>}
