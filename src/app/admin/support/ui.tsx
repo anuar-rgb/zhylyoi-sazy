@@ -115,12 +115,8 @@ function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: Fil
     let lastPick = "";
     const take = (event: Event) => {
       const picked = Array.from(el.files ?? []);
-      void supportPickerDiagAction({
-        event: event.type,
-        count: picked.length,
-        files: picked.map((f) => ({ type: f.type, size: f.size })),
-        ua: navigator.userAgent,
-      }).catch(() => {});
+      diag(event.type, picked);
+      pickerOpenUntil = 0;
       if (!picked.length) return;
       const signature = picked.map((f) => `${f.name}:${f.size}:${f.lastModified}`).join("|");
       if (signature === lastPick) return;
@@ -133,11 +129,27 @@ function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: Fil
         lastPick = "";
       }, 500);
     };
+    const opened = () => {
+      pickerOpenUntil = Date.now() + 60_000;
+      diag("click");
+    };
+    const shown = () => diag(`visible-${document.visibilityState}`, Array.from(el.files ?? []));
+    const failed = (e: ErrorEvent) => diag("error", [], String(e.message));
+    const rejected = (e: PromiseRejectionEvent) => diag("rejection", [], String(e.reason));
+    diag("mount");
     el.addEventListener("change", take);
     el.addEventListener("input", take);
+    el.addEventListener("click", opened);
+    document.addEventListener("visibilitychange", shown);
+    window.addEventListener("error", failed);
+    window.addEventListener("unhandledrejection", rejected);
     return () => {
       el.removeEventListener("change", take);
       el.removeEventListener("input", take);
+      el.removeEventListener("click", opened);
+      document.removeEventListener("visibilitychange", shown);
+      window.removeEventListener("error", failed);
+      window.removeEventListener("unhandledrejection", rejected);
     };
   }, []);
 
@@ -167,6 +179,40 @@ function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: Fil
 }
 
 /**
+ * Live refresh waits while someone is writing or picking a photo: a refresh landing as the phone
+ * comes back from its gallery could lose the pick. Forms with something typed or chosen hold it,
+ * and opening the picker holds it for a minute (the gallery gives no sign when it is cancelled).
+ */
+const composing = new Set<symbol>();
+let pickerOpenUntil = 0;
+
+function refreshPaused(): boolean {
+  return composing.size > 0 || Date.now() < pickerOpenUntil;
+}
+
+/** Holds live refresh while a form has unsent content. */
+function useHoldRefresh(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const token = Symbol("composing");
+    composing.add(token);
+    return () => {
+      composing.delete(token);
+    };
+  }, [active]);
+}
+
+/** TEMPORARY: one line to the server log about the photo picker on a phone (see actions.ts). */
+function diag(event: string, picked: File[] = [], extra = "") {
+  void supportPickerDiagAction({
+    event: extra ? `${event}:${extra}`.slice(0, 120) : event,
+    count: picked.length,
+    files: picked.map((f) => ({ type: f.type, size: f.size })),
+    ua: navigator.userAgent,
+  }).catch(() => {});
+}
+
+/**
  * Keeps a support page current without a manual reload: re-reads it from the server every few
  * seconds while the tab is visible, and at once when the person comes back to it. A refresh keeps
  * what is being typed in the forms.
@@ -175,7 +221,7 @@ export function LiveRefresh({ seconds }: { seconds: number }) {
   const router = useRouter();
   useEffect(() => {
     const tick = () => {
-      if (document.visibilityState === "visible") router.refresh();
+      if (document.visibilityState === "visible" && !refreshPaused()) router.refresh();
     };
     const timer = window.setInterval(tick, seconds * 1000);
     document.addEventListener("visibilitychange", tick);
@@ -194,6 +240,7 @@ export function NewRequestForm() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  useHoldRefresh(body.trim() !== "" || files.length > 0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -262,6 +309,7 @@ export function ReplyForm({ requestId, closed }: { requestId: string; closed: bo
   const feedback = useFeedback();
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  useHoldRefresh(body.trim() !== "" || files.length > 0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
