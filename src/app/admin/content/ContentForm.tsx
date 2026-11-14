@@ -72,6 +72,7 @@ export default function ContentForm({
                     defaultKk={kk}
                     defaultRu={ru}
                     textarea={field.long}
+                    rows={field.rows}
                   />
                 );
               })}

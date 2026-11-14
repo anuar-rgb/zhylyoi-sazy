@@ -12,6 +12,7 @@ import { getTakenSeatIds } from "@/lib/bookings";
 import { getHallById, listHallRowLayouts, rowLayoutsForMap } from "@/lib/halls";
 import { listPublicPaymentMethodsForEvent } from "@/lib/paymentMethods";
 import SeatPicker, { type SeatOption } from "./SeatPicker";
+import { EventVisitConditions } from "@/components/VisitRules";
 import type { Locale } from "@/i18n/routing";
 
 /** Picks the viewer's language, falling back to the other rather than showing nothing. */
@@ -142,6 +143,17 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
         <FadeIn>
           <SectionTitle title={eventTitle} subtitle={locale === "kk" ? "Орынды таңдаңыз" : "Выберите места"} />
         </FadeIn>
+
+        {rows.length > 0 && (
+          <FadeIn>
+            <div className="mb-6">
+              <EventVisitConditions
+                notes={locale === "kk" ? (event.visitNotesKk ?? event.visitNotesRu) : (event.visitNotesRu ?? event.visitNotesKk)}
+                locale={locale}
+              />
+            </div>
+          </FadeIn>
+        )}
 
         {rows.length === 0 ? (
           <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-8 text-center">

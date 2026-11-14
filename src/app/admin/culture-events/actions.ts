@@ -100,7 +100,12 @@ function payload(form: FormData) {
     // Only when the form showed them (the «Билеты» form). The Афиша form leaves them out, and
     // writing null here would quietly take a ticketed event's hall away and stop its sales.
     ...(form.get("ticket_fields") === "1"
-      ? { hall_id: field(form, "hall_id"), payment_method_id: field(form, "payment_method_id") }
+      ? {
+          hall_id: field(form, "hall_id"),
+          payment_method_id: field(form, "payment_method_id"),
+          visit_notes_kk: field(form, "visit_notes_kk"),
+          visit_notes_ru: field(form, "visit_notes_ru"),
+        }
       : {}),
   };
 }
@@ -116,6 +121,8 @@ const FIELD_PAIRS = [
   ["full_text_kk", "full_text_ru"],
   ["location_kk", "location_ru"],
   ["organizer_kk", "organizer_ru"],
+  // Only on the «Билеты» form; absent from the Афиша one, and then nothing is translated.
+  ["visit_notes_kk", "visit_notes_ru"],
 ] as const;
 
 async function fillTranslations(data: ReturnType<typeof payload>): Promise<ReturnType<typeof payload>> {

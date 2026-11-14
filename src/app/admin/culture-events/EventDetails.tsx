@@ -34,6 +34,9 @@ export default function EventDetails({ event, hallName }: { event: CultureEventR
     { label: "Организатор", value: <Pair kk={event.organizerKk} ru={event.organizerRu} /> },
     { label: "Возрастное ограничение", value: event.ageLimit ?? "—" },
     ...(hallName ? [{ label: "Зал", value: hallName }] : []),
+    ...(event.visitNotesKk || event.visitNotesRu
+      ? [{ label: "Особые условия посещения", value: <Pair kk={event.visitNotesKk} ru={event.visitNotesRu} /> }]
+      : []),
     {
       label: "Категории",
       value: event.categories.length > 0 ? event.categories.map((c) => EVENT_CATEGORY_LABELS[c]).join(", ") : "—",

@@ -237,6 +237,23 @@ export default function EventForm({
               <EventPriceFields key={selectedHall.id} categories={selectedHall.categories} prices={prices} />
             </div>
           )}
+
+          <div className="mt-5 pt-5 border-t border-cream-dark">
+            <BilingualField
+              kkName="visit_notes_kk"
+              ruName="visit_notes_ru"
+              label="Особые условия посещения (необязательно)"
+              defaultKk={event?.visitNotesKk}
+              defaultRu={event?.visitNotesRu}
+              textarea
+              rows={3}
+            />
+            <p className="text-xs text-ocean/40 mt-2">
+              Только то, что касается этого мероприятия, например: «Вход в зал закрывается с началом спектакля» или «Съёмка
+              запрещена». Покупатель видит это на странице мероприятия и при выборе мест. Общие правила посещения для всех
+              мероприятий правятся в разделе «Тексты сайта».
+            </p>
+          </div>
         </div>
       )}
 

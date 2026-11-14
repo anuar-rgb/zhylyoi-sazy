@@ -8,6 +8,7 @@ import { getPublicCultureEventBySlug } from "@/lib/cultureEvents";
 import { buildIcsDataUri, toEventView } from "@/lib/eventView";
 import type { Locale } from "@/i18n/routing";
 import { formatDateTime } from "@/lib/timeZone";
+import { EventVisitConditions } from "@/components/VisitRules";
 
 const content: Record<
   Locale,
@@ -80,6 +81,7 @@ export default async function EventDetailPage({
   if (!record) notFound();
 
   const event = toEventView(record, locale);
+  const visitNotes = locale === "kk" ? (record.visitNotesKk ?? record.visitNotesRu) : (record.visitNotesRu ?? record.visitNotesKk);
 
   const icsHref = buildIcsDataUri(event);
 
@@ -175,6 +177,14 @@ export default async function EventDetailPage({
                   <p key={i}>{paragraph}</p>
                 ))}
               </div>
+
+              {/* The event's own conditions and, where tickets are sold, the general rules: the offer
+                  (2.11, 6.2) says the buyer reads them on the event page before ordering. */}
+              {(visitNotes || (record.hallId && !record.cancelledAt)) && (
+                <div className="mt-8">
+                  <EventVisitConditions notes={visitNotes} locale={locale} linkRules={Boolean(record.hallId && !record.cancelledAt)} />
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-3 mt-8">
                 {record.hallId && !record.cancelledAt && (
