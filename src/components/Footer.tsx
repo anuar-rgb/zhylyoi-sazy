@@ -71,7 +71,7 @@ export default async function Footer() {
           <div>
             <h3 className="text-gold font-semibold mb-4">{t.navTitle}</h3>
             <ul className="space-y-2 text-sm">
-              {t.nav.map((link) => (
+              {t.nav.filter((link) => link.href !== "/honored" || organization?.sections.includes("honored")).map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="hover:text-gold transition-colors">
                     {link.label}

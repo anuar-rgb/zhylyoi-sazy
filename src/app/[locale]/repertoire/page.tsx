@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { institutionPageMetadata, type PageMeta } from "@/lib/pageMetadata";
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
@@ -11,22 +12,13 @@ import {
 } from "@/lib/repertoireFields";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Репертуар",
-    description:
-      "«Жылыой сазы» ансамблінің репертуары: халық әндері мен күйлері, дәстүрлі шығармалар, авторлық туындылар және әлемдік классика.",
-  },
-  ru: {
-    title: "Репертуар",
-    description:
-      "Репертуар ансамбля «Жылыой сазы»: народные песни и кюи, традиционные произведения, авторские сочинения и мировая классика.",
-  },
+const meta: PageMeta = {
+  kk: { title: "Репертуар", description: (name) => `${name}: ұжымдардың репертуары.` },
+  ru: { title: "Репертуар", description: (name) => `Репертуар творческих коллективов — ${name}.` },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  return institutionPageMetadata(meta);
 }
 
 export default async function RepertoirePage() {

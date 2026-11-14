@@ -1,29 +1,23 @@
+import { siteHasSection } from "@/lib/organization";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Даму жоспары 2026–2028",
-    description:
-      "«Жылыой сазы» ансамблінің 2026–2028 жылдарға арналған даму жоспары: репертуарды кеңейту, фестивальдерге қатысу, гастрольдер, авторлық шығармалар.",
-  },
-  ru: {
-    title: "План развития 2026–2028",
-    description:
-      "План развития ансамбля «Жылыой сазы» на 2026–2028 годы: расширение репертуара, участие в фестивалях, гастроли, авторские произведения.",
-  },
-};
-
+/** The page's own title and subtitle (Тексты сайта), as the institution wrote them. */
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  const text = await getSiteText(locale);
+  return { title: text("planPage.title"), description: text("planPage.subtitle") || undefined };
 }
 
 export default async function PlanPage() {
+  // An optional page: only the institutions that switched it on have it (Настройки → «Разделы сайта»).
+  if (!(await siteHasSection("plan"))) notFound();
   const locale = (await getLocale()) as Locale;
   const text = await getSiteText(locale);
 

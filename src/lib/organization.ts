@@ -2,6 +2,9 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { siteDomainFor } from "@/lib/siteHost";
+import { SITE_SECTIONS, type SiteSection } from "@/lib/siteSections";
+
+export { SITE_SECTIONS, SITE_SECTION_LABELS, type SiteSection } from "@/lib/siteSections";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import type { Locale } from "@/i18n/routing";
 import type { MapPoint } from "@/lib/mapPoint";
@@ -40,6 +43,11 @@ export type OrganizationRecord = {
   logoUrl: string | null;
   /** The picture messengers show for a link to the site; the logo when null. */
   shareImageUrl: string | null;
+  /** The home page's first screen picture, wide and upright (phones); null shows the site's colour. */
+  heroImageUrl: string | null;
+  heroImageMobileUrl: string | null;
+  /** The optional pages and blocks this institution shows (SiteSection). */
+  sections: SiteSection[];
   addressKk: string | null;
   addressRu: string | null;
   /** District and region in the footer («Жылыой ауданы, Атырау облысы»). */
@@ -59,7 +67,7 @@ export type OrganizationRecord = {
 };
 
 const COLUMNS =
-  "id, slug, type, domain, name, name_kk, name_ru, short_name_kk, short_name_ru, tagline_kk, tagline_ru, logo_url, share_image_url, region_label_kk, region_label_ru, address, address_kk, address_ru, phone, email, " +
+  "id, slug, type, domain, name, name_kk, name_ru, short_name_kk, short_name_ru, tagline_kk, tagline_ru, logo_url, share_image_url, region_label_kk, region_label_ru, hero_image_url, hero_image_mobile_url, sections, address, address_kk, address_ru, phone, email, " +
   "legal_name_kk, legal_name_ru, bin, director, founder_kk, founder_ru, map_lat, map_lng";
 
 function str(value: unknown): string | null {
@@ -84,6 +92,9 @@ function toRecord(row: Record<string, unknown>): OrganizationRecord {
     taglineRu: str(row.tagline_ru),
     logoUrl: str(row.logo_url),
     shareImageUrl: str(row.share_image_url),
+    heroImageUrl: str(row.hero_image_url),
+    heroImageMobileUrl: str(row.hero_image_mobile_url),
+    sections: Array.isArray(row.sections) ? row.sections.filter((s): s is SiteSection => SITE_SECTIONS.includes(s as SiteSection)) : [],
     addressKk: str(row.address_kk),
     addressRu: str(row.address_ru),
     regionLabelKk: str(row.region_label_kk),
@@ -170,4 +181,10 @@ export function siteBrand(organization: OrganizationRecord, locale: Locale): Sit
     tagline: localizedOrganization(organization, locale, "tagline") ?? "",
     logoUrl: organization.logoUrl,
   };
+}
+
+/** Whether the site's institution shows this optional page or block. */
+export async function siteHasSection(section: SiteSection): Promise<boolean> {
+  const organization = await getSiteOrganization();
+  return Boolean(organization?.sections.includes(section));
 }

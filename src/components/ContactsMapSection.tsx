@@ -13,7 +13,6 @@ const content: Record<
   {
     title: string;
     subtitle: string;
-    address: string;
     hours: string;
     lunch: string;
     contactBtn: string;
@@ -24,7 +23,6 @@ const content: Record<
   kk: {
     title: "Контакты",
     subtitle: "Бізді табу оңай",
-    address: "Атырау облысы, Жылыой ауданы,\nҚұлсары қаласы, Махамбет даңғылы, 37",
     hours: "Дүйсенбі – Жұма: 09:00 – 18:30",
     lunch: "Түскі үзіліс: 13:00 – 14:30",
     contactBtn: "Байланысу",
@@ -34,7 +32,6 @@ const content: Record<
   ru: {
     title: "Контакты",
     subtitle: "Нас легко найти",
-    address: "Атырауская область, Жылыойский район,\nг. Кульсары, проспект Махамбет, 37",
     hours: "Понедельник – Пятница: 09:00 – 18:30",
     lunch: "Обеденный перерыв: 13:00 – 14:30",
     contactBtn: "Связаться",
@@ -50,7 +47,8 @@ export default async function ContactsMapSection() {
   // the editable texts. Both reach this block from the admin panel.
   const text = await getSiteText(locale);
   const organization = await getSiteOrganization();
-  const address = (organization && localizedOrganization(organization, locale, "address")) ?? t.address;
+  // The institution's own address from its card; a dash until it is filled in, never another's.
+  const address = (organization && localizedOrganization(organization, locale, "address")) ?? "—";
   // The map point is set in Админка → Настройки; without one the block shows only the details.
   const point = organization?.mapPoint ?? null;
 

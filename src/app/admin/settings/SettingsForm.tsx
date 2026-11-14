@@ -6,6 +6,7 @@ import type { OrganizationRecord } from "@/lib/organization";
 import BilingualField from "@/components/admin/BilingualField";
 import { formatMapPoint, mapsLink } from "@/lib/mapPoint";
 import ImageField from "./ImageField";
+import { SITE_SECTIONS, SITE_SECTION_LABELS } from "@/lib/siteSections";
 import type { FormState } from "./actions";
 
 const INPUT =
@@ -108,6 +109,49 @@ export default function SettingsForm({
           Короткое название и подпись — в шапке сайта, например «Кең Жылыой» и «Жылыой аудандық мәдениет үйі». Пустое
           короткое название — покажется полное. Без логотипа в кружке будут первые буквы названия.
         </p>
+      </div>
+
+      <div className={CARD}>
+        <p className="text-sm font-semibold text-ocean mb-4">Главный экран</p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <ImageField
+            name="hero_image_url"
+            label="Картинка для компьютера (широкая)"
+            hint="Во весь первый экран главной и в блоке «О нас». Широкая, от 1920 px."
+            organizationId={organization.id}
+            defaultValue={organization.heroImageUrl}
+          />
+          <ImageField
+            name="hero_image_mobile_url"
+            label="Картинка для телефона (вертикальная)"
+            hint="Для экрана телефона. Пусто — покажется широкая."
+            organizationId={organization.id}
+            defaultValue={organization.heroImageMobileUrl}
+          />
+        </div>
+        <p className="text-xs text-ocean/40 mt-3">Без картинки первый экран будет фирменного синего цвета. Тексты на нём — в «Тексты сайта» → «Первый экран».</p>
+      </div>
+
+      <div className={CARD}>
+        <p className="text-sm font-semibold text-ocean mb-4">Разделы сайта</p>
+        <div className="space-y-3">
+          {SITE_SECTIONS.map((section) => (
+            <label key={section} className="flex items-start gap-2.5 text-sm text-ocean/80 cursor-pointer">
+              <input
+                type="checkbox"
+                name="sections"
+                value={section}
+                defaultChecked={organization.sections.includes(section)}
+                className="mt-0.5 w-4 h-4 accent-ocean shrink-0"
+              />
+              <span>
+                <span className="font-medium">{SITE_SECTION_LABELS[section].label}</span>
+                <span className="block text-xs text-ocean/50">{SITE_SECTION_LABELS[section].hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-ocean/40 mt-3">Выключенный раздел пропадает с сайта и из меню, его адрес отвечает «страница не найдена». Тексты и данные не удаляются.</p>
       </div>
 
       <div className={CARD}>

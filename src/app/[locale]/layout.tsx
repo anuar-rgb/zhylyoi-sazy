@@ -98,7 +98,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale}>
           <FeedbackProvider>
-          <Header brand={siteBrand(organization, locale)} />
+          <Header brand={siteBrand(organization, locale)} showHonored={organization.sections.includes("honored")} />
           {/* overflow-x-hidden lives here, not on html/body: that combination breaks
               position: sticky on Header (see globals.css). */}
           <div className="flex-1 flex flex-col overflow-x-hidden">

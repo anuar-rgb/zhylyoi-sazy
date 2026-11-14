@@ -70,10 +70,18 @@ function LanguageSwitcher({ pathname, className = "" }: { pathname: string; clas
 }
 
 /** The institution's name, tagline and logo come from its card (Настройки), through the layout. */
-export default function Header({ brand }: { brand: Pick<SiteBrand, "name" | "tagline" | "logoUrl"> }) {
+export default function Header({
+  brand,
+  showHonored,
+}: {
+  brand: Pick<SiteBrand, "name" | "tagline" | "logoUrl">;
+  /** The «Народный» collectives page is an optional section (Настройки → «Разделы сайта»). */
+  showHonored: boolean;
+}) {
   const pathname = usePathname();
   const locale = useLocale() as Locale;
   const t = content[locale];
+  const nav = t.nav.filter((link) => showHonored || link.href !== "/honored");
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -172,7 +180,7 @@ export default function Header({ brand }: { brand: Pick<SiteBrand, "name" | "tag
           </Link>
 
           <nav className="hidden lg:flex items-center gap-0.5">
-            {t.nav.map((link) => (
+            {nav.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -293,7 +301,7 @@ export default function Header({ brand }: { brand: Pick<SiteBrand, "name" | "tag
         </div>
 
         <nav className="flex-1 overflow-y-auto overscroll-contain px-4 py-6 space-y-1">
-          {t.nav.map((link) => (
+          {nav.map((link) => (
             <Link
               key={link.href}
               href={link.href}

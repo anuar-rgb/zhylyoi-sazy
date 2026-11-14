@@ -1,3 +1,5 @@
+import { siteHasSection } from "@/lib/organization";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
@@ -37,6 +39,8 @@ export async function generateMetadata(): Promise<Metadata> {
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
 export default async function ZhastarPage() {
+  // An optional page: only the institutions that switched it on have it (Настройки → «Разделы сайта»).
+  if (!(await siteHasSection("zhastar"))) notFound();
   const locale = (await getLocale()) as Locale;
   const t = content[locale];
 

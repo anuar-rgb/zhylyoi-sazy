@@ -1,32 +1,23 @@
+import { siteHasSection } from "@/lib/organization";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+
 import { getLocale } from "next-intl/server";
 import SectionTitle from "@/components/SectionTitle";
 import FadeIn from "@/components/FadeIn";
 import { getSiteText } from "@/lib/orgContent";
 import type { Locale } from "@/i18n/routing";
 
-// Metadata stays in the file on purpose: generateMetadata runs before the page and
-// would need its own database read, and a search engine seeing last week's wording
-// for a day costs nothing. The visible page is what an administrator edits.
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Ансамбль туралы",
-    description:
-      "«Жылыой сазы» фольклорлық ансамблі 2026 жылы «Кең Жылыой» мәдениет үйінде құрылды. 18 кәсіби өнерпаз. Қазақ халқының дәстүрлі музыкалық мұрасын насихаттау.",
-  },
-  ru: {
-    title: "Об ансамбле",
-    description:
-      "Фольклорный ансамбль «Жылыой сазы» создан в 2026 году при доме культуры «Кен Жылыой». 18 профессиональных артистов. Популяризация традиционного музыкального наследия казахского народа.",
-  },
-};
-
+/** The page's own title and subtitle (Тексты сайта), as the institution wrote them. */
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  const text = await getSiteText(locale);
+  return { title: text("aboutPage.title"), description: text("aboutPage.subtitle") || undefined };
 }
 
 export default async function AboutPage() {
+  // An optional page: only the institutions that switched it on have it (Настройки → «Разделы сайта»).
+  if (!(await siteHasSection("about"))) notFound();
   const locale = (await getLocale()) as Locale;
   const text = await getSiteText(locale);
 

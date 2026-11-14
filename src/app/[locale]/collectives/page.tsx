@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { institutionPageMetadata, type PageMeta } from "@/lib/pageMetadata";
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -8,22 +9,13 @@ import { listPublicCultureClubs, localized } from "@/lib/cultureClubs";
 import { listPublicCultureMembers } from "@/lib/cultureMembers";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Ұжымдар",
-    description:
-      "«Кең Жылыой» мәдениет үйінде жұмыс істейтін шығармашылық ұжымдар: «Жылыой сазы» фольклорлық ансамблі, «Жастар» халықтық театры, би, вокал, театр және ИЗО үйірмелері.",
-  },
-  ru: {
-    title: "Коллективы",
-    description:
-      "Творческие коллективы Дома культуры «Кен Жылыой»: фольклорный ансамбль «Жылыой сазы», народный театр «Жастар», танцевальный, вокальный, театральный и ИЗО кружки.",
-  },
+const meta: PageMeta = {
+  kk: { title: "Ұжымдар", description: (name) => `${name}: шығармашылық ұжымдар.` },
+  ru: { title: "Коллективы", description: (name) => `Творческие коллективы — ${name}.` },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  return institutionPageMetadata(meta);
 }
 
 const content = {

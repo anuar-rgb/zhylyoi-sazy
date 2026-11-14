@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getStaffIdentity } from "@/lib/profile";
-import { getSiteOrganizationId } from "@/lib/organization";
+import { getSiteOrganizationId, SITE_SECTIONS, type SiteSection } from "@/lib/organization";
 import { translateFieldPair } from "@/lib/autoTranslate";
 import { resolveMapPoint } from "@/lib/mapLinks";
 
@@ -52,6 +52,10 @@ function payload(form: FormData) {
     tagline_ru: field(form, "tagline_ru"),
     logo_url: field(form, "logo_url"),
     share_image_url: field(form, "share_image_url"),
+    hero_image_url: field(form, "hero_image_url"),
+    hero_image_mobile_url: field(form, "hero_image_mobile_url"),
+    // Only the known optional sections; the database checks the same list.
+    sections: form.getAll("sections").filter((s): s is SiteSection => SITE_SECTIONS.includes(s as SiteSection)),
   };
 }
 
@@ -104,7 +108,7 @@ export async function updateOrganization(_prev: FormState, form: FormData): Prom
 
   const organizationId = identity.organizationId ?? (await getSiteOrganizationId());
   if (!organizationId) return { error: "Не удалось определить учреждение.", saved: false };
-  for (const url of [data.logo_url, data.share_image_url]) {
+  for (const url of [data.logo_url, data.share_image_url, data.hero_image_url, data.hero_image_mobile_url]) {
     if (url && !isOwnPicture(url, organizationId)) return { error: "Картинку нужно загрузить кнопкой «Загрузить».", saved: false };
   }
 

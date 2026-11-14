@@ -28,7 +28,6 @@ const content = {
     title: "Байланыс",
     subtitle: "Бізбен хабарласыңыз",
     addressTitle: "Мекенжай",
-    address: ["Атырау облысы, Жылыой ауданы, Құлсары қаласы", "Махамбет даңғылы, 37"],
     phoneTitle: "Телефон",
     emailTitle: "Email",
     hoursTitle: "Жұмыс уақыты",
@@ -58,7 +57,6 @@ const content = {
     title: "Контакты",
     subtitle: "Свяжитесь с нами",
     addressTitle: "Адрес",
-    address: ["Атырауская область, Жылыойский район, г. Кульсары", "проспект Махамбет, 37"],
     phoneTitle: "Телефон",
     emailTitle: "Email",
     hoursTitle: "Часы работы",
@@ -97,7 +95,8 @@ export default async function ContactsPage() {
     time: text(`contacts.rehearsal${n}Time`),
   }));
   const organization = await getSiteOrganization();
-  const address = (organization && localizedOrganization(organization, locale, "address")) ?? t.address.join(", ");
+  // The institution's own address from its card; a dash until it is filled in, never another's.
+  const address = (organization && localizedOrganization(organization, locale, "address")) ?? "—";
   const requisites = organization
     ? [
         { label: t.legalFullNameLabel, value: localizedOrganization(organization, locale, "legalName") },

@@ -1,4 +1,7 @@
+import { siteHasSection } from "@/lib/organization";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+
 import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -8,22 +11,11 @@ import { getSiteText } from "@/lib/orgContent";
 import { listHonoredCollectives, localized } from "@/lib/cultureClubs";
 import type { Locale } from "@/i18n/routing";
 
-const meta: Record<Locale, Metadata> = {
-  kk: {
-    title: "Халықтық үлгілі атағы бар ұжымдар",
-    description:
-      "«Кең Жылыой» мәдениет үйінің халықтық атаққа ие шығармашылық ұжымдары: «Жылыой сазы» фольклорлық ансамблі және «Жастар» халықтық театры.",
-  },
-  ru: {
-    title: "Коллективы со званием «Народный»",
-    description:
-      "Коллективы Дома культуры «Кен Жылыой», удостоенные почётного звания «Народный»: фольклорный ансамбль «Жылыой сазы» и народный театр «Жастар».",
-  },
-};
-
+/** The page's own title and subtitle (Тексты сайта), as the institution wrote them. */
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as Locale;
-  return meta[locale];
+  const text = await getSiteText(locale);
+  return { title: text("honoredPage.title"), description: text("honoredPage.subtitle") || undefined };
 }
 
 const labels = {
@@ -32,6 +24,8 @@ const labels = {
 } satisfies Record<Locale, unknown>;
 
 export default async function HonoredPage() {
+  // An optional page: only the institutions that switched it on have it (Настройки → «Разделы сайта»).
+  if (!(await siteHasSection("honored"))) notFound();
   const locale = (await getLocale()) as Locale;
   const text = await getSiteText(locale);
   const t = labels[locale];

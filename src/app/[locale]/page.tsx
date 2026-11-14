@@ -6,8 +6,11 @@ import GalleryPreviewSection from "@/components/GalleryPreviewSection";
 import AchievementsSection from "@/components/AchievementsSection";
 import ContactsMapSection from "@/components/ContactsMapSection";
 import FoundersSection from "@/components/FoundersSection";
+import { siteHasSection } from "@/lib/organization";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // The photo and video block shows «Кең Жылыой»'s own photos: an optional block (Настройки → «Разделы сайта»).
+  const showGallery = await siteHasSection("gallery");
   return (
     <>
       {/* Hero */}
@@ -23,7 +26,7 @@ export default function HomePage() {
       <NewsSection />
 
       {/* Бейне және фотогалерея */}
-      <GalleryPreviewSection />
+      {showGallery && <GalleryPreviewSection />}
 
       {/* О нас / Достижения */}
       <AchievementsSection />
