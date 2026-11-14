@@ -38,3 +38,14 @@ export function siteDomainFor(host: string | null | undefined, fallback: string)
   if (!normalized || isLocalHost(normalized)) return normalizeHost(fallback);
   return normalized;
 }
+
+/**
+ * A domain as typed by a person (with https://, a path, capitals, www.) as it is stored in
+ * organizations.domain, or null when it is not a domain name.
+ */
+export function cleanDomain(input: string): string | null {
+  const raw = input.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const domain = normalizeHost(raw);
+  if (!domain) return null;
+  return /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(domain) ? domain : null;
+}

@@ -2,9 +2,8 @@ import { getStaffIdentity } from "@/lib/profile";
 import { getSiteOrganization } from "@/lib/organization";
 import SettingsForm from "./SettingsForm";
 import { updateOrganization } from "./actions";
-import { MailSettingsEditor, MailSettingsStatus } from "./MailSettings";
+import { MailSettingsStatus } from "./MailSettings";
 import { getMailStatus } from "@/lib/mailSettings";
-import { createClient } from "@/lib/supabase/server";
 
 const CARD = "bg-white rounded-3xl border border-cream-dark shadow-sm";
 
@@ -44,12 +43,11 @@ export default async function SettingsPage() {
   // The mailbox is set up by the platform's owner; the institution's staff see only whether it works.
   const mailStatus = await getMailStatus(organization.id);
   const isPlatformAdmin = identity.role === "platform_admin";
-  const adminEmail = isPlatformAdmin ? ((await (await createClient()).auth.getUser()).data.user?.email ?? "") : "";
 
   return (
     <div className="space-y-5">
       <SettingsForm organization={organization} action={updateOrganization} />
-      {isPlatformAdmin ? <MailSettingsEditor status={mailStatus} adminEmail={adminEmail} /> : <MailSettingsStatus status={mailStatus} />}
+      <MailSettingsStatus status={mailStatus} platformHref={isPlatformAdmin ? `/admin/platform/${organization.id}` : undefined} />
     </div>
   );
 }

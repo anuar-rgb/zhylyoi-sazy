@@ -21,13 +21,17 @@ const items = [
   { href: "/admin/settings", label: "Настройки" },
 ];
 
-export default function AdminNav({ newApplications = 0 }: { newApplications?: number }) {
+/** «Платформа»: the platform owner's own section, after the institution's items. */
+const PLATFORM_ITEM = { href: "/admin/platform", label: "Платформа" };
+
+export default function AdminNav({ newApplications = 0, isPlatformAdmin = false }: { newApplications?: number; isPlatformAdmin?: boolean }) {
   const pathname = usePathname();
+  const shown = isPlatformAdmin ? [...items, PLATFORM_ITEM] : items;
 
   return (
     <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0">
-      {items.map((item) => {
-        const active = pathname === item.href;
+      {shown.map((item) => {
+        const active = pathname === item.href || (item.href === PLATFORM_ITEM.href && pathname.startsWith(`${PLATFORM_ITEM.href}/`));
         // The count moved onto Дашборд with the Заявки item it used to sit on.
         // The point of it is to be seen while working on something else, and the
         // dashboard is now the only way through to the applications.

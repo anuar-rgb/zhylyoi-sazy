@@ -108,7 +108,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {/* min-w-0: without it the grid item's default min-width:auto stretches to the
               nav's full content width, so the nav's horizontal scroll never engages on mobile. */}
           <aside className="min-w-0 lg:sticky lg:top-8 lg:self-start">
-            <AdminNav newApplications={newApplications} />
+            <AdminNav newApplications={newApplications} isPlatformAdmin={identity?.role === "platform_admin"} />
           </aside>
           <main className="min-w-0">{children}</main>
         </div>
