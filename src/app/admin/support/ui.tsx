@@ -16,6 +16,7 @@ import {
   createSupportRequestAction,
   deleteSupportRequestAction,
   sendSupportMessageAction,
+  supportPickerDiagAction,
   supportUploadSlotsAction,
 } from "./actions";
 
@@ -94,11 +95,53 @@ function Thumb({ file, onRemove }: { file: File; onRemove: () => void }) {
 
 /**
  * The file field sits inside its label rather than hidden and clicked from code: a tap on the label
- * opens the phone's picker natively, which some Android browsers did not do reliably the other way.
- * `image/*` lets the gallery offer every photo; the type is checked after shrinking.
+ * opens the phone's picker natively. It is always in the page (only the label hides at the limit),
+ * so the native listeners below stay attached.
  */
 function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: File[]) => void }) {
   const id = useId();
+  const input = useRef<HTMLInputElement>(null);
+  // The latest list and setter, for the native listeners (attached once).
+  const latest = useRef({ files, onChange });
+  useEffect(() => {
+    latest.current = { files, onChange };
+  });
+
+  // Listened to natively on both `change` and `input`: some phone browsers report a pick with only
+  // one of them. Desktop browsers send both for one pick, so a pick already taken is skipped.
+  useEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    let lastPick = "";
+    const take = (event: Event) => {
+      const picked = Array.from(el.files ?? []);
+      void supportPickerDiagAction({
+        event: event.type,
+        count: picked.length,
+        files: picked.map((f) => ({ type: f.type, size: f.size })),
+        ua: navigator.userAgent,
+      }).catch(() => {});
+      if (!picked.length) return;
+      const signature = picked.map((f) => `${f.name}:${f.size}:${f.lastModified}`).join("|");
+      if (signature === lastPick) return;
+      lastPick = signature;
+      const { files: current, onChange: set } = latest.current;
+      set([...current, ...picked].slice(0, SUPPORT_MAX_IMAGES));
+      // Emptied after both events of this pick, so the same photo can be chosen again later.
+      window.setTimeout(() => {
+        el.value = "";
+        lastPick = "";
+      }, 500);
+    };
+    el.addEventListener("change", take);
+    el.addEventListener("input", take);
+    return () => {
+      el.removeEventListener("change", take);
+      el.removeEventListener("input", take);
+    };
+  }, []);
+
+  const full = files.length >= SUPPORT_MAX_IMAGES;
   return (
     <div>
       {files.length > 0 && (
@@ -108,27 +151,17 @@ function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: Fil
           ))}
         </ul>
       )}
-      {files.length < SUPPORT_MAX_IMAGES && (
-        <label
-          htmlFor={id}
-          className="inline-block cursor-pointer px-4 py-2 rounded-full border border-cream-dark bg-white text-sm font-semibold text-ocean hover:bg-cream/50 focus-within:ring-2 focus-within:ring-gold"
-        >
-          Прикрепить скриншот
-          <input
-            id={id}
-            type="file"
-            accept="image/*"
-            multiple
-            className="sr-only"
-            onChange={(e) => {
-              const picked = Array.from(e.currentTarget.files ?? []);
-              e.currentTarget.value = "";
-              if (picked.length) onChange([...files, ...picked].slice(0, SUPPORT_MAX_IMAGES));
-            }}
-          />
-        </label>
-      )}
-      <p className="text-xs text-ocean/50 mt-1.5">До {SUPPORT_MAX_IMAGES} картинок. Мы уменьшим их перед отправкой.</p>
+      <label
+        htmlFor={id}
+        className={`${full ? "hidden" : "inline-block"} cursor-pointer px-4 py-2 rounded-full border border-cream-dark bg-white text-sm font-semibold text-ocean hover:bg-cream/50 focus-within:ring-2 focus-within:ring-gold`}
+      >
+        Прикрепить скриншот
+        <input ref={input} id={id} type="file" accept="image/*" className="sr-only" disabled={full} />
+      </label>
+      <p className="text-xs text-ocean/50 mt-1.5">
+        {files.length ? `Выбрано: ${files.length} из ${SUPPORT_MAX_IMAGES}.` : `До ${SUPPORT_MAX_IMAGES} картинок, по одной.`} Мы
+        уменьшим их перед отправкой.
+      </p>
     </div>
   );
 }

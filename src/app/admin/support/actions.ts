@@ -60,3 +60,15 @@ export async function deleteSupportRequestAction(id: string): Promise<SupportRes
   if (result.ok) refresh();
   return result;
 }
+
+/**
+ * TEMPORARY (2026-11-14): what a phone's file picker hands the page, to find why a picked photo did
+ * not show on one phone. Logs only counts, types, sizes and the browser line, never a file or a name.
+ * Remove once found.
+ */
+export async function supportPickerDiagAction(input: { event: string; count: number; files: { type: string; size: number }[]; ua: string }) {
+  const ctx = await supportContext();
+  if (!ctx) return;
+  const files = Array.isArray(input.files) ? input.files.slice(0, 5).map((f) => `${String(f.type).slice(0, 40) || "?"}/${Number(f.size) || 0}`) : [];
+  console.log(`[support-picker] side=${ctx.side} event=${String(input.event).slice(0, 10)} count=${Number(input.count) || 0} files=${files.join(",")} ua=${String(input.ua).slice(0, 200)}`);
+}
