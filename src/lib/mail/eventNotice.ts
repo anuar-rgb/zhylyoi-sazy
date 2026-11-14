@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderTicketsPdf } from "@/lib/tickets/render";
 import { INSTITUTION_TIME_ZONE } from "@/lib/timeZone";
-import { mailBody, mailConfig, orderLink } from "./config";
+import { mailBody, mailConfigFor, orderLink } from "./config";
 import type { TicketEmailResult } from "./tickets";
 
 /**
@@ -67,17 +67,18 @@ const text = (value: unknown) => (typeof value === "string" && value.trim() ? va
 
 /** Sends one notice about one booking's event, once. Never throws. */
 export async function sendEventNotice(bookingId: string, kind: EventNoticeKind): Promise<TicketEmailResult> {
-  const cfg = mailConfig();
-  if (!cfg) return "not_configured";
   const admin = createAdminClient();
   if (!admin) return "not_configured";
 
   const { data: booking } = await admin
     .from("bookings")
-    .select("id, status, buyer_email, buyer_locale, access_token, public_order_id, total_amount, event_id")
+    .select("id, status, buyer_email, buyer_locale, access_token, public_order_id, total_amount, event_id, organization_id")
     .eq("id", bookingId)
     .maybeSingle();
   if (!booking?.buyer_email) return "skipped";
+  // The booking's institution's own mailbox; nothing is claimed without one.
+  const cfg = await mailConfigFor(booking.organization_id as string | null);
+  if (!cfg) return "not_configured";
   const { data: event } = await admin
     .from("culture_events")
     .select("title_kk, title_ru, event_date, cancelled_at, cancel_reason, moved_from")
@@ -139,7 +140,7 @@ export async function sendEventNotice(bookingId: string, kind: EventNoticeKind):
     }
 
     await nodemailer.createTransport(cfg.transport).sendMail({
-      from: { name: "Кең Жылыой", address: cfg.from },
+      from: { name: cfg.fromName[lang], address: cfg.from },
       to: String(booking.buyer_email),
       replyTo: cfg.replyTo,
       subject,

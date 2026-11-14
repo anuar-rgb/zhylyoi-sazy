@@ -2,7 +2,7 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CONTROLLER_ROLE } from "@/lib/profile";
-import { mailBody, mailConfig } from "@/lib/mail/config";
+import { mailBody, mailConfigFor } from "@/lib/mail/config";
 
 /**
  * Controllers of one institution: accounts that only check tickets at /door.
@@ -49,9 +49,9 @@ async function findUserByEmail(admin: NonNullable<ReturnType<typeof createAdminC
   return null;
 }
 
-/** Emails the person a link to choose their password. */
-async function sendInvite(email: string, name: string): Promise<boolean> {
-  const cfg = mailConfig();
+/** Emails the person a link to choose their password, from their institution's own mailbox and site. */
+async function sendInvite(organizationId: string, email: string, name: string): Promise<boolean> {
+  const cfg = await mailConfigFor(organizationId);
   const admin = createAdminClient();
   if (!cfg || !admin) return false;
   const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
@@ -61,7 +61,7 @@ async function sendInvite(email: string, name: string): Promise<boolean> {
   const body = mailBody(
     [
       [name ? `Здравствуйте, ${name}!` : "Здравствуйте!"],
-      ["Вам открыт доступ к проверке билетов на входе в зал Дома культуры «Кең Жылыой»."],
+      [`Вам открыт доступ к проверке билетов на входе в зал. Учреждение: ${cfg.institutionRu}.`],
       ["Перейдите по ссылке и придумайте пароль. Ссылка действует сутки и только один раз."],
       [`Потом входите на ${cfg.siteUrl}/login: почта ${email} и ваш пароль.`],
     ],
@@ -69,7 +69,7 @@ async function sendInvite(email: string, name: string): Promise<boolean> {
   );
   try {
     await nodemailer.createTransport(cfg.transport).sendMail({
-      from: { name: "Кең Жылыой", address: cfg.from },
+      from: { name: cfg.fromName.ru, address: cfg.from },
       to: email,
       replyTo: cfg.replyTo,
       subject: "Доступ к проверке билетов",
@@ -113,7 +113,7 @@ export async function addController(organizationId: string, name: string, rawEma
     .insert({ id: user.id, full_name: fullName, role: CONTROLLER_ROLE, organization_id: organizationId, is_active: true });
   if (error) return { ok: false, message: "Не удалось сохранить контролёра." };
 
-  const sent = await sendInvite(email, fullName);
+  const sent = await sendInvite(organizationId, email, fullName);
   return sent
     ? { ok: true, message: `Контролёр добавлен. На ${email} отправлено письмо со ссылкой для пароля.` }
     : { ok: true, message: "Контролёр добавлен, но письмо не отправилось. Нажмите «Отправить ссылку ещё раз»." };
@@ -134,7 +134,7 @@ export async function resendInvite(organizationId: string, userId: string): Prom
   const { data } = await found.admin.auth.admin.getUserById(userId);
   const email = data?.user?.email;
   if (!email) return { ok: false, message: "У контролёра нет почты." };
-  return (await sendInvite(email, String(found.profile.full_name ?? "")))
+  return (await sendInvite(organizationId, email, String(found.profile.full_name ?? "")))
     ? { ok: true, message: `Письмо со ссылкой отправлено на ${email}.` }
     : { ok: false, message: "Письмо не отправилось. Попробуйте позже." };
 }

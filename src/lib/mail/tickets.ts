@@ -2,20 +2,17 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderTicketsPdf } from "@/lib/tickets/render";
-import { escapeHtml as esc, mailConfig, mailConfigured, orderLink } from "./config";
+import { escapeHtml as esc, mailConfigFor, orderLink } from "./config";
 
 /**
  * The email with the buyer's tickets, sent once the order is confirmed: a link to the order page
  * and the tickets as a PDF, in the language the order was made in.
  *
- * Sent through the institution's own mailbox (SMTP_* in the server's environment; on this site the
- * ps.kz mail hosting in Kazakhstan). A booking is claimed with one UPDATE ... WHERE
- * tickets_emailed_at IS NULL before sending, so two confirmations never send two emails; a failed
- * send releases the claim and the payment reconciliation tries again later.
+ * Sent through the booking's institution's own mailbox (organization_mail_settings, mail/config.ts).
+ * A booking is claimed with one UPDATE ... WHERE tickets_emailed_at IS NULL before sending, so two
+ * confirmations never send two emails; a failed send releases the claim and the payment
+ * reconciliation tries again later.
  */
-const config = mailConfig;
-
-export { mailConfigured };
 
 const TEXT = {
   ru: {
@@ -48,10 +45,13 @@ export type TicketEmailResult = "sent" | "skipped" | "not_configured" | "failed"
 
 /** Sends the tickets of one booking to its buyer, once. Never throws. */
 export async function sendTicketsEmail(bookingId: string): Promise<TicketEmailResult> {
-  const cfg = config();
-  if (!cfg) return "not_configured";
   const admin = createAdminClient();
   if (!admin) return "not_configured";
+  // Whose mailbox: the booking's institution's. Without one set up nothing is claimed, so the
+  // reconciliation sends it once the mailbox is there.
+  const { data: owner } = await admin.from("bookings").select("organization_id").eq("id", bookingId).maybeSingle();
+  const cfg = await mailConfigFor(owner?.organization_id as string | undefined);
+  if (!cfg) return "not_configured";
 
   const { data: claimed } = await admin
     .from("bookings")
@@ -82,7 +82,7 @@ export async function sendTicketsEmail(bookingId: string): Promise<TicketEmailRe
     ];
 
     await nodemailer.createTransport(cfg.transport).sendMail({
-      from: { name: rendered.organization || "Кең Жылыой", address: cfg.from },
+      from: { name: cfg.fromName[lang], address: cfg.from },
       to: String(claimed.buyer_email),
       replyTo: cfg.replyTo,
       subject: t.subject(rendered.orderNumber),
@@ -108,7 +108,6 @@ export async function sendTicketsEmail(bookingId: string): Promise<TicketEmailRe
  */
 export async function retryTicketEmails(limit = 20): Promise<{ sent: number; failed: number }> {
   const result = { sent: 0, failed: 0 };
-  if (!mailConfigured()) return result;
   const admin = createAdminClient();
   if (!admin) return result;
   const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();

@@ -112,8 +112,9 @@ export async function buildTicketsPdf(
   const regular = await pdf.embedFont(fonts.regular, { subset: true });
   const bold = await pdf.embedFont(fonts.bold, { subset: true });
   pdf.setTitle(`${data.eventTitle} · ${data.orderNumber}`);
-  pdf.setProducer("Кең Жылыой");
-  pdf.setCreator("Кең Жылыой");
+  // The institution that issued the tickets, as the PDF's producer.
+  pdf.setProducer(data.organization);
+  pdf.setCreator(data.organization);
 
   for (const ticket of data.tickets) {
     const page = pdf.addPage([W, H]);

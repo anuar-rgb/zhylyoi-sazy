@@ -1,25 +1,69 @@
 import "server-only";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * The institution's mailbox, from the server's environment (SMTP_*; on this site the ps.kz mail
- * hosting in Kazakhstan). Null when mail is not set up, and then no email is attempted.
+ * Where one institution's emails go out from: its own mailbox (organization_mail_settings, entered
+ * by the platform owner), with its own name as the sender and links to its own site.
+ *
+ * Null when the institution has no mailbox set up (or the server has no service key): then no email
+ * is attempted, exactly as before when the server had no mailbox. Never another institution's
+ * mailbox: a letter from the wrong house of culture is worse than none.
  */
-export function mailConfig() {
-  const host = process.env.SMTP_HOST?.trim();
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASSWORD;
-  if (!host || !user || !pass) return null;
-  const port = Number(process.env.SMTP_PORT ?? 465) || 465;
+export type MailConfig = {
+  transport: { host: string; port: number; secure: boolean; auth: { user: string; pass: string } };
+  /** The sender's address. */
+  from: string;
+  /** The sender's name in each language: the institution's short name. */
+  fromName: { kk: string; ru: string };
+  /** The institution's full name in Russian, for staff letters. */
+  institutionRu: string;
+  replyTo: string | undefined;
+  /** https://its-domain, no trailing slash. */
+  siteUrl: string;
+};
+
+const text = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim() : null);
+
+export async function mailConfigFor(organizationId: string | null | undefined): Promise<MailConfig | null> {
+  if (!organizationId) return null;
+  const admin = createAdminClient();
+  if (!admin) return null;
+
+  const [{ data: settings }, { data: organization }] = await Promise.all([
+    admin
+      .from("organization_mail_settings")
+      .select("smtp_host, smtp_port, smtp_user, smtp_password, from_address, reply_to")
+      .eq("organization_id", organizationId)
+      .maybeSingle(),
+    admin
+      .from("organizations")
+      .select("domain, name, name_kk, name_ru, short_name_kk, short_name_ru")
+      .eq("id", organizationId)
+      .maybeSingle(),
+  ]);
+  if (!settings || !organization) return null;
+
+  const host = text(settings.smtp_host);
+  const user = text(settings.smtp_user);
+  const pass = typeof settings.smtp_password === "string" ? settings.smtp_password : null;
+  const domain = text(organization.domain);
+  // A mailbox without a site has nowhere to link to: the letters would carry dead links.
+  if (!host || !user || !pass || !domain) return null;
+
+  const port = Number(settings.smtp_port) || 465;
+  const fullKk = text(organization.name_kk) ?? text(organization.name_ru) ?? text(organization.name) ?? "";
+  const fullRu = text(organization.name_ru) ?? text(organization.name_kk) ?? text(organization.name) ?? "";
   return {
     transport: { host, port, secure: port === 465, auth: { user, pass } },
-    from: user,
-    replyTo: process.env.MAIL_REPLY_TO?.trim() || undefined,
-    siteUrl: (process.env.SITE_URL ?? "https://dk-zhylyoi.kz").replace(/\/$/, ""),
+    from: text(settings.from_address) ?? user,
+    fromName: {
+      kk: text(organization.short_name_kk) ?? text(organization.short_name_ru) ?? fullKk,
+      ru: text(organization.short_name_ru) ?? text(organization.short_name_kk) ?? fullRu,
+    },
+    institutionRu: fullRu,
+    replyTo: text(settings.reply_to) ?? undefined,
+    siteUrl: `https://${domain}`,
   };
-}
-
-export function mailConfigured(): boolean {
-  return mailConfig() !== null;
 }
 
 export const escapeHtml = (s: string) =>
