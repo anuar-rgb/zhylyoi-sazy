@@ -19,23 +19,37 @@ const items = [
   { href: "/admin/content", label: "Тексты сайта" },
   { href: "/admin/tickets", label: "Билеты" },
   { href: "/admin/settings", label: "Настройки" },
+  { href: "/admin/support", label: "Поддержка" },
 ];
 
 /** The platform owner's whole panel. They do not work on any institution's content. */
 const INSTITUTIONS_HREF = "/admin/platform";
 const STATS_HREF = "/admin/platform/stats";
+const SUPPORT_HREF = "/admin/platform/support";
 const platformItems = [
   { href: INSTITUTIONS_HREF, label: "Учреждения" },
   { href: STATS_HREF, label: "Статистика" },
+  { href: SUPPORT_HREF, label: "Поддержка" },
 ];
 
 function isActive(href: string, pathname: string): boolean {
   if (pathname === href) return true;
+  // A request's own page belongs to its «Поддержка».
+  if ((href === SUPPORT_HREF || href === "/admin/support") && pathname.startsWith(`${href}/`)) return true;
   // An institution's own page (/admin/platform/<id>, /new) belongs to «Учреждения».
-  return href === INSTITUTIONS_HREF && pathname.startsWith(`${INSTITUTIONS_HREF}/`) && !pathname.startsWith(STATS_HREF);
+  return href === INSTITUTIONS_HREF && pathname.startsWith(`${INSTITUTIONS_HREF}/`) && !pathname.startsWith(STATS_HREF) && !pathname.startsWith(SUPPORT_HREF);
 }
 
-export default function AdminNav({ newApplications = 0, isPlatformAdmin = false }: { newApplications?: number; isPlatformAdmin?: boolean }) {
+export default function AdminNav({
+  newApplications = 0,
+  supportUnread = 0,
+  isPlatformAdmin = false,
+}: {
+  newApplications?: number;
+  /** Support requests with something new for this side. */
+  supportUnread?: number;
+  isPlatformAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const shown = isPlatformAdmin ? platformItems : items;
 
@@ -46,7 +60,8 @@ export default function AdminNav({ newApplications = 0, isPlatformAdmin = false 
         // The count moved onto Дашборд with the Заявки item it used to sit on.
         // The point of it is to be seen while working on something else, and the
         // dashboard is now the only way through to the applications.
-        const badge = item.href === "/admin" ? newApplications : 0;
+        const badge =
+          item.href === "/admin" ? newApplications : item.href === "/admin/support" || item.href === SUPPORT_HREF ? supportUnread : 0;
 
         return (
           <Link
@@ -63,7 +78,7 @@ export default function AdminNav({ newApplications = 0, isPlatformAdmin = false 
                  circle with a number in it means nothing to a screen reader. */
               <span
                 className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold leading-none"
-                aria-label={`новых заявок: ${badge}`}
+                aria-label={item.href === "/admin" ? `новых заявок: ${badge}` : `новых сообщений: ${badge}`}
               >
                 {badge > 99 ? "99+" : badge}
               </span>

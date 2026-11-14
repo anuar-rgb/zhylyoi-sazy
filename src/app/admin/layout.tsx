@@ -5,6 +5,7 @@ import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { CONTROLLER_ROLE, getStaffIdentity } from "@/lib/profile";
 import { countUnseenApplications } from "@/lib/applications";
+import { countUnreadSupport, supportContext } from "@/lib/support";
 import { getSiteOrganization, siteBrand } from "@/lib/organization";
 import { staffAreaMetadata } from "@/lib/staffAreaMetadata";
 import FeedbackProvider from "@/components/feedback/FeedbackProvider";
@@ -36,7 +37,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // In the layout rather than on the applications page: the point of the badge is
   // that it is seen while working on something else. RLS scopes the count to what
   // this person may read, so nobody is told about another institution's applications.
-  const [identity, newApplications] = await Promise.all([getStaffIdentity(), countUnseenApplications()]);
+  const [identity, newApplications, support] = await Promise.all([getStaffIdentity(), countUnseenApplications(), supportContext()]);
+  const supportUnread = support ? await countUnreadSupport(support) : 0;
   // A controller works at the door only; nothing of the staff area is theirs.
   if (identity?.role === CONTROLLER_ROLE) redirect("/door");
 
@@ -119,7 +121,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {/* min-w-0: without it the grid item's default min-width:auto stretches to the
               nav's full content width, so the nav's horizontal scroll never engages on mobile. */}
           <aside className="min-w-0 lg:sticky lg:top-8 lg:self-start">
-            <AdminNav newApplications={newApplications} isPlatformAdmin={isPlatformAdmin} />
+            <AdminNav newApplications={newApplications} supportUnread={supportUnread} isPlatformAdmin={isPlatformAdmin} />
           </aside>
           <main className="min-w-0">{children}</main>
         </div>
