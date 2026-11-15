@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { LEGAL_DOCS, formatEdition, parseLegalText, type LegalDocId } from "@/lib/legalDocs";
 import type { Locale } from "@/i18n/routing";
+import BackHomeLink from "@/components/BackHomeLink";
 
 const EMAIL = /([\w.+-]+@[\w-]+(?:\.[\w-]+)+)/;
 
@@ -34,6 +35,7 @@ export default function LegalDocument({ id, locale }: { id: LegalDocId; locale: 
   return (
     <section className="py-10 sm:py-14">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <BackHomeLink locale={locale} />
         {locale === "kk" && (
           <p className="mb-6 text-sm text-ocean bg-gold/10 border border-gold/30 rounded-2xl px-4 py-3">
             Құжаттың қазақ тіліндегі нұсқасы дайындалуда. Төменде орыс тіліндегі мәтіні берілген.
