@@ -16,7 +16,6 @@ import {
   createSupportRequestAction,
   deleteSupportRequestAction,
   sendSupportMessageAction,
-  supportPickerDiagAction,
   supportUploadSlotsAction,
 } from "./actions";
 
@@ -113,9 +112,8 @@ function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: Fil
     const el = input.current;
     if (!el) return;
     let lastPick = "";
-    const take = (event: Event) => {
+    const take = () => {
       const picked = Array.from(el.files ?? []);
-      diag(event.type, picked);
       pickerOpenUntil = 0;
       if (!picked.length) return;
       const signature = picked.map((f) => `${f.name}:${f.size}:${f.lastModified}`).join("|");
@@ -131,25 +129,14 @@ function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: Fil
     };
     const opened = () => {
       pickerOpenUntil = Date.now() + 60_000;
-      diag("click");
     };
-    const shown = () => diag(`visible-${document.visibilityState}`, Array.from(el.files ?? []));
-    const failed = (e: ErrorEvent) => diag("error", [], String(e.message));
-    const rejected = (e: PromiseRejectionEvent) => diag("rejection", [], String(e.reason));
-    diag("mount");
     el.addEventListener("change", take);
     el.addEventListener("input", take);
     el.addEventListener("click", opened);
-    document.addEventListener("visibilitychange", shown);
-    window.addEventListener("error", failed);
-    window.addEventListener("unhandledrejection", rejected);
     return () => {
       el.removeEventListener("change", take);
       el.removeEventListener("input", take);
       el.removeEventListener("click", opened);
-      document.removeEventListener("visibilitychange", shown);
-      window.removeEventListener("error", failed);
-      window.removeEventListener("unhandledrejection", rejected);
     };
   }, []);
 
@@ -168,10 +155,10 @@ function ImagePicker({ files, onChange }: { files: File[]; onChange: (files: Fil
         className={`${full ? "hidden" : "inline-block"} cursor-pointer px-4 py-2 rounded-full border border-cream-dark bg-white text-sm font-semibold text-ocean hover:bg-cream/50 focus-within:ring-2 focus-within:ring-gold`}
       >
         Прикрепить скриншот
-        <input ref={input} id={id} type="file" accept="image/*" className="sr-only" disabled={full} />
+        <input ref={input} id={id} type="file" accept="image/*" multiple className="sr-only" disabled={full} />
       </label>
       <p className="text-xs text-ocean/50 mt-1.5">
-        {files.length ? `Выбрано: ${files.length} из ${SUPPORT_MAX_IMAGES}.` : `До ${SUPPORT_MAX_IMAGES} картинок, по одной.`} Мы
+        {files.length ? `Выбрано: ${files.length} из ${SUPPORT_MAX_IMAGES}.` : `До ${SUPPORT_MAX_IMAGES} картинок.`} Мы
         уменьшим их перед отправкой.
       </p>
     </div>
@@ -200,16 +187,6 @@ function useHoldRefresh(active: boolean) {
       composing.delete(token);
     };
   }, [active]);
-}
-
-/** TEMPORARY: one line to the server log about the photo picker on a phone (see actions.ts). */
-function diag(event: string, picked: File[] = [], extra = "") {
-  void supportPickerDiagAction({
-    event: extra ? `${event}:${extra}`.slice(0, 120) : event,
-    count: picked.length,
-    files: picked.map((f) => ({ type: f.type, size: f.size })),
-    ua: navigator.userAgent,
-  }).catch(() => {});
 }
 
 /**
