@@ -4,6 +4,8 @@ import { getSiteOrganization, localizedOrganization, siteBrand } from "@/lib/org
 import OrgLogo from "@/components/OrgLogo";
 import { telHref } from "@/lib/contactLinks";
 import { LEGAL_DOCS } from "@/lib/legalDocs";
+import { VISIT_RULES_TEXT } from "@/components/VisitRules";
+import { REFUND_RULES_TEXT } from "@/lib/refundRules";
 import type { Locale } from "@/i18n/routing";
 
 const content: Record<
@@ -114,6 +116,17 @@ export default async function Footer() {
               </Link>
             </li>
           ))}
+          {/* The institution's own rules, accepted with the offer at purchase. */}
+          <li>
+            <Link href="/rules" className="hover:text-gold transition-colors">
+              {VISIT_RULES_TEXT[locale].title}
+            </Link>
+          </li>
+          <li>
+            <Link href="/refund" className="hover:text-gold transition-colors">
+              {REFUND_RULES_TEXT[locale].title}
+            </Link>
+          </li>
         </ul>
 
         <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-cream/40">
