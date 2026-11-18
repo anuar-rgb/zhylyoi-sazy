@@ -65,8 +65,12 @@ describe("Kazakh texts", () => {
     for (const doc of Object.values(LEGAL_DOCS)) {
       if (!doc.textKk) continue;
       expect(points(doc.textKk)).toEqual(points(doc.text));
-      const sections = (t: string) => parseLegalText(t).blocks.filter((b) => b.type === "section").length;
-      expect(sections(doc.textKk)).toBe(sections(doc.text));
+      // Headings, clauses, lists and defined terms line up block for block, so the pages read alike.
+      const shape = (t: string) => {
+        const parsed = parseLegalText(t);
+        return [parsed.title.length, ...parsed.blocks.map((b) => b.type + (b.type === "list" ? b.items.length : "") + (b.type === "paragraph" && b.term ? "*" : ""))];
+      };
+      expect(shape(doc.textKk)).toEqual(shape(doc.text));
     }
   });
 

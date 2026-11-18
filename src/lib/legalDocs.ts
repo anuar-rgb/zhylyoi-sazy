@@ -1,6 +1,7 @@
 import offer from "@/content/legal/offer";
 import terms from "@/content/legal/terms";
 import privacy from "@/content/legal/privacy";
+import offerKk from "@/content/legal/offer.kk";
 import termsKk from "@/content/legal/terms.kk";
 import privacyKk from "@/content/legal/privacy.kk";
 import type { Locale } from "@/i18n/routing";
@@ -35,6 +36,7 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
     version: "2026-11-14",
     title: { kk: "Жария оферта", ru: "Публичная оферта" },
     text: offer,
+    textKk: offerKk,
   },
   terms: {
     id: "terms",
