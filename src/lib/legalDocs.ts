@@ -1,11 +1,14 @@
 import offer from "@/content/legal/offer";
 import terms from "@/content/legal/terms";
 import privacy from "@/content/legal/privacy";
+import termsKk from "@/content/legal/terms.kk";
+import privacyKk from "@/content/legal/privacy.kk";
 import type { Locale } from "@/i18n/routing";
 
 /**
  * The platform's public documents: the ticket offer, the terms of use and the privacy policy of
- * ИП БАЙТАН, the platform's operator. One text, in Russian, for the whole platform.
+ * ИП БАЙТАН, the platform's operator. One text for the whole platform, in Russian and, where the
+ * lawyer's translation exists, in Kazakh (the same edition: both carry one version).
  *
  * `version` is the date of the edition. It is stored with every order (the offer and the policy) and
  * every club application (the policy), so it can be shown later which text a person accepted. A new
@@ -21,6 +24,8 @@ export type LegalDoc = {
   version: string;
   title: Record<Locale, string>;
   text: string;
+  /** The Kazakh text of the same edition; without it the Kazakh site shows the Russian one. */
+  textKk?: string;
 };
 
 export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
@@ -35,8 +40,9 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
     id: "terms",
     href: "/terms",
     version: "2026-11-14",
-    title: { kk: "Пайдаланушы келісімі", ru: "Пользовательское соглашение" },
+    title: { kk: "Пайдаланушылық келісім", ru: "Пользовательское соглашение" },
     text: terms,
+    textKk: termsKk,
   },
   privacy: {
     id: "privacy",
@@ -44,6 +50,7 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
     version: "2026-11-14",
     title: { kk: "Құпиялылық саясаты", ru: "Политика конфиденциальности" },
     text: privacy,
+    textKk: privacyKk,
   },
 };
 

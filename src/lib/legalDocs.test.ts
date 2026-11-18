@@ -57,3 +57,23 @@ describe("formatEdition", () => {
     expect(formatEdition("2026-11-13", "kk")).toBe("2026 жылғы 13 қараша");
   });
 });
+
+describe("Kazakh texts", () => {
+  const points = (text: string) => text.split("\n").map((l) => /^(\d+(?:\.\d+)+)\.\s/.exec(l.trim())?.[1]).filter(Boolean);
+
+  it("follow the Russian edition point for point", () => {
+    for (const doc of Object.values(LEGAL_DOCS)) {
+      if (!doc.textKk) continue;
+      expect(points(doc.textKk)).toEqual(points(doc.text));
+      const sections = (t: string) => parseLegalText(t).blocks.filter((b) => b.type === "section").length;
+      expect(sections(doc.textKk)).toBe(sections(doc.text));
+    }
+  });
+
+  it("carry none of the details removed from the Russian text", () => {
+    for (const doc of Object.values(LEGAL_DOCS)) {
+      if (!doc.textKk) continue;
+      expect(doc.textKk).not.toMatch(/dk-zhylyoi|HSBK|PostgreSQL|Supabase|Halyk|Досқали|●|\d{12}/);
+    }
+  });
+});

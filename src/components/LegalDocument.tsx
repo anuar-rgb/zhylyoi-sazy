@@ -25,24 +25,26 @@ const NOTE: Record<Locale, (edition: string) => string> = {
 
 /**
  * One of the platform's documents (the offer, the terms, the privacy policy) as a readable page.
- * The text is the lawyer's, in Russian; the Kazakh site says a Kazakh version is being prepared and
- * shows the same text, marked lang="ru" so screen readers and translators read it right.
+ * The text is the lawyer's. The Kazakh site shows the Kazakh text where there is one; otherwise it
+ * says a Kazakh version is being prepared and shows the Russian text, marked lang="ru" so screen
+ * readers and translators read it right.
  */
 export default function LegalDocument({ id, locale }: { id: LegalDocId; locale: Locale }) {
   const doc = LEGAL_DOCS[id];
-  const { title, blocks } = parseLegalText(doc.text);
+  const kazakh = locale === "kk" && Boolean(doc.textKk);
+  const { title, blocks } = parseLegalText(kazakh ? doc.textKk! : doc.text);
 
   return (
     <section className="py-10 sm:py-14">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <BackHomeLink locale={locale} />
-        {locale === "kk" && (
+        {locale === "kk" && !kazakh && (
           <p className="mb-6 text-sm text-ocean bg-gold/10 border border-gold/30 rounded-2xl px-4 py-3">
             Құжаттың қазақ тіліндегі нұсқасы дайындалуда. Төменде орыс тіліндегі мәтіні берілген.
           </p>
         )}
 
-        <article lang="ru" className="bg-white rounded-3xl border border-cream-dark shadow-sm px-5 py-7 sm:px-10 sm:py-10 text-ocean/80">
+        <article lang={kazakh ? "kk" : "ru"} className="bg-white rounded-3xl border border-cream-dark shadow-sm px-5 py-7 sm:px-10 sm:py-10 text-ocean/80">
           <header className="text-center mb-8">
             <h1 className="text-lg sm:text-2xl font-bold text-ocean leading-snug break-words">{title[0]}</h1>
             {title.slice(1).map((line) => (
