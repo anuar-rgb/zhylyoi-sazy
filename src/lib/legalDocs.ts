@@ -33,7 +33,7 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
   offer: {
     id: "offer",
     href: "/offer",
-    version: "2026-11-14",
+    version: "2026-11-18",
     title: { kk: "Жария оферта", ru: "Публичная оферта" },
     text: offer,
     textKk: offerKk,
@@ -41,7 +41,7 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
   terms: {
     id: "terms",
     href: "/terms",
-    version: "2026-11-14",
+    version: "2026-11-18",
     title: { kk: "Пайдаланушылық келісім", ru: "Пользовательское соглашение" },
     text: terms,
     textKk: termsKk,
@@ -49,7 +49,7 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
   privacy: {
     id: "privacy",
     href: "/privacy",
-    version: "2026-11-14",
+    version: "2026-11-18",
     title: { kk: "Құпиялылық саясаты", ru: "Политика конфиденциальности" },
     text: privacy,
     textKk: privacyKk,
