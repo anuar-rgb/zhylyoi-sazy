@@ -6,6 +6,8 @@ import { EVENT_LOCKED_MESSAGE, isBookingEventLocked } from "@/lib/cultureEvents"
 import { getStaffIdentity } from "@/lib/profile";
 import { livePipeline } from "@/lib/payments/deps";
 import { MIN_REFUND_AMOUNT, refundItems, refundPayment } from "@/lib/payments/pipeline";
+import { sendRefundNotice } from "@/lib/mail/refundNotice";
+import type { RefundNoticeCase } from "@/lib/mail/refundNoticeText";
 
 export type OrderActionResult = { ok: boolean; message: string };
 
@@ -64,11 +66,23 @@ async function run(
   return MESSAGES[String(data)] ?? { ok: false, message: "Действие не выполнено." };
 }
 
+/**
+ * Writes to the buyer about the refund that just went through and adds to the cashier's message
+ * whether the letter went. The refund itself already stands, whatever the mail does.
+ */
+async function tellBuyer(bookingId: string, what: RefundNoticeCase, result: OrderActionResult): Promise<OrderActionResult> {
+  const mail = await sendRefundNotice(bookingId, what);
+  if (mail === "sent") return { ...result, message: `${result.message}. Покупателю отправлено письмо.` };
+  if (mail === "skipped") return result;
+  return { ...result, message: `${result.message}. Письмо покупателю не отправилось, сообщите ему сами.` };
+}
+
 const text = (value: string | undefined, max: number) => (value ?? "").trim().slice(0, max) || null;
 
 /** «Аннулировать билеты» of a free order: no money moved, so nothing goes back. */
 export async function markOrderRefunded(bookingId: string, note?: string) {
-  return run(bookingId, "mark_booking_refunded", { p_note: text(note, 500) });
+  const result = await run(bookingId, "mark_booking_refunded", { p_note: text(note, 500) });
+  return result.ok && result.message === MESSAGES.refunded.message ? tellBuyer(bookingId, { kind: "free" }, result) : result;
 }
 
 /**
@@ -102,11 +116,12 @@ export async function refundOrderOnline(bookingId: string): Promise<OrderActionR
   const found = await refundablePayment(bookingId);
   if ("error" in found) return { ok: false, message: found.error ?? "Не удалось выполнить действие." };
 
+  const amount = found.payment.amount - (found.payment.refundedAmount ?? 0);
   const result = await refundPayment(found.deps, found.payment);
   if (!result.ok) return { ok: false, message: "Банк не выполнил возврат. Заказ не изменён, деньги у покупателя не возвращены." };
 
   revalidateOrders();
-  return { ok: true, message: "Деньги возвращены через банк, билеты больше не действуют" };
+  return tellBuyer(bookingId, { kind: "all", amount }, { ok: true, message: "Деньги возвращены через банк, билеты больше не действуют" });
 }
 
 /** «Вернуть выбранные»: the price of the chosen seats goes back; the rest of the order stands. */
@@ -126,12 +141,12 @@ export async function refundOrderItemsOnline(bookingId: string, itemIds: string[
   }
 
   revalidateOrders();
-  return {
+  return tellBuyer(bookingId, result.all ? { kind: "all", amount: result.amount } : { kind: "part", amount: result.amount, seats: ids.length }, {
     ok: true,
     message: result.all
       ? "Деньги возвращены через банк, билеты больше не действуют"
       : `Возвращено ${result.amount.toLocaleString("ru-RU")} ₸ за ${ids.length} ${ids.length === 1 ? "место" : "места"}, остальные билеты действуют`,
-  };
+  });
 }
 
 /** Postgres "undefined_function" / PostgREST "no such function": the event_seat_blocks migration has not been run. */
