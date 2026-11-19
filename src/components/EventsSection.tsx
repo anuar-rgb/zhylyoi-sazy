@@ -40,7 +40,7 @@ export default async function EventsSection() {
           <SectionTitle title={text("events.title")} subtitle={text("events.subtitle")} />
         </FadeIn>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
           {featuredEvents.map((event, index) => (
             <FadeIn key={event.id} delay={index * 120}>
               <div className="group bg-cream/40 rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
@@ -62,7 +62,7 @@ export default async function EventsSection() {
                   </div>
                 </div>
                 <div className="p-5 sm:p-6 flex flex-col flex-1">
-                  <h3 className="font-bold text-ocean text-lg mb-2">{event.title}</h3>
+                  <h3 className="font-bold text-ocean text-base sm:text-lg mb-2">{event.title}</h3>
                   <p className="text-ocean/70 text-sm mb-4 flex-1">{event.description}</p>
                   {/* An event with no address has no page of its own, so it is shown without a link. */}
                   {event.slug && (

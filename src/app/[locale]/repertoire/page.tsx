@@ -97,7 +97,7 @@ export default async function RepertoirePage() {
 
         {pieces.length > 0 && (
           <FadeIn>
-            <div className="mt-8 sm:mt-12 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
+            <div className="mt-8 sm:mt-12 bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-cream-dark">
               <div className="flex flex-wrap justify-center gap-6 text-center">
                 {Object.entries(byCategory).map(([category, count]) => (
                   <div key={category} className="px-4">

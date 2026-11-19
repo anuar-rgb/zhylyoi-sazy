@@ -152,7 +152,7 @@ export default function PaymentStatus({ token }: { token: string }) {
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8 text-center" aria-live="polite">
+    <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-8 text-center" aria-live="polite">
       <div
         className={`mx-auto mb-5 grid place-items-center w-14 h-14 rounded-full text-white ${
           tone === "ok" ? "bg-ocean" : tone === "bad" ? "bg-red-600" : "bg-gold"

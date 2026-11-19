@@ -124,7 +124,7 @@ export default function ClubsCarousel({
 
             <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 flex flex-col gap-3">
               <Link href={club.href} className="block">
-                <h3 className="text-white font-bold text-xl sm:text-2xl leading-tight mb-2 text-balance">
+                <h3 className="text-white font-bold text-lg sm:text-2xl leading-tight mb-2 text-balance">
                   {club.title}
                 </h3>
                 <p className="text-white/75 text-sm leading-relaxed line-clamp-2">

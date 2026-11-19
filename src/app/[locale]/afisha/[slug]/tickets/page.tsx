@@ -56,7 +56,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeIn>
             {backLink}
-            <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-8">
+            <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8">
               <p className="text-ocean/70">
                 {locale === "kk"
                   ? "Бұл іс-шараға билеттер қолжетімсіз."
@@ -75,7 +75,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeIn>
             {backLink}
-            <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-8">
+            <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8">
               <p className="text-ocean/70">
                 {event.cancelledAt
                   ? locale === "kk"
@@ -156,7 +156,7 @@ export default async function EventTicketsPage({ params }: { params: Promise<{ s
         )}
 
         {rows.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-8 text-center">
+          <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8 text-center">
             <p className="text-ocean/60">
               {locale === "kk" ? "Залда орындар әлі жоқ." : "В зале ещё нет мест."}
             </p>

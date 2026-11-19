@@ -87,7 +87,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8">
+          <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-bold text-ocean">
@@ -180,7 +180,7 @@ export default async function MyTicketPage({ params }: { params: Promise<{ token
 
         {needsPayment && (
           <FadeIn>
-            <div className="mt-6 bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8">
+            <div className="mt-6 bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-8">
               <h2 className="text-lg font-bold text-ocean mb-3">{lang === "kk" ? "Төлем" : "Оплата"}</h2>
 
               {!canPay ? (

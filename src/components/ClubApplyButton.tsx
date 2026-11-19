@@ -139,7 +139,7 @@ export default function ClubApplyButton({
             onClick={() => setOpen(false)}
           >
             <div
-              className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-3xl p-5 sm:p-8 max-w-sm w-full shadow-2xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {status === "success" ? (

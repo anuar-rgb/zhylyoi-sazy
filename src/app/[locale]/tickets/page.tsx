@@ -83,7 +83,7 @@ export default async function TicketsPage() {
         {events.length === 0 ? (
           <p className="text-center text-ocean/60 py-16">{t.emptyState}</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
             {events.map((event, index) => (
               <FadeIn key={event.id} delay={index * 100}>
                 <div className="group bg-cream/40 rounded-3xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
@@ -105,7 +105,7 @@ export default async function TicketsPage() {
                     </div>
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
-                    <h3 className="font-bold text-ocean text-lg mb-2">{event.title}</h3>
+                    <h3 className="font-bold text-ocean text-base sm:text-lg mb-2">{event.title}</h3>
                     {event.cancelled ? (
                       <p className="mb-4">
                         <span className="inline-block bg-red-50 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">{t.cancelled}</span>

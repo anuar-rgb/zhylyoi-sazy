@@ -125,7 +125,7 @@ export default async function EventDetailPage({
               </div>
             </div>
 
-            <div className="p-6 sm:p-8">
+            <div className="p-5 sm:p-8">
               <h1 className="text-2xl sm:text-3xl font-bold text-ocean mb-4 leading-tight">
                 {event.title}
               </h1>

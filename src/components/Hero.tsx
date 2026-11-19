@@ -75,13 +75,13 @@ export default async function Hero() {
           <div className="flex flex-col items-start sm:flex-row gap-3 max-w-3xl animate-fade-in-delay-3">
             <a
               href="#afisha"
-              className="btn-primary inline-flex items-center justify-center px-6 sm:px-8 py-3 border-2 border-transparent font-semibold text-base sm:text-lg"
+              className="btn-primary inline-flex items-center justify-center px-5 sm:px-8 py-2.5 sm:py-3 border-2 border-transparent font-semibold text-[15px] sm:text-lg"
             >
               {t.afisha}
             </a>
             <a
               href="#about-us"
-              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 rounded-[20px] border-2 border-white/40 text-white font-semibold hover:bg-white/10 active:scale-95 transition-all text-base sm:text-lg"
+              className="inline-flex items-center justify-center px-5 sm:px-8 py-2.5 sm:py-3 rounded-[20px] border-2 border-white/40 text-white font-semibold hover:bg-white/10 active:scale-95 transition-all text-[15px] sm:text-lg"
             >
               {t.about}
             </a>

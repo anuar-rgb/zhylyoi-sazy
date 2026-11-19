@@ -38,7 +38,7 @@ export default async function VideoPage() {
         </div>
 
         <FadeIn>
-          <div className="mt-8 sm:mt-12 bg-ocean/5 rounded-3xl p-6 sm:p-8 text-center">
+          <div className="mt-8 sm:mt-12 bg-ocean/5 rounded-3xl p-5 sm:p-8 text-center">
             <p className="text-ocean/70 text-base sm:text-lg">{text("videoPage.footer")}</p>
           </div>
         </FadeIn>

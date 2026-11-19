@@ -306,7 +306,7 @@ export default function Header({
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
+              className={`block px-4 py-2.5 rounded-full text-base sm:text-lg font-medium transition-colors ${
                 pathname === link.href
                   ? "bg-gold text-ocean"
                   : "text-cream/90 active:bg-ocean-light"
@@ -321,7 +321,7 @@ export default function Header({
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className={`block px-4 py-3 rounded-full text-lg font-medium transition-colors ${
+              className={`block px-4 py-2.5 rounded-full text-base sm:text-lg font-medium transition-colors ${
                 pathname === link.href
                   ? "bg-gold text-ocean"
                   : "text-cream/90 active:bg-ocean-light"

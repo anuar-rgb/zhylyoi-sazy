@@ -46,7 +46,7 @@ export default async function AboutPage() {
         <div className="space-y-5 sm:space-y-6 text-ocean/80">
           {sections.map((s, index) => (
             <FadeIn key={index}>
-              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
+              <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-cream-dark">
                 <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">{s.heading}</h3>
                 <p className="leading-relaxed text-sm sm:text-base">{s.body}</p>
               </div>
@@ -55,7 +55,7 @@ export default async function AboutPage() {
 
           {directions.length > 0 && (
             <FadeIn>
-              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-cream-dark">
+              <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-cream-dark">
                 <h3 className="text-lg sm:text-xl font-bold text-ocean mb-3 sm:mb-4">
                   {text("aboutPage.directionsTitle")}
                 </h3>
@@ -89,7 +89,7 @@ export default async function AboutPage() {
 
           {quote && (
             <FadeIn>
-              <div className="bg-ocean/5 rounded-3xl p-6 sm:p-8">
+              <div className="bg-ocean/5 rounded-3xl p-5 sm:p-8">
                 <blockquote className="text-center italic text-ocean text-base sm:text-lg leading-relaxed">
                   {quote}
                 </blockquote>

@@ -120,7 +120,7 @@ export default function AfishaFilters({
                     </div>
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
-                    <h3 className="font-bold text-ocean text-lg mb-2">{event.title}</h3>
+                    <h3 className="font-bold text-ocean text-base sm:text-lg mb-2">{event.title}</h3>
                     <p className="text-ocean/70 text-sm mb-4 flex-1">{event.description}</p>
                     {/* An event with no address has no page of its own, so it is shown without a link. */}
                     {event.slug && (

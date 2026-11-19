@@ -35,7 +35,7 @@ export default function Checkout({ form, orderHref }: { form: CheckoutForm; orde
   return (
     <section className="py-12 sm:py-16 lg:py-20">
       <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-6 sm:p-8 text-center" aria-live="polite">
+        <div className="bg-white rounded-3xl border border-cream-dark shadow-sm p-5 sm:p-8 text-center" aria-live="polite">
           {failed ? (
             <>
               <p className="text-sm text-ocean">{t.failed}</p>

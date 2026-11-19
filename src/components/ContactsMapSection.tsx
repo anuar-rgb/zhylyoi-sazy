@@ -61,7 +61,7 @@ export default async function ContactsMapSection() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8">
           <FadeIn className={point ? "lg:col-span-2" : "lg:col-span-5"}>
-            <div className="bg-cream/40 rounded-3xl p-6 sm:p-8 border border-cream-dark h-full flex flex-col">
+            <div className="bg-cream/40 rounded-3xl p-5 sm:p-8 border border-cream-dark h-full flex flex-col">
               <ul className="space-y-5 text-sm sm:text-base flex-1">
                 <li className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-gold-dark shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@ export default async function ContactsMapSection() {
 
               <Link
                 href="/contacts"
-                className="btn-primary mt-6 inline-flex items-center justify-center px-6 py-3 font-semibold"
+                className="btn-primary mt-6 inline-flex items-center justify-center px-6 py-2.5 sm:py-3 text-[15px] sm:text-base font-semibold"
               >
                 {t.contactBtn}
               </Link>
